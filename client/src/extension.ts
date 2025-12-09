@@ -244,12 +244,6 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
     };
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
-        middleware: {
-            handleDiagnostics(uri, diagnostics, next) {
-                handleNativeDiagnostics(diagnostics)
-                next(uri, diagnostics);
-            },
-        }
     };
     client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
     client.onDidChangeState((e) => {
@@ -322,23 +316,16 @@ async function stopExtension(reason: string) {
 }
 
 /**
- * Looks for diagnostics in the editor and updates the status bar accordingly
- * @param diagnostics The diagnostics to handle
- */
-function handleNativeDiagnostics(diagnostics: vscode.Diagnostic[]) {
-    const ljError = diagnostics.find(d => d.source === "liquidjava" && d.severity === vscode.DiagnosticSeverity.Error);
-    if (ljError) {
-        updateStatusBar("failed");
-    } else {
-        updateStatusBar("passed");
-    }
-}
-
-/**
  * Handles LiquidJava diagnostics received from the language server
  * @param diagnostics The LiquidJava diagnostics
  */
 function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
+    const containsError = diagnostics.some(d => d.category === "error");
+    if (containsError) {
+        updateStatusBar("failed");
+    } else {
+        updateStatusBar("passed");
+    }
     webviewProvider?.sendMessage({ type: "diagnostics", diagnostics });
     currentDiagnostics = diagnostics;
 }
