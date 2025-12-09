@@ -74,8 +74,8 @@ export function getScript(vscode: any, document: any, window: any) {
             totalErrors = errors.length;
             totalWarnings = warnings.length;
 
-            fileErrors = errors.filter(error => error.file === msg.file);
-            fileWarnings = warnings.filter(warning => warning.file === msg.file);
+            fileErrors = errors.filter(error => error.file === msg.file || error.file === undefined);
+            fileWarnings = warnings.filter(warning => warning.file === msg.file || warning.file === undefined);
 
             updateView();
         }
