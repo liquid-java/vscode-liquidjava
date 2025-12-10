@@ -9,6 +9,7 @@ export type ValDerivationNode = {
 
 export type VarDerivationNode = {
     var: string;
+    origin?: DerivationNode;
 }
 
 export type BinaryDerivationNode = {

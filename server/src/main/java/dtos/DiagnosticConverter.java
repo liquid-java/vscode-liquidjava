@@ -3,6 +3,7 @@
 package dtos;
 
 import dtos.diagnostics.LJDiagnosticDTO;
+import dtos.errors.ArgumentMismatchErrorDTO;
 import dtos.errors.CustomErrorDTO;
 import dtos.errors.IllegalConstructorTransitionErrorDTO;
 import dtos.errors.InvalidRefinementErrorDTO;
@@ -17,6 +18,7 @@ import dtos.warnings.ExternalClassNotFoundWarningDTO;
 import dtos.warnings.ExternalMethodNotFoundWarningDTO;
 import dtos.warnings.LJWarningDTO;
 import liquidjava.diagnostics.LJDiagnostic;
+import liquidjava.diagnostics.errors.ArgumentMismatchError;
 import liquidjava.diagnostics.errors.CustomError;
 import liquidjava.diagnostics.errors.IllegalConstructorTransitionError;
 import liquidjava.diagnostics.errors.InvalidRefinementError;
@@ -58,6 +60,8 @@ public class DiagnosticConverter {
             return NotFoundErrorDTO.from(d);
         } else if (diagnostic instanceof IllegalConstructorTransitionError d) {
             return IllegalConstructorTransitionErrorDTO.from(d);
+        } else if (diagnostic instanceof ArgumentMismatchError d) {
+            return ArgumentMismatchErrorDTO.from(d);
         } else if (diagnostic instanceof ExternalClassNotFoundWarning d) {
             return ExternalClassNotFoundWarningDTO.from(d);
         } else if (diagnostic instanceof ExternalMethodNotFoundWarning d) {

@@ -65,7 +65,7 @@ export type RefinementError = BaseDiagnostic & {
     category: 'error';
     type: 'refinement-error';
     translationTable: TranslationTable;
-    expected: string; // ValDerivationNode
+    expected: ValDerivationNode;
     found: ValDerivationNode;
 }
 
@@ -82,6 +82,12 @@ export type StateRefinementError = BaseDiagnostic & {
     translationTable: TranslationTable;
     expected: string;
     found: string;
+}
+
+export type ArgumentMismatchError = BaseDiagnostic & {
+    category: 'error';
+    type: 'argument-mismatch-error';
+    refinement: string;
 }
 
 export type SyntaxError = BaseDiagnostic & {
