@@ -13,8 +13,10 @@ import { getWarningsView } from "./renderers/diagnostics/warnings";
  */
 export function getScript(vscode: any, document: any, window: any) {
     const root = document.getElementById('root');
-    let currentErrors: LJError[] = [];
-    let currentWarnings: LJWarning[] = [];
+    let fileErrors: LJError[] = [];
+    let fileWarnings: LJWarning[] = [];
+    let totalErrors = 0;
+    let totalWarnings = 0;
 
     // initial state
     root.innerHTML = getLoadingView();
@@ -68,17 +70,20 @@ export function getScript(vscode: any, document: any, window: any) {
             const diagnostics = msg.diagnostics as LJDiagnostic[];
             const errors = diagnostics.filter((diag: LJDiagnostic) => diag.category === 'error') as LJError[];
             const warnings = diagnostics.filter((diag: LJDiagnostic) => diag.category === 'warning') as LJWarning[];
-            
-            currentErrors = errors;
-            currentWarnings = warnings;
+
+            totalErrors = errors.length;
+            totalWarnings = warnings.length;
+
+            fileErrors = errors.filter(error => error.file === msg.file || error.file === undefined);
+            fileWarnings = warnings.filter(warning => warning.file === msg.file || warning.file === undefined);
 
             updateView();
         }
     });
 
     function updateView() {
-        let mainView = currentErrors.length > 0 ? getErrorsView(currentErrors) : getCorrectView();
-        let warningsView = currentWarnings.length > 0 ? getWarningsView(currentWarnings) : '';
+        let mainView = totalErrors > 0 ? getErrorsView(fileErrors, totalErrors) : getCorrectView();
+        let warningsView = totalWarnings > 0 ? getWarningsView(fileWarnings) : '';
         root.innerHTML = mainView + warningsView;
     }
 }

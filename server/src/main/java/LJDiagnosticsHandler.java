@@ -24,7 +24,6 @@ public class LJDiagnosticsHandler {
     private static final String SRC_SUFFIX = "/src/";
     private static final String SOURCE = "liquidjava";
 
-
     /**
      * Generates LJDiagnostics for the given URI
      * @param uri

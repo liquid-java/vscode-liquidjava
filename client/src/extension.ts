@@ -18,6 +18,7 @@ let logger: LiquidJavaLogger;
 let statusBarItem: vscode.StatusBarItem;
 let currentDiagnostics: LJDiagnostic[];
 let webviewProvider: LiquidJavaWebviewProvider;
+let currentFilePath: string | undefined;
 
 /**
  * Activates the LiquidJava extension
@@ -31,6 +32,11 @@ export async function activate(context: vscode.ExtensionContext) {
     initCodeLens(context);
 
     logger.client.info("Activating LiquidJava extension...");
+    
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor && activeEditor.document.languageId === "java") {
+        currentFilePath = activeEditor.document.uri.fsPath;
+    }
     await applyItalicOverlay();
 
     // find java executable path
@@ -126,7 +132,16 @@ function initWebview(context: vscode.ExtensionContext) {
         webviewProvider.onDidReceiveMessage(message => {
             console.log("received message", message);
             if (message.type === "ready") {
-                webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
+                webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics, file: currentFilePath });
+            }
+        })
+    );
+    // listen for active text editor changes
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(editor => {
+            if (editor && editor.document.languageId === "java") {
+                currentFilePath = editor.document.uri.fsPath;
+                webviewProvider?.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics, file: currentFilePath });
             }
         })
     );
@@ -244,12 +259,6 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
     };
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
-        middleware: {
-            handleDiagnostics(uri, diagnostics, next) {
-                handleNativeDiagnostics(diagnostics)
-                next(uri, diagnostics);
-            },
-        }
     };
     client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
     client.onDidChangeState((e) => {
@@ -322,23 +331,16 @@ async function stopExtension(reason: string) {
 }
 
 /**
- * Looks for diagnostics in the editor and updates the status bar accordingly
- * @param diagnostics The diagnostics to handle
- */
-function handleNativeDiagnostics(diagnostics: vscode.Diagnostic[]) {
-    const ljError = diagnostics.find(d => d.source === "liquidjava" && d.severity === vscode.DiagnosticSeverity.Error);
-    if (ljError) {
-        updateStatusBar("failed");
-    } else {
-        updateStatusBar("passed");
-    }
-}
-
-/**
  * Handles LiquidJava diagnostics received from the language server
  * @param diagnostics The LiquidJava diagnostics
  */
 function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
-    webviewProvider?.sendMessage({ type: "diagnostics", diagnostics });
+    const containsError = diagnostics.some(d => d.category === "error");
+    if (containsError) {
+        updateStatusBar("failed");
+    } else {
+        updateStatusBar("passed");
+    }
+    webviewProvider?.sendMessage({ type: "diagnostics", diagnostics, file: currentFilePath });
     currentDiagnostics = diagnostics;
 }

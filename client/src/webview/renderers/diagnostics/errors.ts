@@ -9,11 +9,11 @@ import {
 } from "../../../types";
 import { renderDerivationNode } from "./derivation-nodes";
 
-export function getErrorsView(errors: LJError[]): string {
+export function getErrorsView(errors: LJError[], totalErrors: number): string {
     return /*html*/`
         <div>
             <h2>Failed Verification</h2>
-            <p>${errors.length} error${errors.length > 1 ? 's were' : ' was'} found by the LiquidJava verifier.</p>
+            <p>${totalErrors} error${totalErrors > 1 ? 's were' : ' was'} found by the LiquidJava verifier.</p>
             <div class="content">
                 <ul>
                     ${errors.map((error) => /*html*/`
