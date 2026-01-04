@@ -69,7 +69,7 @@ public class LJDiagnosticsHandler {
         // group diagnostics by file
         Map<String, List<Diagnostic>> diagnosticsByFile = diagnostics.stream()
             .collect(Collectors.groupingBy(
-                d -> FILE_PREFIX + d.getFile(),
+                d -> toFileUri(d.getFile()),
                 Collectors.mapping(d -> {
                     Range range = getRangeFromErrorPosition(d.getPosition());
                     String message = String.format("%s: %s", d.getTitle(), d.getMessage());
@@ -83,6 +83,22 @@ public class LJDiagnosticsHandler {
             .toList();
     }
 
+    /**
+     * Converts a file path to a file:// URI
+     * Handles Windows paths (C:\path) and Unix paths (/path)
+     * @param filePath the file path
+     * @return the file URI
+     */
+    private static String toFileUri(String filePath) {
+        String normalized = filePath.replace("\\", "/");
+        // Windows
+        if (normalized.length() > 1 && normalized.charAt(1) == ':') {
+            return FILE_PREFIX + "/" + normalized;
+        }
+        // Unix
+        return FILE_PREFIX + normalized;
+    }
+    
     /**
      * Generates empty diagnostics for the given URI
      * @param uri the uri used for the verification
