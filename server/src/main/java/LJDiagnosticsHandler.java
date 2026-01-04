@@ -85,17 +85,16 @@ public class LJDiagnosticsHandler {
 
     /**
      * Converts a file path to a file:// URI
-     * Handles Windows paths (C:\path) and Unix paths (/path)
      * @param filePath the file path
      * @return the file URI
      */
     private static String toFileUri(String filePath) {
         String normalized = filePath.replace("\\", "/");
-        // Windows
-        if (normalized.length() > 1 && normalized.charAt(1) == ':') {
+        // Windows (C:/path)
+        if (!normalized.isEmpty() && normalized.charAt(1) == ':') {
             return FILE_PREFIX + "/" + normalized;
         }
-        // Unix
+        // Unix (/path)
         return FILE_PREFIX + normalized;
     }
     
