@@ -21,19 +21,18 @@ import liquidjava.diagnostics.warnings.LJWarning;
 public class LJDiagnosticsHandler {
 
     private static final String FILE_PREFIX = "file://";
-    private static final String SRC_SUFFIX = "/src/";
     private static final String SOURCE = "liquidjava";
 
     /**
      * Generates LJDiagnostics for the given URI
-     * @param uri
+     * @param uri the document URI
+     * @param path the file path
      * @return LJDiagnostics
      */
-    public static LJDiagnostics getLJDiagnostics(String uri) {
+    public static LJDiagnostics getLJDiagnostics(String uri, String path) {
         List<LJError> errors = new ArrayList<>();
         List<LJWarning> warnings = new ArrayList<>();
-        
-        String path = convertUTFtoCharacters(extractBasePath(uri));
+    
         CommandLineLauncher.launch(path);
         Diagnostics diagnostics = Diagnostics.getInstance();
         if (diagnostics.foundWarning()) {
@@ -91,30 +90,6 @@ public class LJDiagnosticsHandler {
      */
     public static PublishDiagnosticsParams getEmptyDiagnostics(String uri) {
         return new PublishDiagnosticsParams(uri, Collections.emptyList());
-    }
-
-    /**
-     * Extracts the base path from the given full path
-     * e.g. file://path/to/project/src/main/path/to/File.java => /path/to/project/src/main
-     * @param fullPath the full path
-     * @return base path
-     */
-    private static String extractBasePath(String fullPath) {
-        fullPath = fullPath.replace(FILE_PREFIX, "");
-        int suffixIndex = fullPath.indexOf(SRC_SUFFIX);
-        int nextSlashIndex = fullPath.indexOf("/", suffixIndex + SRC_SUFFIX.length());
-        if (suffixIndex == -1 || nextSlashIndex == -1)
-            return fullPath; // cannot extract base path
-        return fullPath.substring(0, nextSlashIndex); // up to and including the next slash after /src/
-    }
-
-    /**
-     * Converts a UTF-8 encoded string to a regular string
-     * @param source the UTF-8 encoded string
-     * @return converted string
-     */
-    private static String convertUTFtoCharacters(String source) {
-        return java.net.URLDecoder.decode(source, StandardCharsets.UTF_8);
     }
 
     /**

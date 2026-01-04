@@ -30,6 +30,12 @@ public class LJLanguageServer implements LanguageServer {
         WorkspaceServerCapabilities workspaceServerCapabilities = new WorkspaceServerCapabilities();
         WorkspaceFoldersOptions workspaceFoldersOptions = new WorkspaceFoldersOptions();
 
+        // extract workspace root from initialization params
+        if (params.getWorkspaceFolders() != null && !params.getWorkspaceFolders().isEmpty()) {
+            String workspaceRoot = params.getWorkspaceFolders().get(0).getUri();
+            diagnosticsService.setSourcePath(workspaceRoot);
+        }
+
         // set options
         workspaceFoldersOptions.setChangeNotifications(true);
         workspaceFoldersOptions.setSupported(true);
