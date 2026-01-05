@@ -1,5 +1,7 @@
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,8 +20,9 @@ import dtos.DiagnosticConverter;
 import liquidjava.diagnostics.LJDiagnostic;
 
 public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
-    
+
     private LJLanguageClient client;
+    private String sourcePath;
 
     /**
      * Sets the language client
@@ -27,6 +30,17 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      */
     public void setClient(LJLanguageClient client) {
         this.client = client;
+    }
+
+    /**
+     * Sets the source path
+     * Uses workspaceRoot + "/src/main/java" if it exists, otherwise uses workspaceRoot
+     * @param workspaceRoot the workspace root URI
+     */
+    public void setSourcePath(String workspaceRoot) {
+        Path workspaceRootPath = Paths.get(URI.create(workspaceRoot));
+        Path srcMainJava = workspaceRootPath.resolve("src/main/java");
+        this.sourcePath = srcMainJava.toFile().isDirectory() ? srcMainJava.toString() : workspaceRootPath.toString();
     }
 
     /**
@@ -49,7 +63,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      * @param uri the URI of the document
      */
     public void generateDiagnostics(String uri) {
-        LJDiagnostics ljDiagnostics = LJDiagnosticsHandler.getLJDiagnostics(uri);
+        LJDiagnostics ljDiagnostics = LJDiagnosticsHandler.getLJDiagnostics(uri, sourcePath);
         List<PublishDiagnosticsParams> nativeDiagnostics = LJDiagnosticsHandler.getNativeDiagnostics(ljDiagnostics, uri);
         nativeDiagnostics.forEach(params -> {
             this.client.publishDiagnostics(params);
