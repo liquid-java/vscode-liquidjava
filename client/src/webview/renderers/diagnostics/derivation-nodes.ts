@@ -30,25 +30,21 @@ function renderJsonTree(
     // VarDerivationNode
     if ("var" in node) {
         const placement = error.translationTable?.[node.var];
+        if (!placement) return `<span class="node-var">${node.var}</span>`;
+        
         const filePath = (placement as any)?.file ?? error.file;
-        const filename = filePath ? filePath.split("/").pop() : "";
-        const position = placement?.position;
-        const tooltipData = placement
-            ? `${filename}:${(position?.line ?? 0) + 1}:${(position?.column ?? 0) + 1}`
-            : "No location available";
-        const fileAttr = filePath ? `data-file="${filePath}"` : "";
-        const lineAttr = position ? `data-line="${position.line}"` : "";
-        const columnAttr = position ? `data-column="${position.column}"` : "";
-        const clickableClass = hasOrigin ? "derivable-node" : "";
-        const pathAttr = hasOrigin ? `data-node-path="${path}"` : "";
-        const idAttr = hasOrigin ? `data-error-id="${errorId}"` : "";
-        return `<span class="node-var tooltip clickable ${clickableClass}" data-tooltip="${tooltipData}" ${fileAttr} ${lineAttr} ${columnAttr} ${pathAttr} ${idAttr}>${node.var}</span>`;
+        const filename = filePath.split("/").pop() ?? "";
+        const tooltipData = `${filename}:${(placement.position?.line ?? 0) + 1}`;
+        const classes = `node-var tooltip clickable ${hasOrigin ? "derivable-node" : ""}`.trim();
+        const attrs = hasOrigin ? ` data-node-path="${path}" data-error-id="${errorId}"` : "";
+        const fileAttr = ` data-file="${filePath}" data-line="${placement.position?.line ?? 0}" data-column="${placement.position?.column ?? 0}"`;
+        return `<span class="${classes}" data-tooltip="${tooltipData}"${fileAttr}${attrs}>${node.var}</span>`;
     }
 
     // ValDerivationNode
     if ("value" in node) {
         const valueNode = node as ValDerivationNode;
-        const valClass = typeof valueNode.value === "number" ? "node-number" : "node-value";
+        const valClass = typeof valueNode.value === "number" ? "node-number" : typeof valueNode.value === "boolean" ? "node-boolean" : "node-value";
         const clickableClass = hasOrigin ? "derivable-node clickable" : "";
         const pathAttr = hasOrigin ? `data-node-path="${path}"` : "";
         const idAttr = hasOrigin ? `data-error-id="${errorId}"` : "";
@@ -65,7 +61,7 @@ function renderJsonTree(
     // UnaryDerivationNode
     if ("operand" in node) {
         const operandHtml = renderJsonTree(error, node.operand, errorId, `${path}.operand`, expandedPaths);
-        return `${node.op}(${operandHtml})`;
+        return node.op === "-" ? `(${node.op}${operandHtml})` : `${node.op}${operandHtml}`;
     }
 
     // fallback
@@ -116,11 +112,13 @@ export function renderDerivationNode(error: RefinementError, node: ValDerivation
     const expansions = getExpansions(errorId);
     return /*html*/ `
         <div class="container derivation-container" data-error-id="${errorId}">
-            ${renderJsonTree(error, node.origin || node, errorId, "root", expansions)}
-            ${expansions.size === 0 ? '<span class="node-expand-indicator">&nbsp;(click to expand)</span>' : ''}
+            <div style="flex: 1;">
+                ${renderJsonTree(error, node.origin || node, errorId, "root", expansions)}
+                ${expansions.size === 0 ? '<span class="node-expand-indicator">&nbsp;(click to expand)</span>' : ''}
+            </div>
+            <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${expansions.size === 0 ? "disabled" : ""}>
+                ↻
+            </button>
         </div>
-        <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${expansions.size === 0 ? "disabled" : ""}>
-            Reset
-        </button>
     `;
 }
