@@ -90,10 +90,13 @@ export function getStyles(): string {
             position: relative;
         }
         .node-value {
-            color: #CE9178;
+            color: var(--vscode-editor-foreground);
         }
         .node-number {
             color: #B5CEA8;
+        }
+        .node-boolean {
+            color: #569CD6;
         }
         .node-expand-indicator {
             opacity: 0.5;
@@ -101,24 +104,33 @@ export function getStyles(): string {
         }
         .clickable {
             cursor: pointer;
-        }
-        .clickable:hover {
             text-decoration: underline;
             text-decoration-style: dotted;
         }
+        .clickable:hover {
+            font-weight: bold;
+        }
+        .derivation-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
         .reset-btn {
-            margin: 0.5rem 0;
+            margin: 0;
             padding: 0.4rem 0.8rem;
-            background-color: var(--vscode-button-background);
+            background-color: transparent;
             color: var(--vscode-button-foreground);
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-family: var(--vscode-font-family);
-            font-size: var(--vscode-font-size);
+            font-size: larger;
+            flex-shrink: 0;
+            opacity: 0.7;
         }
         .reset-btn:hover {
-            background-color: var(--vscode-button-hoverBackground);
+            font-weight: bold;
         }
         .reset-btn:disabled {
             opacity: 0.5;

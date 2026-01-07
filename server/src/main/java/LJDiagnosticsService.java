@@ -73,6 +73,21 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     }
 
     /**
+     * Checks if a file URI is within the source path
+     * @param uri the file URI
+     * @return true if the file is within sourcePath, false otherwise
+     */
+    private boolean isFileInSourcePath(String uri) {
+        try {
+            Path filePath = Paths.get(new URI(uri));
+            Path sourcePathObj = Paths.get(sourcePath);
+            return filePath.startsWith(sourcePathObj);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Clear a diagnostic for a specific URI
      * @param uri the URI of the document
      */
@@ -88,8 +103,10 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      */
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
+        String uri = params.getTextDocument().getUri();
+        if (!isFileInSourcePath(uri)) return;
         System.out.println("Document opened — checking diagnostics");
-        generateDiagnostics(params.getTextDocument().getUri());
+        generateDiagnostics(uri);
     }
 
     /**
@@ -98,8 +115,9 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      */
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
-        System.out.println("Document saved — checking diagnostics");
         String uri = params.getTextDocument().getUri();
+        if (!isFileInSourcePath(uri)) return;
+        System.out.println("Document saved — checking diagnostics");
         clearDiagnostic(uri);
         generateDiagnostics(uri);
     }
@@ -111,6 +129,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
+        if (!isFileInSourcePath(uri)) return;
         try {
             // check if the file still exists on disk
             File file = new File(new URI(uri));
@@ -118,9 +137,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
                 System.out.println("File deleted — clearing diagnostic");
                 clearDiagnostic(uri);
             }
-        } catch (Exception e) {
-            System.out.println("Error checking if file exists: " + e.getMessage());
-        }
+        } catch (Exception e) {}
     }
 
     @Override
