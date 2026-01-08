@@ -29,7 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
     initStatusBar(context);
     initCommandPalette(context);
     initWebview(context);
-    initCodeLens(context);
+    initHover();
 
     logger.client.info("Activating LiquidJava extension...");
     
@@ -148,37 +148,26 @@ function initWebview(context: vscode.ExtensionContext) {
 }
 
 /**
- * Initializes code lens with clickable "View Details" button
- * @param context The extension context
+ * Initializes hover provider for LiquidJava diagnostics
  */
-function initCodeLens(context: vscode.ExtensionContext) {
-    const codeLensEventEmitter = new vscode.EventEmitter<void>();
-    const codeLensProvider: vscode.CodeLensProvider = {
-        provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
+function initHover() {
+    vscode.languages.registerHoverProvider('java', {
+        provideHover(document, position) {
+            // if webview is visible, do not show hover
+            if (webviewProvider?.isVisible()) return null;
+            
+            // get lj diagnostic at the current position
             const diagnostics = vscode.languages.getDiagnostics(document.uri);
-            return diagnostics
-                .filter(d => d.source === "liquidjava" && d.severity === vscode.DiagnosticSeverity.Error)
-                .map(d => {
-                    const range = new vscode.Range(d.range.start.line, 0, d.range.end.line, 0);
-                    return new vscode.CodeLens(range, {
-                        title: "View " + (d.message.split(":")[0] || "Error"),
-                        command: "liquidjava.showView",
-                        tooltip: "Open LiquidJava View",
-                    });
-                });
-        },
-        onDidChangeCodeLenses: codeLensEventEmitter.event
-    };
-    context.subscriptions.push(
-        vscode.languages.registerCodeLensProvider({ language: "java" }, codeLensProvider)
-    );
-    // update code lenses when diagnostics change
-    context.subscriptions.push(
-        vscode.languages.onDidChangeDiagnostics(() => {
-            codeLensEventEmitter.fire();
-        })
-    );
-    context.subscriptions.push(codeLensEventEmitter);
+            const diagnostic = diagnostics.find(d => d.range.contains(position) && d.source === 'liquidjava');
+            if (!diagnostic) return null;
+
+            // create hover content with link to open webview
+            const hoverContent = new vscode.MarkdownString();
+            hoverContent.isTrusted = true;
+            hoverContent.appendMarkdown(`\n\n[Open LiquidJava view](command:liquidjava.showView) for more details.`);
+            return new vscode.Hover(hoverContent);
+        }
+    });
 }
 
 /**
