@@ -57,6 +57,14 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
+   * Checks if the webview is currently visible
+   * @returns true if the webview is visible, false otherwise
+   */
+  public isVisible(): boolean {
+    return this.view?.visible ?? false;
+  }
+
+  /**
    * Generates the HTML content for the webview
    * @param webview
    * @returns HTML string
