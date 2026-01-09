@@ -1,4 +1,3 @@
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +19,6 @@ import liquidjava.diagnostics.warnings.LJWarning;
 
 public class LJDiagnosticsHandler {
 
-    private static final String FILE_PREFIX = "file://";
     private static final String SOURCE = "liquidjava";
 
     /**
@@ -29,7 +27,7 @@ public class LJDiagnosticsHandler {
      * @param path the file path
      * @return LJDiagnostics
      */
-    public static LJDiagnostics getLJDiagnostics(String uri, String path) {
+    public static LJDiagnostics getLJDiagnostics(String path) {
         List<LJError> errors = new ArrayList<>();
         List<LJWarning> warnings = new ArrayList<>();
     
@@ -69,7 +67,7 @@ public class LJDiagnosticsHandler {
         // group diagnostics by file
         Map<String, List<Diagnostic>> diagnosticsByFile = diagnostics.stream()
             .collect(Collectors.groupingBy(
-                d -> toFileUri(d.getFile()),
+                d -> PathUtils.toFileUri(d.getFile()),
                 Collectors.mapping(d -> {
                     Range range = getRangeFromErrorPosition(d.getPosition());
                     String message = String.format("%s: %s", d.getTitle(), d.getMessage());
@@ -83,21 +81,6 @@ public class LJDiagnosticsHandler {
             .toList();
     }
 
-    /**
-     * Converts a file path to a file:// URI
-     * @param filePath the file path
-     * @return the file URI
-     */
-    private static String toFileUri(String filePath) {
-        String normalized = filePath.replace("\\", "/");
-        // Windows (C:/path)
-        if (!normalized.isEmpty() && normalized.charAt(1) == ':') {
-            return FILE_PREFIX + "/" + normalized;
-        }
-        // Unix (/path)
-        return FILE_PREFIX + normalized;
-    }
-    
     /**
      * Generates empty diagnostics for the given URI
      * @param uri the uri used for the verification

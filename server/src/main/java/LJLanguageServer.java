@@ -33,7 +33,7 @@ public class LJLanguageServer implements LanguageServer {
         // extract workspace root from initialization params
         if (params.getWorkspaceFolders() != null && !params.getWorkspaceFolders().isEmpty()) {
             String workspaceRoot = params.getWorkspaceFolders().get(0).getUri();
-            diagnosticsService.setSourcePath(workspaceRoot);
+            diagnosticsService.setWorkspaceRoot(workspaceRoot);
         }
 
         // set options
