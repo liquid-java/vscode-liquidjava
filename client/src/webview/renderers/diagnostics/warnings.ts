@@ -1,12 +1,12 @@
 import { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../../types";
 import { renderHeader, renderLocation, renderSection } from "./utils";
 
-export function getWarningsView(warnings: LJWarning[]): string {
+export function getWarningsView(warnings: LJWarning[], showAllDiagnostics: boolean, currentFile: string | undefined): string {
     return /*html*/`
         <div>
             <div class="content">
                 <ul>
-                    ${warnings.map((warning) => /*html*/`
+                    ${warnings.filter(warning => showAllDiagnostics || warning.file === currentFile).map((warning) => /*html*/`
                         <li class="diagnostic-item warning-item">
                             ${renderWarning(warning)}
                         </li>

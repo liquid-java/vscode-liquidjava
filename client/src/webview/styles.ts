@@ -8,10 +8,11 @@ export function getStyles(): string {
         body {
             padding: 1rem;
             font-family: var(--vscode-font-family);
+            overflow-y: scroll;
         }
         h2 {
             font-weight: bold;
-            margin: 0 0 1rem 0;
+            margin: 0;
         }
         p {
             word-wrap: break-word;
@@ -45,6 +46,11 @@ export function getStyles(): string {
             overflow: visible;
             position: relative;
         }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
         .diagnostic-header {
             margin: 1rem 0;
         }
@@ -56,7 +62,7 @@ export function getStyles(): string {
         .diagnostic-item {
             background-color: var(--vscode-textBlockQuote-background);
             padding: 1rem;
-            margin: 1rem 0;
+            margin-bottom: 1rem;
             border-radius: 4px;
         }
         .diagnostic-item h3 {
@@ -131,10 +137,26 @@ export function getStyles(): string {
         }
         .reset-btn:hover {
             font-weight: bold;
+            background-color: transparent;
         }
         .reset-btn:disabled {
             opacity: 0.5;
         }
+        button {
+            padding: 0.2rem 0.6rem;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: 1px solid var(--vscode-button-border);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--vscode-font-family);
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+
         .tooltip:hover::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -163,6 +185,15 @@ export function getStyles(): string {
             margin-bottom: -0.25rem;
             z-index: 1000;
             pointer-events: none;
+        }
+        .more-indicator {
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-bottom: 1rem;
+        }
+        .info {
+            margin: 1rem 0;
         }
     `;
 }

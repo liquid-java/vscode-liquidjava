@@ -15,8 +15,8 @@ export function getScript(vscode: any, document: any, window: any) {
     const root = document.getElementById('root');
     let fileErrors: LJError[] = [];
     let fileWarnings: LJWarning[] = [];
-    let totalErrors = 0;
-    let totalWarnings = 0;
+    let showAllDiagnostics = false;
+    let currentFile: string | undefined;
 
     // initial state
     root.innerHTML = getLoadingView();
@@ -61,6 +61,15 @@ export function getScript(vscode: any, document: any, window: any) {
             if (handleDerivationResetClick(target)) {
                 updateView();
             }
+            return;
+        }
+
+        // toggle show all diagnostics
+        if (target.classList.contains('show-all-button')) {
+            e.stopPropagation();
+            showAllDiagnostics = !showAllDiagnostics;
+            updateView();
+            return;
         }
     });
     
@@ -68,22 +77,22 @@ export function getScript(vscode: any, document: any, window: any) {
         const msg = event.data;
         if (msg.type === 'diagnostics') {
             const diagnostics = msg.diagnostics as LJDiagnostic[];
-            const errors = diagnostics.filter((diag: LJDiagnostic) => diag.category === 'error') as LJError[];
-            const warnings = diagnostics.filter((diag: LJDiagnostic) => diag.category === 'warning') as LJWarning[];
+            const errors = diagnostics.filter((d: LJDiagnostic) => d.category === 'error') as LJError[];
+            const warnings = diagnostics.filter((d: LJDiagnostic) => d.category === 'warning') as LJWarning[];
 
-            totalErrors = errors.length;
-            totalWarnings = warnings.length;
-
-            fileErrors = errors.filter(error => error.file === msg.file || error.file === undefined);
-            fileWarnings = warnings.filter(warning => warning.file === msg.file || warning.file === undefined);
-
+            fileErrors = errors;
+            fileWarnings = warnings;
+    
             updateView();
+        } else if (msg.type === 'file') {
+            currentFile = msg.file;
+            if (!showAllDiagnostics) updateView();
         }
     });
 
     function updateView() {
-        let mainView = totalErrors > 0 ? getErrorsView(fileErrors, totalErrors) : getCorrectView();
-        let warningsView = totalWarnings > 0 ? getWarningsView(fileWarnings) : '';
+        let mainView = fileErrors.length > 0 ? getErrorsView(fileErrors, showAllDiagnostics, currentFile) : getCorrectView(showAllDiagnostics);
+        let warningsView = fileWarnings.length > 0 ? getWarningsView(fileWarnings, showAllDiagnostics, currentFile) : '';
         root.innerHTML = mainView + warningsView;
     }
 }

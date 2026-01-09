@@ -26,7 +26,7 @@ export type LJDiagnostic = LJError | LJWarning;
 
 export type LJError = CustomError | IllegalConstructorTransitionError | 
     InvalidRefinementError | NotFoundError | RefinementError | StateConflictError | 
-    StateRefinementError | SyntaxError;
+    StateRefinementError | SyntaxError | ArgumentMismatchError;
 
 export type LJWarning = CustomWarning | ExternalClassNotFoundWarning | ExternalMethodNotFoundWarning;
 

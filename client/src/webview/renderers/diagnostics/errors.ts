@@ -11,20 +11,27 @@ import {
 
 } from "../../../types";
 import { renderDerivationNode } from "./derivation-nodes";
+import { renderShowAllButton } from "./show-all-button";
 
-export function getErrorsView(errors: LJError[], totalErrors: number): string {
+export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: string | undefined): string {
+    const displayDiagnostics = showAll ? errors : errors.filter(error => error.file && error.file?.toLowerCase() === currentFile?.toLowerCase());
+    const hiddenCount = errors.length - displayDiagnostics.length;
     return /*html*/`
         <div>
-            <h2>Failed Verification</h2>
-            <p>${totalErrors} error${totalErrors > 1 ? 's were' : ' was'} found by the LiquidJava verifier.</p>
+            <div class="header">
+                <h2>Failed Verification</h2>
+                ${renderShowAllButton(showAll)}
+            </div>
+            <p class="info">${`${errors.length} error${errors.length !== 1 ? 's were' : ' was'} found by the LiquidJava verifier.`}</p>
             <div class="content">
                 <ul>
-                    ${errors.map((error) => /*html*/`
+                    ${displayDiagnostics.map((error) => /*html*/`
                         <li class="diagnostic-item error-item">
                             ${renderError(error)}
                         </li>
                     `).join("")}
                 </ul>
+                ${hiddenCount > 0 ? `<p class="more-indicator">(+${hiddenCount} errors)</p>` : ''}
             </div>
         </div>
     `;
@@ -64,7 +71,15 @@ export function renderError(error: LJError): string {
             const e = error as SyntaxError;
             return `${header}${renderSection('Refinement', `<pre>"${e.refinement}"</pre>`)}${location}`;
         }
+        case 'argument-mismatch-error': {
+            const e = error as ArgumentMismatchError;
+            return `${header}${renderSection('Refinement', `<pre>"${e.refinement}"</pre>`)}${location}`;
+        }
         default:
             return `${header}${location}`;
     }
 }
+function renderToggleButton(showAll: boolean) {
+    throw new Error("Function not implemented.");
+}
+
