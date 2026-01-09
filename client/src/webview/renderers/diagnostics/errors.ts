@@ -31,7 +31,7 @@ export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: 
                         </li>
                     `).join("")}
                 </ul>
-                ${hiddenCount > 0 ? `<p class="more-indicator">(+${hiddenCount} errors)</p>` : ''}
+                ${hiddenCount > 0 ? `<p class="more-indicator">(+${hiddenCount} error${hiddenCount !== 1 ? 's' : ''})</p>` : ''}
             </div>
         </div>
     `;
