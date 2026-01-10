@@ -18,7 +18,7 @@ let logger: LiquidJavaLogger;
 let statusBarItem: vscode.StatusBarItem;
 let currentDiagnostics: LJDiagnostic[];
 let webviewProvider: LiquidJavaWebviewProvider;
-let currentFilePath: string | undefined;
+let currentFile: string | undefined;
 
 /**
  * Activates the LiquidJava extension
@@ -35,7 +35,8 @@ export async function activate(context: vscode.ExtensionContext) {
     
     const activeEditor = vscode.window.activeTextEditor;
     if (activeEditor && activeEditor.document.languageId === "java") {
-        currentFilePath = activeEditor.document.uri.fsPath;
+        currentFile = activeEditor.document.uri.fsPath;
+        webviewProvider?.sendMessage({ type: "file", file: currentFile });
     }
     await applyItalicOverlay();
 
@@ -132,7 +133,8 @@ function initWebview(context: vscode.ExtensionContext) {
         webviewProvider.onDidReceiveMessage(message => {
             console.log("received message", message);
             if (message.type === "ready") {
-                webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics, file: currentFilePath });
+                webviewProvider.sendMessage({ type: "file", file: currentFile });
+                webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
             }
         })
     );
@@ -140,8 +142,8 @@ function initWebview(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.window.onDidChangeActiveTextEditor(editor => {
             if (editor && editor.document.languageId === "java") {
-                currentFilePath = editor.document.uri.fsPath;
-                webviewProvider?.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics, file: currentFilePath });
+                currentFile = editor.document.uri.fsPath;
+                webviewProvider?.sendMessage({ type: "file", file: currentFile });
             }
         })
     );
@@ -330,6 +332,6 @@ function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     } else {
         updateStatusBar("passed");
     }
-    webviewProvider?.sendMessage({ type: "diagnostics", diagnostics, file: currentFilePath });
+    webviewProvider?.sendMessage({ type: "diagnostics", diagnostics });
     currentDiagnostics = diagnostics;
 }
