@@ -16,6 +16,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 
 import dtos.DiagnosticConverter;
 import liquidjava.diagnostics.LJDiagnostic;
+import utils.PathUtils;
 
 public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
 

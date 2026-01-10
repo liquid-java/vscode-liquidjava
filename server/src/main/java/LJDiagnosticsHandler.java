@@ -16,6 +16,7 @@ import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.errors.LJError;
 import liquidjava.diagnostics.warnings.LJWarning;
+import utils.PathUtils;
 
 public class LJDiagnosticsHandler {
 

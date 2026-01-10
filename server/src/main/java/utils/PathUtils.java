@@ -1,11 +1,15 @@
+package utils;
+
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Utility class for path operations
+ */
 public class PathUtils {
     private static final String FILE_PREFIX = "file://";
     private static final String SRC_SUFFIX = "/src/";
-
 
     /**
      * Checks if a file is in a given directory
