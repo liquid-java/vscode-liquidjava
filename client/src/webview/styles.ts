@@ -61,7 +61,7 @@ export function getStyles(): string {
         }
         .diagnostic-item {
             background-color: var(--vscode-textBlockQuote-background);
-            padding: 1rem;
+            padding: 0.5rem 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
         }
@@ -156,7 +156,23 @@ export function getStyles(): string {
         button:hover {
             background-color: var(--vscode-button-hoverBackground);
         }
-
+        .show-more-button {
+            display: block;
+            width: 100%;
+            margin: 0.5rem auto;
+            padding: 0.5rem;
+            background-color: transparent;
+            border: none;
+            color: var(--vscode-foreground);
+            opacity: 0.7;
+            font-size: 1rem;
+        }
+        .show-more-button:hover {
+            background-color: var(--vscode-editor-background);
+        }
+        .extra-content {
+            margin-top: 1rem;
+        }
         .tooltip:hover::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -194,6 +210,36 @@ export function getStyles(): string {
         }
         .info {
             margin: 1rem 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0rem 0;
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        th {
+            text-align: left;
+            padding: 0.75rem;
+            font-weight: bold;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            color: var(--vscode-foreground);
+        }
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            color: var(--vscode-foreground);
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        td code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 3px;
+            font-family: var(--vscode-editor-font-family);
+            font-size: 0.9em;
         }
     `;
 }

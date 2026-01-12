@@ -1,4 +1,4 @@
-import { renderShowAllButton } from "./diagnostics/show-all-button";
+import { renderShowAllButton } from "./diagnostics/utils";
 
 export function getCorrectView(showAllDiagnostics: boolean): string {
     return /*html*/`
