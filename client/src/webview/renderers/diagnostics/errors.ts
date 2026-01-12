@@ -1,4 +1,4 @@
-import { renderHeader, renderLocation, renderSection } from "./utils";
+import { renderHeader, renderLocation, renderSection, renderCustomSection } from "./utils";
 import {
     ArgumentMismatchError,
     InvalidRefinementError,
@@ -37,49 +37,35 @@ export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: 
     `;
 }
 
+const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) => string>> = {
+    'refinement-error': (e: RefinementError) => /*html*/`
+        ${renderSection('Expected', e.expected.value)}
+        ${renderCustomSection('Found', renderDerivationNode(e, e.found))}
+    `,
+    'state-refinement-error': (e: StateRefinementError) => /*html*/`
+        ${renderSection('Expected', e.expected)}
+        ${renderSection('Found', e.found)}
+    `,
+    'invalid-refinement-error': (e: InvalidRefinementError) => /*html*/`
+        ${renderSection('Refinement', e.refinement)}
+    `,
+    'not-found-error': (e: NotFoundError) => /*html*/`
+        ${renderSection(e.kind, e.name)}
+    `,
+    'state-conflict-error': (e: StateConflictError) => /*html*/`
+        ${renderSection('State', e.state)}
+    `,
+    'syntax-error': (e: SyntaxError) => /*html*/`
+        ${renderSection('Refinement', e.refinement)}
+    `,
+    'argument-mismatch-error': (e: ArgumentMismatchError) => /*html*/`
+        ${renderSection('Refinement', e.refinement)}
+    `
+};
+
 export function renderError(error: LJError): string {
     const header = renderHeader(error);
+    const content = errorContentRenderers[error.type]?.(error) ?? '';
     const location = renderLocation(error);
-    switch (error.type) {
-        case 'refinement-error': {
-            const e = error as RefinementError;
-            return /*html*/`
-                ${header}
-                ${renderSection('Expected', `<pre>${e.expected.value}</pre>`)}
-                ${renderSection('Found', renderDerivationNode(e, e.found))}
-                ${location}
-            `;
-        }
-        case 'state-refinement-error': {
-            const e = error as StateRefinementError;
-            return `${header}${renderSection('Expected', `<pre>${e.expected}</pre>`)}${renderSection('Found', `<pre>${e.found}</pre>`)}${location}`;
-        }
-        case 'invalid-refinement-error': {
-            const e = error as InvalidRefinementError;
-            return `${header}${renderSection('Refinement', `<pre>"${e.refinement}"</pre>`)}${location}`;
-        }
-        case 'not-found-error': {
-            const e = error as NotFoundError;
-            const content = `<p>${e.kind} <b>${e.name}</b> not found</p>`;
-            return `<h3>${error.title}</h3><div class="diagnostic-header">${content}</div>${location}`;
-        }
-        case 'state-conflict-error': {
-            const e = error as StateConflictError;
-            return `${header}${renderSection('State', `<pre>${e.state}</pre>`)}${location}`;
-        }
-        case 'syntax-error': {
-            const e = error as SyntaxError;
-            return `${header}${renderSection('Refinement', `<pre>"${e.refinement}"</pre>`)}${location}`;
-        }
-        case 'argument-mismatch-error': {
-            const e = error as ArgumentMismatchError;
-            return `${header}${renderSection('Refinement', `<pre>"${e.refinement}"</pre>`)}${location}`;
-        }
-        default:
-            return `${header}${location}`;
-    }
+    return /*html*/`${header}${content}${location}`;
 }
-function renderToggleButton(showAll: boolean) {
-    throw new Error("Function not implemented.");
-}
-
