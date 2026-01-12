@@ -1,5 +1,5 @@
 import { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../../types";
-import { renderHeader, renderLocation, renderCustomSection } from "./utils";
+import { renderHeader, renderLocation, renderCustomSection, renderSection } from "./utils";
 
 export function getWarningsView(warnings: LJWarning[], showAllDiagnostics: boolean, currentFile: string | undefined): string {
     return /*html*/`
@@ -17,20 +17,19 @@ export function getWarningsView(warnings: LJWarning[], showAllDiagnostics: boole
     `;
 }
 
+const warningContentRenderers: Partial<Record<LJWarning['type'], (warning: LJWarning) => string>> = {
+    'external-class-not-found-warning': (w: ExternalClassNotFoundWarning) => /*html*/`
+        ${renderSection('Class Name', w.className)}
+    `,
+    'external-method-not-found-warning': (w: ExternalMethodNotFoundWarning) => /*html*/`
+        ${renderSection('Method', w.methodName)}
+        ${w.overloads.length > 0 ? renderSection('Overloads', w.overloads.join('\n')) : ''}
+    `
+};
+
 export function renderWarning(warning: LJWarning): string {
     const header = renderHeader(warning);
+    const content = warningContentRenderers[warning.type]?.(warning) ?? '';
     const location = renderLocation(warning);
-    switch (warning.type) {
-        case 'external-class-not-found-warning': {
-            const e = warning as ExternalClassNotFoundWarning;
-            return `${header}${renderCustomSection('Class Name', `<pre>${e.className}</pre>`)}${location}`;
-        }
-        case 'external-method-not-found-warning': {
-            const e = warning as ExternalMethodNotFoundWarning;
-            return `${header}${renderCustomSection('Method', `<pre>${e.methodName}</pre>`)}${e.overloads.length > 0 ? renderCustomSection("Overloads", `<pre>${e.overloads.join("\n")}</pre>`) : ""}${location}`;
-        }
-        case 'custom-warning': {
-            return `${header}${location}`;
-        }
-    }
+    return /*html*/`${header}${content}${location}`;
 }
