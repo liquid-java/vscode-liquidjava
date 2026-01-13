@@ -80,13 +80,10 @@ function renderExtra(error: LJError, errorIndex: number, isExpanded: boolean): s
             ${isExpanded ? '↑' : '↓'}
         </button>
     `;
-    if (!isExpanded) return button;
     
-    let extra = button;
-    extra += '<div class="extra-content">';
+    let extra = "";
     if (error.hasOwnProperty('translationTable')) {
         extra += renderTranslationTable((error as any).translationTable as TranslationTable);
     }
-    extra += '</div>';
-    return extra;
+    return extra ? isExpanded ? /*html*/`${button}<div class="extra-content">${extra}</div>` : button : "";
 }
