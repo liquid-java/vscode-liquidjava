@@ -1,4 +1,5 @@
-import { renderHeader, renderLocation, renderSection, renderCustomSection } from "./utils";
+import { renderHeader, renderLocation, renderSection, renderCustomSection, renderShowAllButton, renderTranslationTable } from "./utils";
+import { renderDerivationNode } from "./derivation-nodes";
 import {
     ArgumentMismatchError,
     InvalidRefinementError,
@@ -8,12 +9,10 @@ import {
     StateConflictError,
     StateRefinementError,
     SyntaxError,
-
+    TranslationTable,
 } from "../../../types";
-import { renderDerivationNode } from "./derivation-nodes";
-import { renderShowAllButton } from "./show-all-button";
 
-export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: string | undefined): string {
+export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: string | undefined, expandedErrors: Set<number>): string {
     const displayDiagnostics = showAll ? errors : errors.filter(error => error.file && error.file?.toLowerCase() === currentFile?.toLowerCase());
     const hiddenCount = errors.length - displayDiagnostics.length;
     return /*html*/`
@@ -25,11 +24,15 @@ export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: 
             <p class="info">${`${errors.length} error${errors.length !== 1 ? 's were' : ' was'} found by the LiquidJava verifier.`}</p>
             <div class="content">
                 <ul>
-                    ${displayDiagnostics.map((error) => /*html*/`
+                    ${displayDiagnostics.map((error, index) => {
+                        const errorIndex = errors.indexOf(error);
+                        const isExpanded = expandedErrors.has(errorIndex);
+                        return /*html*/`
                         <li class="diagnostic-item error-item">
-                            ${renderError(error)}
+                            ${renderError(error, errorIndex, isExpanded)}
                         </li>
-                    `).join("")}
+                    `;
+                    }).join("")}
                 </ul>
                 ${hiddenCount > 0 ? `<p class="more-indicator">(+${hiddenCount} error${hiddenCount !== 1 ? 's' : ''})</p>` : ''}
             </div>
@@ -63,9 +66,27 @@ const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) =>
     `
 };
 
-export function renderError(error: LJError): string {
+export function renderError(error: LJError, errorIndex: number, isExpanded: boolean): string {
     const header = renderHeader(error);
     const content = errorContentRenderers[error.type]?.(error) ?? '';
     const location = renderLocation(error);
-    return /*html*/`${header}${content}${location}`;
+    const extra = renderExtra(error, errorIndex, isExpanded);
+    return /*html*/`${header}${content}${location}${extra}`;
+}
+
+function renderExtra(error: LJError, errorIndex: number, isExpanded: boolean): string {
+    const button = /*html*/`
+        <button class="show-more-button" data-error-index="${errorIndex}" title="Toggle show extra information about the diagnostic">
+            ${isExpanded ? '↑' : '↓'}
+        </button>
+    `;
+    if (!isExpanded) return button;
+    
+    let extra = button;
+    extra += '<div class="extra-content">';
+    if (error.hasOwnProperty('translationTable')) {
+        extra += renderTranslationTable((error as any).translationTable as TranslationTable);
+    }
+    extra += '</div>';
+    return extra;
 }

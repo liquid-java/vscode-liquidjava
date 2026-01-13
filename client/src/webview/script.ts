@@ -17,6 +17,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let fileWarnings: LJWarning[] = [];
     let showAllDiagnostics = false;
     let currentFile: string | undefined;
+    let expandedErrors = new Set<number>();
 
     // initial state
     root.innerHTML = getLoadingView();
@@ -71,6 +72,21 @@ export function getScript(vscode: any, document: any, window: any) {
             updateView();
             return;
         }
+
+        // toggle show more/less for errors
+        if (target.classList.contains('show-more-button')) {
+            e.stopPropagation();
+            const errorIndex = parseInt(target.getAttribute('data-error-index') || '-1', 10);
+            if (errorIndex >= 0) {
+                if (expandedErrors.has(errorIndex)) {
+                    expandedErrors.delete(errorIndex);
+                } else {
+                    expandedErrors.add(errorIndex);
+                }
+                updateView();
+            }
+            return;
+        }
     });
     
     window.addEventListener('message', event => {
@@ -91,7 +107,7 @@ export function getScript(vscode: any, document: any, window: any) {
     });
 
     function updateView() {
-        let mainView = fileErrors.length > 0 ? getErrorsView(fileErrors, showAllDiagnostics, currentFile) : getCorrectView(showAllDiagnostics);
+        let mainView = fileErrors.length > 0 ? getErrorsView(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : getCorrectView(showAllDiagnostics);
         let warningsView = fileWarnings.length > 0 ? getWarningsView(fileWarnings, showAllDiagnostics, currentFile) : '';
         root.innerHTML = mainView + warningsView;
     }

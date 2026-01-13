@@ -61,7 +61,7 @@ function renderJsonTree(
     // UnaryDerivationNode
     if ("operand" in node) {
         const operandHtml = renderJsonTree(error, node.operand, errorId, `${path}.operand`, expandedPaths);
-        return node.op === "-" ? `(${node.op}${operandHtml})` : `${node.op}${operandHtml}`;
+        return node.op === "-" ? `${node.op}(${operandHtml})` : `${node.op}${operandHtml}`;
     }
 
     // fallback
