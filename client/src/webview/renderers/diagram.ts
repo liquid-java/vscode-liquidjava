@@ -1,6 +1,6 @@
 import { StateMachine } from "../../types/fsm";
 
-export function getDiagramView(diagram: string, sm: StateMachine): string {
+export function renderStateMachineView(sm: StateMachine, diagram: string): string {
     return /*html*/`
         <div class="diagram-section">
             <div class="diagram-container">

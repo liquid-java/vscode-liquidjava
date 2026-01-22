@@ -185,8 +185,6 @@ function initFileEvents(context: vscode.ExtensionContext) {
 
 async function requestStateMachine(document: vscode.TextDocument) {
     const sm: StateMachine = await client?.sendRequest("liquidjava/fsm", { uri: document.uri.toString() });
-    if (!sm) return;
-
     webviewProvider?.sendMessage({ type: "fsm", sm });
     currentStateMachine = sm;
 }

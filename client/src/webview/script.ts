@@ -4,7 +4,7 @@ import { getCorrectView } from "./renderers/correct";
 import { getLoadingView } from "./renderers/loading";
 import { getErrorsView } from "./renderers/diagnostics/errors";
 import { getWarningsView } from "./renderers/diagnostics/warnings";
-import { getDiagramView } from "./renderers/diagram";
+import { renderStateMachineView } from "./renderers/diagram";
 import { StateMachine } from "../types/fsm";
 import { createMermaidDiagram } from "./fsm";
 
@@ -21,7 +21,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let showAllDiagnostics = false;
     let currentFile: string | undefined;
     let expandedErrors = new Set<number>();
-    let stateMachine = '';
+    let stateMachineView = '';
 
     // initial state
     root.innerHTML = getLoadingView();
@@ -108,9 +108,14 @@ export function getScript(vscode: any, document: any, window: any) {
             currentFile = msg.file;
             if (!showAllDiagnostics) updateView();
         } else if (msg.type === 'fsm') {
+            if (!msg.sm) {
+                stateMachineView = '';
+                updateView();
+                return;
+            }
             const sm = msg.sm as StateMachine;
             const diagram = createMermaidDiagram(sm);
-            stateMachine = diagram ? getDiagramView(diagram, sm) : '';
+            stateMachineView = renderStateMachineView(sm, diagram);
             updateView();
         }
     });  
@@ -132,12 +137,10 @@ export function getScript(vscode: any, document: any, window: any) {
     function updateView() {
         let mainView = fileErrors.length > 0 ? getErrorsView(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : getCorrectView(showAllDiagnostics);
         let warningsView = fileWarnings.length > 0 ? getWarningsView(fileWarnings, showAllDiagnostics, currentFile) : '';
-        root.innerHTML = mainView + warningsView + stateMachine;
+        root.innerHTML = mainView + warningsView + stateMachineView;
         
         // re-render mermaid diagram after DOM update
-        if (stateMachine) {
-            renderMermaidDiagram();
-        }
+        if (stateMachineView) renderMermaidDiagram();
     }
 }
 
