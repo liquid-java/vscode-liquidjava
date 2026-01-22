@@ -9,7 +9,8 @@ import { connectToPort, findJavaExecutable, getAvailablePort, killProcess } from
 import { SERVER_JAR, DEBUG_MODE, DEBUG_PORT } from "./constants";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
 import { LJDiagnostic } from "./types";
-import { createMermaidDiagram } from "./fsm";
+import { createMermaidDiagram } from "./webview/fsm";
+import { StateMachine } from "./types/fsm";
 
 let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
@@ -20,6 +21,7 @@ let statusBarItem: vscode.StatusBarItem;
 let currentDiagnostics: LJDiagnostic[];
 let webviewProvider: LiquidJavaWebviewProvider;
 let currentFile: string | undefined;
+let currentStateMachine: StateMachine | undefined;
 
 /**
  * Activates the LiquidJava extension
@@ -132,6 +134,7 @@ function initWebview(context: vscode.ExtensionContext) {
             if (message.type === "ready") {
                 webviewProvider.sendMessage({ type: "file", file: currentFile });
                 webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
+                if (currentStateMachine) webviewProvider.sendMessage({ type: "fsm", sm: currentStateMachine });
             }
         })
     );
@@ -183,9 +186,9 @@ function initFileEvents(context: vscode.ExtensionContext) {
 async function requestStateMachine(document: vscode.TextDocument) {
     const sm: StateMachine = await client?.sendRequest("liquidjava/fsm", { uri: document.uri.toString() });
     if (!sm) return;
- 
-    const diagram = createMermaidDiagram(sm);
-    console.log(diagram);
+
+    webviewProvider?.sendMessage({ type: "fsm", sm });
+    currentStateMachine = sm;
 }
 
 /**

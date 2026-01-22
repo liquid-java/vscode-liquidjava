@@ -1,4 +1,4 @@
-type StateMachine = {
+export type StateMachine = {
     className: string;
     initial: string;
     states: string[];

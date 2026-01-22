@@ -43,6 +43,10 @@ public class StateMachineParser {
 
             // extract class name and states
             List<String> states = getStates(ctType);
+            if (states == null || states.isEmpty()) {
+                return null;
+            }
+
             String className = getClassName(ctType);
 
             // extract initial state and transitions

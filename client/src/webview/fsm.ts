@@ -1,3 +1,4 @@
+import { StateMachine } from "../types/fsm";
 
 /**
  * Converts a StateMachine object to a Mermaid state diagram string
@@ -8,6 +9,9 @@ export function createMermaidDiagram(sm: StateMachine): string {
     const lines: string[] = [];
 
     // header
+    lines.push('---');
+    lines.push(`title: ${sm.className}`);
+    lines.push('---');
     lines.push('stateDiagram-v2');
     
     // initial state
