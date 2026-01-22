@@ -1,6 +1,6 @@
 
 
-package dtos;
+package utils;
 
 import dtos.diagnostics.LJDiagnosticDTO;
 import dtos.errors.ArgumentMismatchErrorDTO;

@@ -7,9 +7,14 @@ import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
 import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
+
+import dtos.uri.Uri;
+import fsm.StateMachine;
+import fsm.StateMachineParser;
 
 public class LJLanguageServer implements LanguageServer {
 
@@ -75,5 +80,12 @@ public class LJLanguageServer implements LanguageServer {
     @JsonNotification("$/setTraceNotification")
     public void setTrace(Object params) {
         // suppress notification
+    }
+
+    @JsonRequest("liquidjava/fsm")
+    public CompletableFuture<StateMachine> fsm(Uri uri) {
+        return CompletableFuture.supplyAsync(() -> {
+            return StateMachineParser.parse(uri.uri());
+        });
     }
 }

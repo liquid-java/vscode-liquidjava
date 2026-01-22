@@ -33,12 +33,12 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
     
     return /*html*/`
         <div class="translation-table">
-            <h3>Translation Table</h3>
+            <h3>Context Variables</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Variable</th>
-                        <th>Code</th>
+                        <th>Source</th>
                         <th>Location</th>
                     </tr>
                 </thead>
