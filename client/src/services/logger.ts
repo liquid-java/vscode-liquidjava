@@ -1,4 +1,6 @@
+import * as vscode from "vscode";
 import { OutputChannel } from "vscode";
+import { extension } from "../state";
 
 enum LogLevel {
     INFO = "INFO",
@@ -64,4 +66,16 @@ export function createLogger(channel: OutputChannel): LiquidJavaLogger {
         },
         dispose: () => disposed = true,
     };
+}
+
+/**
+ * Initializes logging for the extension with an output channel
+ * @param context The extension context
+ */
+export function registerLogger(context: vscode.ExtensionContext) {
+    const outputChannel = vscode.window.createOutputChannel("LiquidJava");
+    extension.logger = createLogger(outputChannel);
+    context.subscriptions.push(outputChannel);
+    context.subscriptions.push(extension.logger);
+    context.subscriptions.push(vscode.commands.registerCommand("liquidjava.showLogs", () => outputChannel.show(true)));
 }
