@@ -63,7 +63,7 @@ public class StateMachineParser {
             } else {
                 return null;
             }
-            if (transitions == null) return null; // no transitions found
+            if (transitions.isEmpty()) return null; // no transitions found
             
             return new StateMachine(className, initial, states, transitions);
 
