@@ -218,7 +218,7 @@ public class StateMachineParser {
         String to = ann.getValueAsString("to");
 
         // if has from but not to, to is the same as from (self-loop)
-        if (from != null && to == null) {
+        if (!from.isEmpty() && to.isEmpty()) {
             to = from;
         }
 
@@ -227,7 +227,7 @@ public class StateMachineParser {
         List<String> toStates = parseStateExpression(to, states);
 
         // if no from states, use all states
-        if (fromStates.isEmpty() && to != null) {
+        if (fromStates.isEmpty()) {
             fromStates = new ArrayList<>(states);
         }
 
