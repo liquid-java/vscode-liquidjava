@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import liquidjava.rj_language.ast.*;
+import liquidjava.rj_language.parsing.RefinementsParser;
 import liquidjava.utils.Utils;
 import spoon.Launcher;
 import spoon.reflect.CtModel;
@@ -86,7 +88,7 @@ public class StateMachineParser {
     }
 
     /**
-     * Extracts the simple name from a class or interface
+     * Gets the simple name from a class or interface
      * Uses name from ExternalRefinementsFor if present, otherwise uses class or interface name
      * @param ctType
      * @return class name
@@ -102,7 +104,7 @@ public class StateMachineParser {
     }
 
     /**
-     * Extracts the possible states from a class or interface
+     * Gets the possible states from a class or interface
      * @param ctType
      * @return list of states
      */
@@ -117,7 +119,7 @@ public class StateMachineParser {
     }
 
     /**
-     * Extracts the initial state from a class
+     * Gets the initial state from a class
      * If not explicitely defined, uses the first state in the state set
      * @param ctClass
      * @return initial state
@@ -126,16 +128,19 @@ public class StateMachineParser {
         for (CtConstructor<?> constructor : ctClass.getConstructors()) {
             for (CtAnnotation<?> annotation : constructor.getAnnotations()) {
                 if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
-                    Object to = annotation.getValueAsObject("to");
-                    return normalizeState(to);
+                    String to = annotation.getValueAsString("to");
+                    List<String> parsedStates = parseStateExpression(to, states);
+                    if (!parsedStates.isEmpty()) {
+                        return parsedStates.getFirst();
+                    }
                 }
             }
         }
-        return states.isEmpty() ? null : states.getFirst();
+        return states.getFirst();
     }
 
     /**
-     * Extracts the initial state from an interface
+     * Gets the initial state from an interface
      * If not explicitely defined, uses the first state in the state set
      * @param ctInterface
      * @param className
@@ -146,8 +151,11 @@ public class StateMachineParser {
             if (method.getSimpleName().equals(className)) {
                 for (CtAnnotation<?> annotation : method.getAnnotations()) {
                     if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
-                        Object to = annotation.getValueAsObject("to");
-                        return normalizeState(to);
+                        String to = annotation.getValueAsString("to");
+                        List<String> parsedStates = parseStateExpression(to, states);
+                        if (!parsedStates.isEmpty()) {
+                            return parsedStates.getFirst();
+                        }
                     }
                 }
             }
@@ -156,7 +164,7 @@ public class StateMachineParser {
     }
 
     /**
-     * Extracts transitions from a class
+     * Gets transitions from a class
      * @param ctClass
      * @param states
      * @return list of StateMachineTransition
@@ -176,7 +184,7 @@ public class StateMachineParser {
     }
 
     /**
-     * Extracts transitions from an interface
+     * Gets transitions from an interface
      * @param ctInterface
      * @param className
      * @param states
@@ -198,60 +206,84 @@ public class StateMachineParser {
     }
 
     /**
-     * Extracts transitions from the given annotation
-     * @param annotation
-     * @param methodName
+     * Gets transitions from the given annotation
+     * @param ann
+     * @param method
      * @param states
      * @return list of StateMachineTransition
      */
-    private static List<StateMachineTransition> getTransitions(CtAnnotation<?> annotation, String methodName, List<String> states) {
+    private static List<StateMachineTransition> getTransitions(CtAnnotation<?> ann, String method, List<String> states) {
         List<StateMachineTransition> transitions = new ArrayList<>();
-        String from = normalizeState(annotation.getValueAsObject("from"));
-        String to = normalizeState(annotation.getValueAsObject("to"));
+        String from = ann.getValueAsString("from");
+        String to = ann.getValueAsString("to");
 
         // if has from but not to, to is the same as from (self-loop)
         if (from != null && to == null) {
             to = from;
         }
 
-        // if from is !state, from is all states except state (multiple transitions)
-        if (from != null && from.startsWith("!")) {
-            String excludedState = from.substring(1);
-            if (states != null && to != null) {
-                for (String state : states) {
-                    if (!state.equals(excludedState)) {
-                        transitions.add(new StateMachineTransition(state, to, methodName));
-                    }
-                }
-            }
-            return transitions;
+        // parse from and to expressions
+        List<String> fromStates = parseStateExpression(from, states);
+        List<String> toStates = parseStateExpression(to, states);
+
+        // if no from states, use all states
+        if (fromStates.isEmpty() && to != null) {
+            fromStates = new ArrayList<>(states);
         }
 
-        // if has to but not from, from is all states (multiple transitions)
-        if (to != null && from == null) {
-            if (states != null) {
-                for (String state : states) {
-                    transitions.add(new StateMachineTransition(state, to, methodName));
-                }
+        // create transitions for each combination of from and to states
+        for (String fromState : fromStates) {
+            for (String toState : toStates) {
+                transitions.add(new StateMachineTransition(fromState, toState, method));
             }
-            return transitions;
-        }
-
-        // normal transition
-        if (from != null && to != null) {
-            transitions.add(new StateMachineTransition(from, to, methodName));
         }
         return transitions;
     }
 
     /**
-     * Normalizes the state value by removing (this) and returning null if empty
-     * @param value
-     * @return normalized state
+     * Parses a state expression and returns the list of states
+     * @param expr
+     * @param states
+     * @return list of states
      */
-    private static String normalizeState(Object value) {
-        if (value == null) return null;
-        String normalized = value.toString().replace("(this)", "");
-        return normalized.isEmpty() ? null : normalized;
+    private static List<String> parseStateExpression(String expr, List<String> states) {
+        if (expr == null || expr.isEmpty()) return new ArrayList<>();
+        Expression ast = RefinementsParser.createAST(expr, "");
+        return getStateExpressions(ast, states);
+    }
+
+    /**
+     * Gets state names from an expression AST recursively
+     * @param expr
+     * @param states
+     * @return list of states
+     */
+    private static List<String> getStateExpressions(Expression expr, List<String> states) {
+        List<String> stateExpressions = new ArrayList<>();
+        if (expr instanceof Var var) {
+            stateExpressions.add(var.getName());
+        } else if (expr instanceof FunctionInvocation func) {
+            stateExpressions.add(func.getName());
+        } else if (expr instanceof GroupExpression group) {
+            stateExpressions.addAll(getStateExpressions(group.getExpression(), states));
+        } else if (expr instanceof BinaryExpression bin) {
+            String op = bin.getOperator();
+            if (op.equals("||")) {
+                // combine states from both operands
+                stateExpressions.addAll(getStateExpressions(bin.getFirstOperand(), states));
+                stateExpressions.addAll(getStateExpressions(bin.getSecondOperand(), states));
+            }
+        } else if (expr instanceof UnaryExpression unary) {
+            if (unary.getOp().equals("!")) {
+                // all except those in the expression
+                List<String> negatedStates = getStateExpressions(unary.getExpression(), states);
+                for (String state : states) {
+                    if (!negatedStates.contains(state)) {
+                        stateExpressions.add(state);
+                    }
+                }
+            }
+        }
+        return stateExpressions;
     }
 }
