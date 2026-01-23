@@ -26,6 +26,9 @@ if git rev-parse "v$VERSION" >/dev/null 2>&1; then
     exit 1
 fi
 
+git checkout main
+git pull
+git status
 git add .
 git commit -m "Release $VERSION"
 git tag -a "v$VERSION" -m "vscode-liquidjava $VERSION"
