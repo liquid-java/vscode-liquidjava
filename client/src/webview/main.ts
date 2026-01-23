@@ -1,6 +1,6 @@
 import { getScript } from "./script";
 
-// Entry point for the webview
+// webview entry point
 
 declare function acquireVsCodeApi(): any;
 declare const document: any;

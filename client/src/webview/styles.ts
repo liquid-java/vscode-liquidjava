@@ -30,7 +30,7 @@ export function getStyles(): string {
             overflow-x: auto;
         }
         strong {
-            display: block;
+            display: inline;
             margin-bottom: 0.5rem;
         }
         .container {
@@ -240,6 +240,31 @@ export function getStyles(): string {
             border-radius: 3px;
             font-family: var(--vscode-editor-font-family);
             font-size: 0.9em;
+        }
+        .diagram-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+        .diagram-section h2 {
+            margin-bottom: 0.5rem;
+        }
+        .diagram-container {
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .diagram-container .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        .diagram-container .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .mermaid .statediagramTitleText {
+            font-size: 22px!important;
         }
     `;
 }

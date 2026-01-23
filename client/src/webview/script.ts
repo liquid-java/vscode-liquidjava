@@ -4,6 +4,9 @@ import { getCorrectView } from "./renderers/correct";
 import { getLoadingView } from "./renderers/loading";
 import { getErrorsView } from "./renderers/diagnostics/errors";
 import { getWarningsView } from "./renderers/diagnostics/warnings";
+import { renderStateMachineView } from "./renderers/diagram";
+import { StateMachine } from "../types/fsm";
+import { createMermaidDiagram } from "./fsm";
 
 /**
  * Initializes the webview script
@@ -18,6 +21,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let showAllDiagnostics = false;
     let currentFile: string | undefined;
     let expandedErrors = new Set<number>();
+    let stateMachineView = '';
 
     // initial state
     root.innerHTML = getLoadingView();
@@ -103,13 +107,40 @@ export function getScript(vscode: any, document: any, window: any) {
         } else if (msg.type === 'file') {
             currentFile = msg.file;
             if (!showAllDiagnostics) updateView();
+        } else if (msg.type === 'fsm') {
+            if (!msg.sm) {
+                stateMachineView = '';
+                updateView();
+                return;
+            }
+            const sm = msg.sm as StateMachine;
+            const diagram = createMermaidDiagram(sm);
+            stateMachineView = renderStateMachineView(sm, diagram);
+            updateView();
         }
-    });
+    });  
+
+    async function renderMermaidDiagram() {
+        const mermaid = (window as any).mermaid;
+        if (!mermaid) return;
+
+        const mermaidElements = document.querySelectorAll('.mermaid');
+        if (mermaidElements.length === 0) return;
+
+        try {
+            await mermaid.run({ nodes: mermaidElements });
+        } catch (e) {
+            console.error('Failed to render Mermaid diagram:', e);
+        }
+    }
 
     function updateView() {
         let mainView = fileErrors.length > 0 ? getErrorsView(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : getCorrectView(showAllDiagnostics);
         let warningsView = fileWarnings.length > 0 ? getWarningsView(fileWarnings, showAllDiagnostics, currentFile) : '';
-        root.innerHTML = mainView + warningsView;
+        root.innerHTML = mainView + warningsView + stateMachineView;
+        
+        // re-render mermaid diagram after DOM update
+        if (stateMachineView) renderMermaidDiagram();
     }
 }
 

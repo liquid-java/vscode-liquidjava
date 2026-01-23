@@ -9,6 +9,8 @@ import { connectToPort, findJavaExecutable, getAvailablePort, killProcess } from
 import { SERVER_JAR, DEBUG_MODE, DEBUG_PORT } from "./constants";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
 import { LJDiagnostic } from "./types";
+import { createMermaidDiagram } from "./webview/fsm";
+import { StateMachine } from "./types/fsm";
 
 let serverProcess: child_process.ChildProcess;
 let client: LanguageClient;
@@ -19,6 +21,7 @@ let statusBarItem: vscode.StatusBarItem;
 let currentDiagnostics: LJDiagnostic[];
 let webviewProvider: LiquidJavaWebviewProvider;
 let currentFile: string | undefined;
+let currentStateMachine: StateMachine | undefined;
 
 /**
  * Activates the LiquidJava extension
@@ -29,15 +32,11 @@ export async function activate(context: vscode.ExtensionContext) {
     initStatusBar(context);
     initCommandPalette(context);
     initWebview(context);
+    initFileEvents(context);
     initHover();
 
     logger.client.info("Activating LiquidJava extension...");
     
-    const activeEditor = vscode.window.activeTextEditor;
-    if (activeEditor && activeEditor.document.languageId === "java") {
-        currentFile = activeEditor.document.uri.fsPath;
-        webviewProvider?.sendMessage({ type: "file", file: currentFile });
-    }
     await applyItalicOverlay();
 
     // find java executable path
@@ -135,15 +134,7 @@ function initWebview(context: vscode.ExtensionContext) {
             if (message.type === "ready") {
                 webviewProvider.sendMessage({ type: "file", file: currentFile });
                 webviewProvider.sendMessage({ type: "diagnostics", diagnostics: currentDiagnostics });
-            }
-        })
-    );
-    // listen for active text editor changes
-    context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor(editor => {
-            if (editor && editor.document.languageId === "java") {
-                currentFile = editor.document.uri.fsPath;
-                webviewProvider?.sendMessage({ type: "file", file: currentFile });
+                if (currentStateMachine) webviewProvider.sendMessage({ type: "fsm", sm: currentStateMachine });
             }
         })
     );
@@ -172,9 +163,39 @@ function initHover() {
     });
 }
 
+
+/**
+ * Initializes file system event listeners
+ * @param context The extension context
+ */
+function initFileEvents(context: vscode.ExtensionContext) {
+    // listen for active text editor changes
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(editor => {
+            if (!editor || editor.document.languageId !== "java") return;
+            handleActiveFileChange(editor);
+            
+        }),
+        vscode.workspace.onDidSaveTextDocument(document => {
+            if (document.uri.scheme !== 'file' || document.languageId !== "java") return;
+            requestStateMachine(document)
+        })
+    );
+}
+
+/**
+ * Requests the state machine for the given document from the language server
+ * @param document The text document
+ */
+async function requestStateMachine(document: vscode.TextDocument) {
+    const sm: StateMachine = await client?.sendRequest("liquidjava/fsm", { uri: document.uri.toString() });
+    webviewProvider?.sendMessage({ type: "fsm", sm });
+    currentStateMachine = sm;
+}
+
 /**
  * Updates the status bar with the current state
- * @param state The state of the status bar: "loading", "stopped", "passed" or "failed"
+ * @param state The current state ("loading", "stopped", "passed", "failed")
  */
 function updateStatusBar(state: "loading" | "stopped" | "passed" | "failed") {
     const icons = {
@@ -231,7 +252,7 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
 /**
  * Starts the client and connects it to the language server
  * @param context The extension context
- * @param port The port the server is running on
+ * @param port The port number the server is running on
  */
 async function runClient(context: vscode.ExtensionContext, port: number) {
     const serverOptions: ServerOptions = () => {
@@ -270,6 +291,11 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
         client.onNotification("liquidjava/diagnostics", (diagnostics: LJDiagnostic[]) => {
             handleLJDiagnostics(diagnostics);
         });
+
+        const editor = vscode.window.activeTextEditor;
+        if (editor && editor.document.languageId === "java") {
+            handleActiveFileChange(editor);
+        }
     } catch (e) {
         vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
         logger.client.error("Failed to initialize: " + e.toString());
@@ -323,7 +349,7 @@ async function stopExtension(reason: string) {
 
 /**
  * Handles LiquidJava diagnostics received from the language server
- * @param diagnostics The LiquidJava diagnostics
+ * @param diagnostics The array of diagnostics received
  */
 function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     const containsError = diagnostics.some(d => d.category === "error");
@@ -334,4 +360,14 @@ function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     }
     webviewProvider?.sendMessage({ type: "diagnostics", diagnostics });
     currentDiagnostics = diagnostics;
+}
+
+/**
+ * Handles active file change events
+ * @param editor The active text editor
+ */
+function handleActiveFileChange(editor: vscode.TextEditor) {
+    currentFile = editor.document.uri.fsPath;
+    webviewProvider?.sendMessage({ type: "file", file: currentFile });
+    requestStateMachine(editor.document);
 }
