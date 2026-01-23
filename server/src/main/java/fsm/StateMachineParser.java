@@ -24,7 +24,7 @@ public class StateMachineParser {
 
     /**
      * Parses a class or interface for the given uri and extracts the state machine information
-     * @param uri
+     * @param uri the document URI
      * @return StateMachine or null if none found
      */
     public static StateMachine parse(String uri) {
@@ -75,7 +75,7 @@ public class StateMachineParser {
 
     /**
      * Finds the first class or interface in the model (we assume only one per file)
-     * @param model
+     * @param model the CtModel
      * @return CtType or null if none found
      */
     private static CtType<?> getType(CtModel model) {
@@ -90,7 +90,7 @@ public class StateMachineParser {
     /**
      * Gets the simple name from a class or interface
      * Uses name from ExternalRefinementsFor if present, otherwise uses class or interface name
-     * @param ctType
+     * @param ctType the CtType (class or interface)
      * @return class name
      */
     private static String getClassName(CtType<?> ctType) {
@@ -105,7 +105,7 @@ public class StateMachineParser {
 
     /**
      * Gets the possible states from a class or interface
-     * @param ctType
+     * @param ctType the CtType (class or interface)
      * @return list of states
      */
     private static List<String> getStates(CtType<?> ctType) {
@@ -121,7 +121,8 @@ public class StateMachineParser {
     /**
      * Gets the initial state from a class
      * If not explicitely defined, uses the first state in the state set
-     * @param ctClass
+     * @param ctClass the CtClass
+     * @param states the list of states
      * @return initial state
      */
     private static String getInitialStateFromClass(CtClass<?> ctClass, List<String> states) {
@@ -142,8 +143,8 @@ public class StateMachineParser {
     /**
      * Gets the initial state from an interface
      * If not explicitely defined, uses the first state in the state set
-     * @param ctInterface
-     * @param className
+     * @param ctInterface the CtInterface
+     * @param className the class name
      * @return initial state
      */
     private static String getInitialStateFromInterface(CtInterface<?> ctInterface, String className, List<String> states) {
@@ -165,8 +166,8 @@ public class StateMachineParser {
 
     /**
      * Gets transitions from a class
-     * @param ctClass
-     * @param states
+     * @param ctClass the CtClass
+     * @param states the list of states
      * @return list of StateMachineTransition
      */
     private static List<StateMachineTransition> getTransitionsFromClass(CtClass<?> ctClass, List<String> states) {
@@ -185,9 +186,9 @@ public class StateMachineParser {
 
     /**
      * Gets transitions from an interface
-     * @param ctInterface
-     * @param className
-     * @param states
+     * @param ctInterface the CtInterface
+     * @param className the class name
+     * @param states the list of states
      * @return list of StateMachineTransition
      */
     private static List<StateMachineTransition> getTransitionsFromInterface(CtInterface<?> ctInterface, String className, List<String> states) {
@@ -207,9 +208,9 @@ public class StateMachineParser {
 
     /**
      * Gets transitions from the given annotation
-     * @param ann
-     * @param method
-     * @param states
+     * @param ann the CtAnnotation
+     * @param method the method name
+     * @param states the list of states
      * @return list of StateMachineTransition
      */
     private static List<StateMachineTransition> getTransitions(CtAnnotation<?> ann, String method, List<String> states) {
@@ -242,8 +243,8 @@ public class StateMachineParser {
 
     /**
      * Parses a state expression and returns the list of states
-     * @param expr
-     * @param states
+     * @param expr the expression
+     * @param states the list of possible states
      * @return list of states
      */
     private static List<String> parseStateExpression(String expr, List<String> states) {
@@ -254,8 +255,8 @@ public class StateMachineParser {
 
     /**
      * Gets state names from an expression AST recursively
-     * @param expr
-     * @param states
+     * @param expr the expression
+     * @param states the list of possible states
      * @return list of states
      */
     private static List<String> getStateExpressions(Expression expr, List<String> states) {

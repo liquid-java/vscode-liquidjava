@@ -25,7 +25,7 @@ let currentStateMachine: StateMachine | undefined;
 
 /**
  * Activates the LiquidJava extension
- * @param context
+ * @param context The extension context
  */
 export async function activate(context: vscode.ExtensionContext) {
     initLogging(context);
@@ -68,7 +68,7 @@ export async function deactivate() {
 
 /**
  * Initializes logging for the extension with an output channel
- * @param context
+ * @param context The extension context
  */
 function initLogging(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel("LiquidJava");
@@ -80,7 +80,7 @@ function initLogging(context: vscode.ExtensionContext) {
 
 /**
  * Initializes the status bar for the extension
- * @param context
+ * @param context The extension context
  */
 function initStatusBar(context: vscode.ExtensionContext) {
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
@@ -93,7 +93,7 @@ function initStatusBar(context: vscode.ExtensionContext) {
 
 /**
  * Initializes the command palette for the extension
- * @param context
+ * @param context The extension context
  */
 function initCommandPalette(context: vscode.ExtensionContext) {
     context.subscriptions.push(
@@ -112,7 +112,7 @@ function initCommandPalette(context: vscode.ExtensionContext) {
 
 /**
  * Initializes the webview panel for the extension
- * @param context
+ * @param context The extension context
  */
 function initWebview(context: vscode.ExtensionContext) {
     webviewProvider = new LiquidJavaWebviewProvider(context.extensionUri);
@@ -166,7 +166,7 @@ function initHover() {
 
 /**
  * Initializes file system event listeners
- * @param context
+ * @param context The extension context
  */
 function initFileEvents(context: vscode.ExtensionContext) {
     // listen for active text editor changes
@@ -183,6 +183,10 @@ function initFileEvents(context: vscode.ExtensionContext) {
     );
 }
 
+/**
+ * Requests the state machine for the given document from the language server
+ * @param document The text document
+ */
 async function requestStateMachine(document: vscode.TextDocument) {
     const sm: StateMachine = await client?.sendRequest("liquidjava/fsm", { uri: document.uri.toString() });
     webviewProvider?.sendMessage({ type: "fsm", sm });
@@ -191,7 +195,7 @@ async function requestStateMachine(document: vscode.TextDocument) {
 
 /**
  * Updates the status bar with the current state
- * @param state
+ * @param state The current state ("loading", "stopped", "passed", "failed")
  */
 function updateStatusBar(state: "loading" | "stopped" | "passed" | "failed") {
     const icons = {
@@ -207,8 +211,8 @@ function updateStatusBar(state: "loading" | "stopped" | "passed" | "failed") {
 
 /**
  * Runs the LiquidJava language server
- * @param context
- * @param javaExecutablePath
+ * @param context The extension context
+ * @param javaExecutablePath The path to the Java executable
  * @returns A promise to the port number the server is running on
  */
 async function runLanguageServer(context: vscode.ExtensionContext, javaExecutablePath: string): Promise<number> {
@@ -247,8 +251,8 @@ async function runLanguageServer(context: vscode.ExtensionContext, javaExecutabl
 
 /**
  * Starts the client and connects it to the language server
- * @param context
- * @param port
+ * @param context The extension context
+ * @param port The port number the server is running on
  */
 async function runClient(context: vscode.ExtensionContext, port: number) {
     const serverOptions: ServerOptions = () => {
@@ -310,7 +314,7 @@ async function runClient(context: vscode.ExtensionContext, port: number) {
 
 /**
  * Stops the LiquidJava extension
- * @param reason
+ * @param reason The reason for stopping the extension
  */
 async function stopExtension(reason: string) {
     if (!client && !serverProcess && !socket) {
@@ -345,7 +349,7 @@ async function stopExtension(reason: string) {
 
 /**
  * Handles LiquidJava diagnostics received from the language server
- * @param diagnostics
+ * @param diagnostics The array of diagnostics received
  */
 function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     const containsError = diagnostics.some(d => d.category === "error");
@@ -360,7 +364,7 @@ function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
 
 /**
  * Handles active file change events
- * @param editor 
+ * @param editor The active text editor
  */
 function handleActiveFileChange(editor: vscode.TextEditor) {
     currentFile = editor.document.uri.fsPath;
