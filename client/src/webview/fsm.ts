@@ -19,7 +19,7 @@ export function createMermaidDiagram(sm: StateMachine): string {
     
     // transitions
     sm.transitions.forEach(transition => {
-        lines.push(`    ${transition.from} --> ${transition.to} : ${transition.on}`);
+        lines.push(`    ${transition.from} --> ${transition.to} : ${transition.label}`);
     });
     
     return lines.join('\n');
