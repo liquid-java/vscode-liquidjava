@@ -1,4 +1,4 @@
-import { renderHeader, renderLocation, renderSection, renderCustomSection, renderShowAllButton, renderTranslationTable } from "./utils";
+import { renderHeader, renderLocation, renderSection, renderCustomSection, renderShowAllButton, renderTranslationTable } from "./sections";
 import { renderDerivationNode } from "./derivation-nodes";
 import {
     ArgumentMismatchError,
@@ -10,7 +10,7 @@ import {
     StateRefinementError,
     SyntaxError,
     TranslationTable,
-} from "../../../types";
+} from "../../types";
 
 export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: string | undefined, expandedErrors: Set<number>): string {
     const displayDiagnostics = showAll ? errors : errors.filter(error => error.file && error.file?.toLowerCase() === currentFile?.toLowerCase());

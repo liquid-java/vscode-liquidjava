@@ -1,5 +1,5 @@
-import { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../../types";
-import { renderHeader, renderLocation, renderSection } from "./utils";
+import { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../types";
+import { renderHeader, renderLocation, renderSection } from "./sections";
 
 export function getWarningsView(warnings: LJWarning[], showAllDiagnostics: boolean, currentFile: string | undefined): string {
     return /*html*/`

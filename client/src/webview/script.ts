@@ -1,12 +1,12 @@
 import type { LJError, LJWarning, LJDiagnostic } from "../types";
-import { handleDerivableNodeClick, handleDerivationResetClick } from "./renderers/diagnostics/derivation-nodes";
-import { getCorrectView } from "./renderers/correct";
-import { getLoadingView } from "./renderers/loading";
-import { getErrorsView } from "./renderers/diagnostics/errors";
-import { getWarningsView } from "./renderers/diagnostics/warnings";
-import { renderStateMachineView } from "./renderers/diagram";
+import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/derivation-nodes";
+import { getCorrectView } from "./views/correct";
+import { getLoadingView } from "./views/loading";
+import { getErrorsView } from "./views/errors";
+import { getWarningsView } from "./views/warnings";
+import { renderStateMachineView } from "./views/diagram";
 import { StateMachine } from "../types/fsm";
-import { createMermaidDiagram } from "./fsm";
+import { createMermaidDiagram } from "./mermaid";
 
 /**
  * Initializes the webview script

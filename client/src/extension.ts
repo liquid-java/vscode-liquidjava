@@ -3,13 +3,13 @@ import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
 import { LanguageClient, LanguageClientOptions, ServerOptions, State } from "vscode-languageclient/node";
-import { LiquidJavaLogger, createLogger } from "./logging";
+import { LiquidJavaLogger, createLogger } from "./logger";
 import { applyItalicOverlay } from "./decorators";
 import { connectToPort, findJavaExecutable, getAvailablePort, killProcess } from "./utils";
 import { SERVER_JAR, DEBUG_MODE, DEBUG_PORT } from "./constants";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
 import { LJDiagnostic } from "./types";
-import { createMermaidDiagram } from "./webview/fsm";
+import { createMermaidDiagram } from "./webview/mermaid";
 import { StateMachine } from "./types/fsm";
 
 let serverProcess: child_process.ChildProcess;
