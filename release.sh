@@ -28,7 +28,6 @@ fi
 
 git checkout main
 git pull
-git status
 git add .
 git commit -m "Release $VERSION"
 git tag -a "v$VERSION" -m "vscode-liquidjava $VERSION"
