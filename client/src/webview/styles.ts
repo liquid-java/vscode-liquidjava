@@ -206,10 +206,11 @@ export function getStyles(): string {
             font-size: 0.8rem;
             opacity: 0.6;
             margin-bottom: 1rem;
+            padding: 0;
             background: none;
             display: flex;
             justify-content: center;
-            width: 100%;
+            border: none;
             text-decoration: underline;
         }
         .show-all-button:hover {
@@ -249,6 +250,12 @@ export function getStyles(): string {
         }
         .info {
             margin: 1rem 0;
+        }
+        .more-indicator {
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-bottom: 1rem;
         }
         table {
             width: 100%;
