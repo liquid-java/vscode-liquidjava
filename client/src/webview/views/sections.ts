@@ -1,31 +1,29 @@
 import type { LJDiagnostic, TranslationTable } from "../../types/diagnostics";
 
-export const renderCustomSection = (title: string, body: string): string =>
+export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
+    <div class="header">
+        ${renderNav(selectedTab)}
+        <h2>${title}</h2>
+    </div>
+`;
+
+export const renderCustomSection = (title: string, body: string): string => /*html*/
     `<div class="section"><strong>${title}:</strong><div>${body}</div></div>`;
 
-export const renderSection = (title: string, body: string): string =>
+export const renderSection = (title: string, body: string): string => /*html*/
     renderCustomSection(title, `<pre>${body}</pre>`);
 
-export const renderHeader = (diagnostic: LJDiagnostic): string => {
-    return `<h3>${diagnostic.title}</h3><div class="diagnostic-header"><p>${diagnostic.message}</p></div>`;
-};
+export const renderHeader = (diagnostic: LJDiagnostic): string => /*html*/
+    `<h3>${diagnostic.title}</h3><div class="diagnostic-header"><p>${diagnostic.message}</p></div>`;
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {
     if (!diagnostic.position) return "";
     const line = diagnostic.position?.lineStart ?? 0;
     const column = diagnostic.position?.colStart ?? 0;
     const simpleFile = diagnostic.file.split('/').pop() || diagnostic.file;
-    const link = `<a href="#" class="link location-link" data-file="${diagnostic.file}" data-line="${line}" data-column="${column}">${simpleFile}:${line}</a>`;
-    return renderCustomSection("Location", `<pre>${link}</pre>`);
+    const link = /*html*/`<a href="#" class="link location-link" data-file="${diagnostic.file}" data-line="${line}" data-column="${column}">${simpleFile}:${line}</a>`;
+    return renderCustomSection("Location", /*html*/`<pre>${link}</pre>`);
 };
-
-export function renderShowAllButton(showAll: boolean): string {
-    return /*html*/`
-        <button class="show-all-button" title="Toggle filter diagnostics by current file">
-            ${showAll ? 'Show in File' : 'Show All'}
-        </button>
-    `;
-}
 
 export function renderTranslationTable(translationTable: TranslationTable): string {  
     const entries = Object.entries(translationTable).sort((a, b) => a[0].localeCompare(b[0])); // sort by variable name
@@ -66,5 +64,18 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                 </tbody>
             </table>
         </div>
+    `;
+}
+
+export type NavTab = 'verification' | 'state-machine';
+
+export function renderNav(selectedTab: NavTab): string {
+    return /*html*/`
+        <nav>
+            <ul>
+                <li><button class="nav-tab ${selectedTab === 'verification' ? 'selected' : ''}" data-tab="verification">Verification</button></li>
+                <li><button class="nav-tab ${selectedTab === 'state-machine' ? 'selected' : ''}" data-tab="state-machine">State Machine</button></li>
+            </ul>
+        </nav>
     `;
 }

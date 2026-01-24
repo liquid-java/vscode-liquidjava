@@ -1,19 +1,15 @@
-import type { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../types/diagnostics";
-import { renderHeader, renderLocation, renderSection } from "./sections";
+import type { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../../types/diagnostics";
+import { renderHeader, renderLocation, renderSection } from "../sections";
 
-export function renderWarnings(warnings: LJWarning[], showAllDiagnostics: boolean, currentFile: string | undefined): string {
+export function renderWarnings(warnings: LJWarning[]): string {
     return /*html*/`
-        <div>
-            <div class="content">
-                <ul>
-                    ${warnings.filter(warning => showAllDiagnostics || warning.file === currentFile).map((warning) => /*html*/`
-                        <li class="diagnostic-item warning-item">
-                            ${renderWarning(warning)}
-                        </li>
-                    `).join("")}
-                </ul>
-            </div>
-        </div>
+        <ul>
+            ${warnings.map(warning => /*html*/`
+                <li class="diagnostic-item warning-item">
+                    ${renderWarning(warning)}
+                </li>
+            `).join("")}
+        </ul>    
     `;
 }
 

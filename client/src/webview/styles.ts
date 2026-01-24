@@ -33,6 +33,45 @@ export function getStyles(): string {
             display: inline;
             margin-bottom: 0.5rem;
         }
+        nav ul {
+            display: flex;
+            gap: 1rem;
+            padding: 0;
+            margin: 0;
+            justify-content: center;
+        }
+        nav ul li {
+            padding-right: 1rem;
+            border-right: 1px solid var(--vscode-panel-border);
+        }
+        nav ul li:last-child {
+            border-right: none;
+        }
+        nav {
+            padding-bottom: 1.5rem;
+        }
+        nav button {
+            color: var(--vscode-foreground);
+            background: none;
+            border: none;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 0;
+            opacity: 0.8;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        nav .selected {
+            opacity: 1;
+            text-decoration: underline;
+            text-decoration-color: #0078D5;
+            text-underline-offset: 6px;
+            text-decoration-thickness: 1px;
+        }
+        nav button:hover {
+            opacity: 1;
+            background: none;
+        }
         .container {
             margin: 0;
             padding: 0.5rem;
@@ -46,27 +85,19 @@ export function getStyles(): string {
             overflow: visible;
             position: relative;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-        }
-        .diagnostic-header {
-            margin: 1rem 0;
-        }
         ul {
             list-style-type: none;
             padding: 0;
             margin: 0;
+        }
+        .diagnostic-header {
+            margin: 1rem 0;
         }
         .diagnostic-item {
             background-color: var(--vscode-textBlockQuote-background);
             padding: 0.5rem 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
-        }
-        .diagnostic-item h3 {
-            margin-top: 0;
         }
         .error-item {
             border-left: 4px solid var(--vscode-errorForeground);
@@ -170,6 +201,21 @@ export function getStyles(): string {
         .show-more-button:hover {
             background-color: var(--vscode-editor-background);
         }
+        .show-all-button {
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-bottom: 1rem;
+            padding: 0;
+            background: none;
+            display: flex;
+            justify-content: center;
+            border: none;
+            text-decoration: underline;
+        }
+        .show-all-button:hover {
+            background: none;
+        }
         .extra-content {
             margin-top: 1rem;
         }
@@ -202,14 +248,14 @@ export function getStyles(): string {
             z-index: 1000;
             pointer-events: none;
         }
+        .info {
+            margin: 1rem 0;
+        }
         .more-indicator {
             text-align: center;
             font-size: 0.8rem;
             opacity: 0.6;
             margin-bottom: 1rem;
-        }
-        .info {
-            margin: 1rem 0;
         }
         table {
             width: 100%;

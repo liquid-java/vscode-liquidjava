@@ -6,6 +6,8 @@ import type { StateMachine } from "../types/fsm";
  * @returns Mermaid diagram string
  */
 export function createMermaidDiagram(sm: StateMachine): string {
+    if (!sm) return '';
+    
     const lines: string[] = [];
 
     // header

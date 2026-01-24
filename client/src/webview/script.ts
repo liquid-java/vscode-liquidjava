@@ -1,12 +1,11 @@
-import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/derivation-nodes";
-import { renderCorrect } from "./views/correct";
+import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/verification/derivation-nodes";
 import { renderLoading } from "./views/loading";
-import { renderErrors } from "./views/errors";
-import { renderWarnings } from "./views/warnings";
 import { renderStateMachineView } from "./views/diagram";
 import { createMermaidDiagram, renderMermaidDiagram } from "./mermaid";
-import type { LJError, LJWarning, LJDiagnostic } from "../types/diagnostics";
+import type { LJDiagnostic } from "../types/diagnostics";
 import type { StateMachine } from "../types/fsm";
+import type { NavTab } from "./views/sections";
+import { renderVerificationView } from "./views/verification/verification";
 
 /**
  * Initializes the webview script
@@ -16,12 +15,12 @@ import type { StateMachine } from "../types/fsm";
  */
 export function getScript(vscode: any, document: any, window: any) {
     const root = document.getElementById('root');
-    let fileErrors: LJError[] = [];
-    let fileWarnings: LJWarning[] = [];
+    let diagnostics: LJDiagnostic[] = [];
     let showAllDiagnostics = false;
     let currentFile: string | undefined;
     let expandedErrors = new Set<number>();
-    let stateMachineView = '';
+    let stateMachine: StateMachine | undefined;
+    let selectedTab: NavTab = 'verification';
 
     // initial state
     root.innerHTML = renderLoading();
@@ -91,31 +90,34 @@ export function getScript(vscode: any, document: any, window: any) {
             }
             return;
         }
+
+        // nav tab click
+        if (target.classList.contains('nav-tab')) {
+            e.stopPropagation();
+            const tab = target.getAttribute('data-tab') as NavTab;
+            if (tab && tab !== selectedTab) {
+                selectedTab = tab;
+                updateView();
+            }
+            return;
+        }
     });
     
     window.addEventListener('message', event => {
         const msg = event.data;
         if (msg.type === 'diagnostics') {
-            const diagnostics = msg.diagnostics as LJDiagnostic[];
-            const errors = diagnostics.filter((d: LJDiagnostic) => d.category === 'error') as LJError[];
-            const warnings = diagnostics.filter((d: LJDiagnostic) => d.category === 'warning') as LJWarning[];
-
-            fileErrors = errors;
-            fileWarnings = warnings;
-    
+            diagnostics = msg.diagnostics as LJDiagnostic[];
             updateView();
         } else if (msg.type === 'file') {
             currentFile = msg.file;
             if (!showAllDiagnostics) updateView();
         } else if (msg.type === 'fsm') {
             if (!msg.sm) {
-                stateMachineView = '';
+                stateMachine = undefined;
                 updateView();
                 return;
             }
-            const sm = msg.sm as StateMachine;
-            const diagram = createMermaidDiagram(sm);
-            stateMachineView = renderStateMachineView(sm, diagram);
+            stateMachine = msg.sm as StateMachine;
             updateView();
         }
     });
@@ -124,12 +126,12 @@ export function getScript(vscode: any, document: any, window: any) {
      * Updates the webview content based on the current state
      */
     function updateView() {
-        let mainView = fileErrors.length > 0 ? renderErrors(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : renderCorrect(showAllDiagnostics);
-        let warningsView = fileWarnings.length > 0 ? renderWarnings(fileWarnings, showAllDiagnostics, currentFile) : '';
-        root.innerHTML = mainView + warningsView + stateMachineView;
-        
-        // re-render mermaid diagram after DOM update
-        if (stateMachineView) renderMermaidDiagram(document, window);
+        if (selectedTab === 'verification') {
+            root.innerHTML = renderVerificationView(diagnostics, showAllDiagnostics, currentFile, expandedErrors, selectedTab)
+        } else {
+            const diagram = createMermaidDiagram(stateMachine);
+            root.innerHTML = renderStateMachineView(stateMachine, diagram, selectedTab);
+            if (stateMachine) renderMermaidDiagram(document, window);
+        }
     }
 }
-
