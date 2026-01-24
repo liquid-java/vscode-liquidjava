@@ -1,4 +1,4 @@
-import { renderHeader, renderLocation, renderSection, renderCustomSection, renderShowAllButton, renderTranslationTable } from "./sections";
+import { renderHeader, renderLocation, renderSection, renderCustomSection, renderTranslationTable,  } from "../sections";
 import { renderDerivationNode } from "./derivation-nodes";
 import type {
     ArgumentMismatchError,
@@ -10,33 +10,21 @@ import type {
     StateRefinementError,
     SyntaxError,
     TranslationTable,
-} from "../../types/diagnostics";
+} from "../../../types/diagnostics";
 
-export function renderErrors(errors: LJError[], showAll: boolean, currentFile: string | undefined, expandedErrors: Set<number>): string {
-    const displayDiagnostics = showAll ? errors : errors.filter(error => error.file && error.file?.toLowerCase() === currentFile?.toLowerCase());
-    const hiddenCount = errors.length - displayDiagnostics.length;
+export function renderErrors(errors: LJError[], expandedErrors: Set<number>): string {
     return /*html*/`
-        <div>
-            <div class="header">
-                <h2>Failed Verification</h2>
-                ${renderShowAllButton(showAll)}
-            </div>
-            <p class="info">${errors.length} error${errors.length !== 1 ? 's were' : ' was'} found by the LiquidJava verifier.</p>
-            <div class="content">
-                <ul>
-                    ${displayDiagnostics.map(error => {
-                        const errorIndex = errors.indexOf(error);
-                        const isExpanded = expandedErrors.has(errorIndex);
-                        return /*html*/`
-                        <li class="diagnostic-item error-item">
-                            ${renderError(error, errorIndex, isExpanded)}
-                        </li>
-                    `;
-                    }).join("")}
-                </ul>
-                ${hiddenCount > 0 ? `<p class="more-indicator">(+${hiddenCount} error${hiddenCount !== 1 ? 's' : ''})</p>` : ''}
-            </div>
-        </div>
+        <ul>
+            ${errors.map(error => {
+                const errorIndex = errors.indexOf(error);
+                const isExpanded = expandedErrors.has(errorIndex);
+                return /*html*/`
+                <li class="diagnostic-item error-item">
+                    ${renderError(error, errorIndex, isExpanded)}
+                </li>
+            `;
+            }).join("")}
+        </ul>
     `;
 }
 

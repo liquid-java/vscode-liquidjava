@@ -1,5 +1,5 @@
-import type { LJError, RefinementError } from "../../types/diagnostics";
-import type { DerivationNode, ValDerivationNode } from "../../types/derivation-nodes";
+import type { LJError, RefinementError } from "../../../types/diagnostics";
+import type { DerivationNode, ValDerivationNode } from "../../../types/derivation-nodes";
 
 // Handles rendering and interaction of derivation nodes in refinement errors
 
