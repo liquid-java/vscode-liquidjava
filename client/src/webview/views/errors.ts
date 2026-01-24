@@ -12,7 +12,7 @@ import type {
     TranslationTable,
 } from "../../types/diagnostics";
 
-export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: string | undefined, expandedErrors: Set<number>): string {
+export function renderErrors(errors: LJError[], showAll: boolean, currentFile: string | undefined, expandedErrors: Set<number>): string {
     const displayDiagnostics = showAll ? errors : errors.filter(error => error.file && error.file?.toLowerCase() === currentFile?.toLowerCase());
     const hiddenCount = errors.length - displayDiagnostics.length;
     return /*html*/`

@@ -1,7 +1,7 @@
 import type { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../types/diagnostics";
 import { renderHeader, renderLocation, renderSection } from "./sections";
 
-export function getWarningsView(warnings: LJWarning[], showAllDiagnostics: boolean, currentFile: string | undefined): string {
+export function renderWarnings(warnings: LJWarning[], showAllDiagnostics: boolean, currentFile: string | undefined): string {
     return /*html*/`
         <div>
             <div class="content">

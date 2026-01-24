@@ -1,8 +1,8 @@
 import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/derivation-nodes";
-import { getCorrectView } from "./views/correct";
-import { getLoadingView } from "./views/loading";
-import { getErrorsView } from "./views/errors";
-import { getWarningsView } from "./views/warnings";
+import { renderCorrect } from "./views/correct";
+import { renderLoading } from "./views/loading";
+import { renderErrors } from "./views/errors";
+import { renderWarnings } from "./views/warnings";
 import { renderStateMachineView } from "./views/diagram";
 import { createMermaidDiagram, renderMermaidDiagram } from "./mermaid";
 import type { LJError, LJWarning, LJDiagnostic } from "../types/diagnostics";
@@ -24,7 +24,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let stateMachineView = '';
 
     // initial state
-    root.innerHTML = getLoadingView();
+    root.innerHTML = renderLoading();
     vscode.postMessage({ type: 'ready' });    
     
     // on click
@@ -124,8 +124,8 @@ export function getScript(vscode: any, document: any, window: any) {
      * Updates the webview content based on the current state
      */
     function updateView() {
-        let mainView = fileErrors.length > 0 ? getErrorsView(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : getCorrectView(showAllDiagnostics);
-        let warningsView = fileWarnings.length > 0 ? getWarningsView(fileWarnings, showAllDiagnostics, currentFile) : '';
+        let mainView = fileErrors.length > 0 ? renderErrors(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : renderCorrect(showAllDiagnostics);
+        let warningsView = fileWarnings.length > 0 ? renderWarnings(fileWarnings, showAllDiagnostics, currentFile) : '';
         root.innerHTML = mainView + warningsView + stateMachineView;
         
         // re-render mermaid diagram after DOM update
