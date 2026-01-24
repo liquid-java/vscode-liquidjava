@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { LIQUIDJAVA_SCOPES } from "./constants";
+import { LIQUIDJAVA_SCOPES } from "../utils/constants";
 
 type TMRule = {
     scope: string | string[];

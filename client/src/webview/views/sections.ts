@@ -1,4 +1,4 @@
-import { LJDiagnostic, TranslationTable } from "../../../types";
+import type { LJDiagnostic, TranslationTable } from "../../types/diagnostics";
 
 export const renderCustomSection = (title: string, body: string): string =>
     `<div class="section"><strong>${title}:</strong><div>${body}</div></div>`;

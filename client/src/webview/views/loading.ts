@@ -1,5 +1,5 @@
 
-export function getLoadingView(): string {
+export function renderLoading(): string {
     return /*html*/`
         <div>
             <h2>LiquidJava</h2>

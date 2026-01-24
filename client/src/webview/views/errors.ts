@@ -1,6 +1,6 @@
-import { renderHeader, renderLocation, renderSection, renderCustomSection, renderShowAllButton, renderTranslationTable } from "./utils";
+import { renderHeader, renderLocation, renderSection, renderCustomSection, renderShowAllButton, renderTranslationTable } from "./sections";
 import { renderDerivationNode } from "./derivation-nodes";
-import {
+import type {
     ArgumentMismatchError,
     InvalidRefinementError,
     LJError,
@@ -10,9 +10,9 @@ import {
     StateRefinementError,
     SyntaxError,
     TranslationTable,
-} from "../../../types";
+} from "../../types/diagnostics";
 
-export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: string | undefined, expandedErrors: Set<number>): string {
+export function renderErrors(errors: LJError[], showAll: boolean, currentFile: string | undefined, expandedErrors: Set<number>): string {
     const displayDiagnostics = showAll ? errors : errors.filter(error => error.file && error.file?.toLowerCase() === currentFile?.toLowerCase());
     const hiddenCount = errors.length - displayDiagnostics.length;
     return /*html*/`
@@ -21,10 +21,10 @@ export function getErrorsView(errors: LJError[], showAll: boolean, currentFile: 
                 <h2>Failed Verification</h2>
                 ${renderShowAllButton(showAll)}
             </div>
-            <p class="info">${`${errors.length} error${errors.length !== 1 ? 's were' : ' was'} found by the LiquidJava verifier.`}</p>
+            <p class="info">${errors.length} error${errors.length !== 1 ? 's were' : ' was'} found by the LiquidJava verifier.</p>
             <div class="content">
                 <ul>
-                    ${displayDiagnostics.map((error, index) => {
+                    ${displayDiagnostics.map(error => {
                         const errorIndex = errors.indexOf(error);
                         const isExpanded = expandedErrors.has(errorIndex);
                         return /*html*/`

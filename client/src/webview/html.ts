@@ -15,7 +15,7 @@ export function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "media", "webview.js"));
     return /*html*/ `
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
             <meta charset="utf-8">
             <meta

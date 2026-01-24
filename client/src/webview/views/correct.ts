@@ -1,6 +1,6 @@
-import { renderShowAllButton } from "./diagnostics/utils";
+import { renderShowAllButton } from "./sections";
 
-export function getCorrectView(showAllDiagnostics: boolean): string {
+export function renderCorrect(showAllDiagnostics: boolean): string {
     return /*html*/`
         <div>
             <div class="header">

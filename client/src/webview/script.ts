@@ -1,12 +1,12 @@
-import type { LJError, LJWarning, LJDiagnostic } from "../types";
-import { handleDerivableNodeClick, handleDerivationResetClick } from "./renderers/diagnostics/derivation-nodes";
-import { getCorrectView } from "./renderers/correct";
-import { getLoadingView } from "./renderers/loading";
-import { getErrorsView } from "./renderers/diagnostics/errors";
-import { getWarningsView } from "./renderers/diagnostics/warnings";
-import { renderStateMachineView } from "./renderers/diagram";
-import { StateMachine } from "../types/fsm";
-import { createMermaidDiagram } from "./fsm";
+import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/derivation-nodes";
+import { renderCorrect } from "./views/correct";
+import { renderLoading } from "./views/loading";
+import { renderErrors } from "./views/errors";
+import { renderWarnings } from "./views/warnings";
+import { renderStateMachineView } from "./views/diagram";
+import { createMermaidDiagram, renderMermaidDiagram } from "./mermaid";
+import type { LJError, LJWarning, LJDiagnostic } from "../types/diagnostics";
+import type { StateMachine } from "../types/fsm";
 
 /**
  * Initializes the webview script
@@ -24,7 +24,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let stateMachineView = '';
 
     // initial state
-    root.innerHTML = getLoadingView();
+    root.innerHTML = renderLoading();
     vscode.postMessage({ type: 'ready' });    
     
     // on click
@@ -118,29 +118,18 @@ export function getScript(vscode: any, document: any, window: any) {
             stateMachineView = renderStateMachineView(sm, diagram);
             updateView();
         }
-    });  
+    });
 
-    async function renderMermaidDiagram() {
-        const mermaid = (window as any).mermaid;
-        if (!mermaid) return;
-
-        const mermaidElements = document.querySelectorAll('.mermaid');
-        if (mermaidElements.length === 0) return;
-
-        try {
-            await mermaid.run({ nodes: mermaidElements });
-        } catch (e) {
-            console.error('Failed to render Mermaid diagram:', e);
-        }
-    }
-
+    /**
+     * Updates the webview content based on the current state
+     */
     function updateView() {
-        let mainView = fileErrors.length > 0 ? getErrorsView(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : getCorrectView(showAllDiagnostics);
-        let warningsView = fileWarnings.length > 0 ? getWarningsView(fileWarnings, showAllDiagnostics, currentFile) : '';
+        let mainView = fileErrors.length > 0 ? renderErrors(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : renderCorrect(showAllDiagnostics);
+        let warningsView = fileWarnings.length > 0 ? renderWarnings(fileWarnings, showAllDiagnostics, currentFile) : '';
         root.innerHTML = mainView + warningsView + stateMachineView;
         
         // re-render mermaid diagram after DOM update
-        if (stateMachineView) renderMermaidDiagram();
+        if (stateMachineView) renderMermaidDiagram(document, window);
     }
 }
 
