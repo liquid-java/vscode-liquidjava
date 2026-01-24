@@ -9,14 +9,14 @@ import { updateStateMachine } from './webview';
 export function registerEvents(context: vscode.ExtensionContext) {
     // listen for active text editor changes
     context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor(editor => {
+        vscode.window.onDidChangeActiveTextEditor(async editor => {
             if (!editor || editor.document.languageId !== "java") return;
-            onActiveFileChange(editor);
+            await onActiveFileChange(editor);
             
         }),
-        vscode.workspace.onDidSaveTextDocument(document => {
+        vscode.workspace.onDidSaveTextDocument(async document => {
             if (document.uri.scheme !== 'file' || document.languageId !== "java") return;
-            updateStateMachine(document)
+            await updateStateMachine(document)
         })
     );
 }
@@ -25,8 +25,8 @@ export function registerEvents(context: vscode.ExtensionContext) {
  * Handles active file change events
  * @param editor The active text editor
  */
-export function onActiveFileChange(editor: vscode.TextEditor) {
+export async function onActiveFileChange(editor: vscode.TextEditor) {
     extension.file = editor.document.uri.fsPath;
     extension.webview?.sendMessage({ type: "file", file: extension.file });
-    updateStateMachine(editor.document);
+    await updateStateMachine(editor.document);
 }

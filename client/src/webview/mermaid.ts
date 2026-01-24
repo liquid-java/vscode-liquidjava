@@ -1,4 +1,4 @@
-import { StateMachine } from "../types/fsm";
+import type { StateMachine } from "../types/fsm";
 
 /**
  * Converts a StateMachine object to a Mermaid state diagram string
@@ -23,4 +23,18 @@ export function createMermaidDiagram(sm: StateMachine): string {
     });
     
     return lines.join('\n');
+}
+
+export async function renderMermaidDiagram(document: any, window: any) {
+    const mermaid = (window as any).mermaid;
+    if (!mermaid) return;
+
+    const mermaidElements = document.querySelectorAll('.mermaid');
+    if (mermaidElements.length === 0) return;
+
+    try {
+        await mermaid.run({ nodes: mermaidElements });
+    } catch (e) {
+        console.error('Failed to render Mermaid diagram:', e);
+    }
 }

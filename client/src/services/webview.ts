@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 import { LiquidJavaWebviewProvider } from "../webview/provider";
 import { extension } from "../state";
-import { LJDiagnostic } from "../types";
 import { StatusBarState, updateStatusBar } from "./status-bar";
-import { StateMachine } from "../types/fsm";
+import type { StateMachine } from "../types/fsm";
+import type { LJDiagnostic } from "../types/diagnostics";
 
 /**
  * Initializes the webview panel for the extension
@@ -18,8 +18,8 @@ export function registerWebview(context: vscode.ExtensionContext) {
     );
     // show view command
     context.subscriptions.push(
-        vscode.commands.registerCommand("liquidjava.showView", () => {
-            vscode.commands.executeCommand("liquidJavaView.focus");
+        vscode.commands.registerCommand("liquidjava.showView", async () => {
+            await vscode.commands.executeCommand("liquidJavaView.focus");
         })
     );
     // listen for messages from the webview

@@ -4,9 +4,9 @@ import { connectToPort } from '../utils/utils';
 import { killProcess } from '../utils/utils';
 import { extension } from '../state';
 import { updateStatusBar } from '../services/status-bar';
-import { LJDiagnostic } from '../types';
 import { handleLJDiagnostics } from '../services/webview';
 import { onActiveFileChange } from '../services/events';
+import type { LJDiagnostic } from "../types/diagnostics";
 
 /**
  * Starts the client and connects it to the language server
@@ -53,7 +53,7 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
 
         const editor = vscode.window.activeTextEditor;
         if (editor && editor.document.languageId === "java") {
-            onActiveFileChange(editor);
+            await onActiveFileChange(editor);
         }
     } catch (e) {
         vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());

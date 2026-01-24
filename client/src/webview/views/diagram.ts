@@ -1,4 +1,4 @@
-import { StateMachine } from "../../types/fsm";
+import type { StateMachine } from "../../types/fsm";
 
 export function renderStateMachineView(sm: StateMachine, diagram: string): string {
     return /*html*/`

@@ -15,8 +15,8 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
 
   resolveWebviewView(
     webviewView: vscode.WebviewView,
-    context: vscode.WebviewViewResolveContext,
-    token: vscode.CancellationToken
+    _context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken
   ) {
     this.view = webviewView;
     webviewView.webview.options = {
@@ -32,7 +32,7 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
       
       // handle message
       if (message.type === "openFile") {
-        // open file at the specificied location
+        // open file at the specified location
         const uri = vscode.Uri.file(message.filePath);
         vscode.workspace.openTextDocument(uri).then(doc => {
           vscode.window.showTextDocument(doc).then(editor => {

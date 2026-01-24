@@ -1,4 +1,5 @@
-import type { RefinementError, DerivationNode, ValDerivationNode, LJError } from "../../types";
+import type { LJError, RefinementError } from "../../types/diagnostics";
+import type { DerivationNode, ValDerivationNode } from "../../types/derivation-nodes";
 
 // Handles rendering and interaction of derivation nodes in refinement errors
 
@@ -9,7 +10,7 @@ function getExpansions(errorId: string): Set<string> {
         expansionsMap.set(errorId, new Set());
     }
     return expansionsMap.get(errorId)!;
-};
+}
 
 function renderJsonTree(
     error: RefinementError,
@@ -66,7 +67,7 @@ function renderJsonTree(
 
     // fallback
     return `<span class="node-value">${JSON.stringify(node)}</span>`;
-};
+}
 
 function hashError(error: LJError): string {
     const content = `${error.title}|${error.message}|${error.file}|${error.position?.lineStart ?? 0}`;
@@ -77,7 +78,7 @@ function hashError(error: LJError): string {
         hash = hash & hash; // Convert to 32bit integer
     }
     return `error_${Math.abs(hash)}`;
-};
+}
 
 export function handleDerivableNodeClick(target?: any): boolean {
     if (!target) return false;
@@ -92,7 +93,7 @@ export function handleDerivableNodeClick(target?: any): boolean {
         return true;
     }
     return false;
-};
+}
 
 export function handleDerivationResetClick(target?: any): boolean {
     if (!target) return false;
@@ -103,7 +104,7 @@ export function handleDerivationResetClick(target?: any): boolean {
         return true;
     }
     return false;
-};
+}
 
 export function renderDerivationNode(error: RefinementError, node: ValDerivationNode): string {
     if (!node.origin) return `<pre>${node.value}</pre>`; // no derivation available

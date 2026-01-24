@@ -1,12 +1,12 @@
-import type { LJError, LJWarning, LJDiagnostic } from "../types";
 import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/derivation-nodes";
 import { getCorrectView } from "./views/correct";
 import { getLoadingView } from "./views/loading";
 import { getErrorsView } from "./views/errors";
 import { getWarningsView } from "./views/warnings";
 import { renderStateMachineView } from "./views/diagram";
-import { StateMachine } from "../types/fsm";
-import { createMermaidDiagram } from "./mermaid";
+import { createMermaidDiagram, renderMermaidDiagram } from "./mermaid";
+import type { LJError, LJWarning, LJDiagnostic } from "../types/diagnostics";
+import type { StateMachine } from "../types/fsm";
 
 /**
  * Initializes the webview script
@@ -118,29 +118,18 @@ export function getScript(vscode: any, document: any, window: any) {
             stateMachineView = renderStateMachineView(sm, diagram);
             updateView();
         }
-    });  
+    });
 
-    async function renderMermaidDiagram() {
-        const mermaid = (window as any).mermaid;
-        if (!mermaid) return;
-
-        const mermaidElements = document.querySelectorAll('.mermaid');
-        if (mermaidElements.length === 0) return;
-
-        try {
-            await mermaid.run({ nodes: mermaidElements });
-        } catch (e) {
-            console.error('Failed to render Mermaid diagram:', e);
-        }
-    }
-
+    /**
+     * Updates the webview content based on the current state
+     */
     function updateView() {
         let mainView = fileErrors.length > 0 ? getErrorsView(fileErrors, showAllDiagnostics, currentFile, expandedErrors) : getCorrectView(showAllDiagnostics);
         let warningsView = fileWarnings.length > 0 ? getWarningsView(fileWarnings, showAllDiagnostics, currentFile) : '';
         root.innerHTML = mainView + warningsView + stateMachineView;
         
         // re-render mermaid diagram after DOM update
-        if (stateMachineView) renderMermaidDiagram();
+        if (stateMachineView) renderMermaidDiagram(document, window);
     }
 }
 

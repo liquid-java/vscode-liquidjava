@@ -4,8 +4,8 @@ import * as child_process from "child_process";
 import { LanguageClient } from "vscode-languageclient/node";
 import { LiquidJavaLogger } from "./services/logger";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
-import { LJDiagnostic } from "./types";
-import { StateMachine } from "./types/fsm";
+import type { LJDiagnostic } from "./types/diagnostics";
+import type { StateMachine } from "./types/fsm";
 
 export class ExtensionState {
     // server/client state
@@ -14,7 +14,6 @@ export class ExtensionState {
     socket?: net.Socket;
     
     // ui state
-    outputChannel?: vscode.OutputChannel;
     logger?: LiquidJavaLogger;
     statusBar?: vscode.StatusBarItem;
     webview?: LiquidJavaWebviewProvider;
