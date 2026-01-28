@@ -48,6 +48,8 @@ public class PathUtils {
      * @return the file URI
      */
     public static String toFileUri(String filePath) {
+        if (filePath == null) return "";
+        
         String normalized = filePath.replace("\\", "/");
         // Windows (C:/path)
         if (!normalized.isEmpty() && normalized.charAt(1) == ':') {
