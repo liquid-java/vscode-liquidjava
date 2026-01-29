@@ -111,7 +111,12 @@
 					"source.java"
 				]
 			}
-		]
+		],
+		"configurationDefaults": {
+			"[java]": {
+				"editor.autoClosingBrackets": "always"
+			}
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run package",
