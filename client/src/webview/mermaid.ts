@@ -21,9 +21,19 @@ export function createMermaidDiagram(sm: StateMachine): string {
         lines.push(`    [*] --> ${state}`);
     });
     
-    // transitions
+    // group transitions by from/to states and merge labels
+    const transitionMap = new Map<string, string[]>();
     sm.transitions.forEach(transition => {
-        lines.push(`    ${transition.from} --> ${transition.to} : ${transition.label}`);
+        const key = `${transition.from}|${transition.to}`;
+        if (!transitionMap.has(key)) transitionMap.set(key, []);
+        transitionMap.get(key).push(transition.label);
+    });
+
+    // add transitions
+    transitionMap.forEach((labels, key) => {
+        const [from, to] = key.split('|');
+        const mergedLabel = labels.join(', ');
+        lines.push(`    ${from} --> ${to} : ${mergedLabel}`);
     });
     
     return lines.join('\n');
