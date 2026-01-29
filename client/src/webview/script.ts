@@ -21,6 +21,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let expandedErrors = new Set<number>();
     let stateMachine: StateMachine | undefined;
     let selectedTab: NavTab = 'verification';
+    let diagramOrientation: "LR" | "TB" = "TB";
 
     // initial state
     root.innerHTML = renderLoading();
@@ -69,9 +70,17 @@ export function getScript(vscode: any, document: any, window: any) {
         }
 
         // toggle show all diagnostics
-        if (target.classList.contains('show-all-button')) {
+        if (target.id === 'show-all-button') {
             e.stopPropagation();
             showAllDiagnostics = !showAllDiagnostics;
+            updateView();
+            return;
+        }
+
+        // toggle diagram orientation
+        if (target.id === 'diagram-orientation-btn') {
+            e.stopPropagation();
+            diagramOrientation = diagramOrientation === "TB" ? "LR" : "TB";
             updateView();
             return;
         }
@@ -129,8 +138,8 @@ export function getScript(vscode: any, document: any, window: any) {
         if (selectedTab === 'verification') {
             root.innerHTML = renderVerificationView(diagnostics, showAllDiagnostics, currentFile, expandedErrors, selectedTab)
         } else {
-            const diagram = createMermaidDiagram(stateMachine);
-            root.innerHTML = renderStateMachineView(stateMachine, diagram, selectedTab);
+            const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
+            root.innerHTML = renderStateMachineView(stateMachine, diagram, selectedTab, diagramOrientation);
             if (stateMachine) renderMermaidDiagram(document, window);
         }
     }

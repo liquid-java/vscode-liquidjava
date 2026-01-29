@@ -28,7 +28,7 @@ export function renderVerificationView(
             <p class="info">${infoMessage}</p>
             ${
                 diagnostics.length === 0 ? '' : /*html*/`
-                    <button class="show-all-button">
+                    <button id="show-all-button" class="underline-button">
                         ${showAll ? `Show file diagnostics` : `Show all diagnostics`}
                     </button>
                 `

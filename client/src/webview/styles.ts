@@ -94,16 +94,16 @@ export function getStyles(): string {
             margin: 1rem 0;
         }
         .diagnostic-item {
-            background-color: var(--vscode-textBlockQuote-background);
+            background-color: var(--vscode-textCodeBlock-background);
             padding: 0.5rem 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
         }
         .error-item {
-            border-left: 4px solid var(--vscode-errorForeground);
+            border-left: 4px solid var(--vscode-editorError-foreground);
         }
         .warning-item {
-            border-left: 4px solid #d4ac0d;
+            border-left: 4px solid var(--vscode-editorWarning-foreground);
         }
         .section {
             margin-bottom: 1rem;
@@ -201,7 +201,8 @@ export function getStyles(): string {
         .show-more-button:hover {
             background-color: var(--vscode-editor-background);
         }
-        .show-all-button {
+        .underline-button {
+            color: var(--vscode-foreground);
             text-align: center;
             font-size: 0.8rem;
             opacity: 0.6;
@@ -213,7 +214,7 @@ export function getStyles(): string {
             border: none;
             text-decoration: underline;
         }
-        .show-all-button:hover {
+        .underline-button:hover {
             background: none;
         }
         .extra-content {
