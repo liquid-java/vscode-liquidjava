@@ -16,8 +16,10 @@ export function createMermaidDiagram(sm: StateMachine): string {
     lines.push('---');
     lines.push('stateDiagram-v2');
     
-    // initial state
-    lines.push(`    [*] --> ${sm.initial}`);
+    // initial states
+    sm.initialStates.forEach(state => {
+        lines.push(`    [*] --> ${state}`);
+    });
     
     // transitions
     sm.transitions.forEach(transition => {

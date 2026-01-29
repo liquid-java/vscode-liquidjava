@@ -2,7 +2,9 @@ package fsm;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import liquidjava.rj_language.ast.*;
 import liquidjava.rj_language.parsing.RefinementsParser;
@@ -52,20 +54,20 @@ public class StateMachineParser {
             String className = getClassName(ctType);
 
             // extract initial state and transitions
-            String initial;
+            List<String> initialStates;
             List<StateMachineTransition> transitions;
             if (ctType instanceof CtClass<?> ctClass) {
-                initial = getInitialStateFromClass(ctClass, states);
+                initialStates = getInitialStatesFromClass(ctClass, states);
                 transitions = getTransitionsFromClass(ctClass, states);
             } else if (ctType instanceof CtInterface<?> ctInterface) {
-                initial = getInitialStateFromInterface(ctInterface, className, states);
+                initialStates = getInitialStatesFromInterface(ctInterface, className, states);
                 transitions = getTransitionsFromInterface(ctInterface, className, states);
             } else {
                 return null;
             }
             if (transitions.isEmpty()) return null; // no transitions found
             
-            return new StateMachine(className, initial, states, transitions);
+            return new StateMachine(className, initialStates, states, transitions);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -119,25 +121,24 @@ public class StateMachineParser {
     }
 
     /**
-     * Gets the initial state from a class
+     * Gets the initial states from a class
      * If not explicitely defined, uses the first state in the state set
      * @param ctClass the CtClass
      * @param states the list of states
-     * @return initial state
+     * @return initial states
      */
-    private static String getInitialStateFromClass(CtClass<?> ctClass, List<String> states) {
+    private static List<String> getInitialStatesFromClass(CtClass<?> ctClass, List<String> states) {
+        Set<String> initialStates = new HashSet<>();
         for (CtConstructor<?> constructor : ctClass.getConstructors()) {
             for (CtAnnotation<?> annotation : constructor.getAnnotations()) {
                 if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
                     String to = annotation.getValueAsString("to");
                     List<String> parsedStates = parseStateExpression(to, states);
-                    if (!parsedStates.isEmpty()) {
-                        return parsedStates.getFirst();
-                    }
+                    initialStates.addAll(parsedStates);
                 }
             }
         }
-        return states.getFirst();
+        return initialStates.isEmpty() ? List.of(states.get(0)) : initialStates.stream().toList();
     }
 
     /**
@@ -145,23 +146,22 @@ public class StateMachineParser {
      * If not explicitely defined, uses the first state in the state set
      * @param ctInterface the CtInterface
      * @param className the class name
-     * @return initial state
+     * @return initial states
      */
-    private static String getInitialStateFromInterface(CtInterface<?> ctInterface, String className, List<String> states) {
+    private static List<String> getInitialStatesFromInterface(CtInterface<?> ctInterface, String className, List<String> states) {
+        Set<String> initialStates = new HashSet<>();
         for (CtMethod<?> method : ctInterface.getMethods()) {
             if (method.getSimpleName().equals(className)) {
                 for (CtAnnotation<?> annotation : method.getAnnotations()) {
                     if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
                         String to = annotation.getValueAsString("to");
                         List<String> parsedStates = parseStateExpression(to, states);
-                        if (!parsedStates.isEmpty()) {
-                            return parsedStates.getFirst();
-                        }
+                        initialStates.addAll(parsedStates);
                     }
                 }
             }
         }
-        return states.isEmpty() ? null : states.getFirst();
+        return initialStates.isEmpty() ? List.of(states.get(0)) : initialStates.stream().toList();
     }
 
     /**
