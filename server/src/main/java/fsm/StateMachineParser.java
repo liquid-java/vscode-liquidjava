@@ -223,36 +223,34 @@ public class StateMachineParser {
      */
     private static List<String> getStateExpressions(Expression expr, List<String> states) {
         List<String> stateExpressions = new ArrayList<>();
-        switch (expr) {
-            case Var var -> stateExpressions.add(var.getName());
-            case FunctionInvocation func -> stateExpressions.add(func.getName());
-            case GroupExpression group -> stateExpressions.addAll(getStateExpressions(group.getExpression(), states));
-            case BinaryExpression bin -> {
-                String op = bin.getOperator();
-                if (op.equals("||")) {
-                    // combine states from both operands
-                    stateExpressions.addAll(getStateExpressions(bin.getFirstOperand(), states));
-                    stateExpressions.addAll(getStateExpressions(bin.getSecondOperand(), states));
-                }
+        if (expr instanceof Var var) {
+            stateExpressions.add(var.getName());
+        } else if (expr instanceof FunctionInvocation func) {
+            stateExpressions.add(func.getName());
+        } else if (expr instanceof GroupExpression group) {
+            stateExpressions.addAll(getStateExpressions(group.getExpression(), states));
+        } else if (expr instanceof BinaryExpression bin) {
+            String op = bin.getOperator();
+            if (op.equals("||")) {
+                // combine states from both operands
+                stateExpressions.addAll(getStateExpressions(bin.getFirstOperand(), states));
+                stateExpressions.addAll(getStateExpressions(bin.getSecondOperand(), states));
             }
-            case UnaryExpression unary -> {
-                if (unary.getOp().equals("!")) {
-                    // all except those in the expression
-                    List<String> negatedStates = getStateExpressions(unary.getExpression(), states);
-                    for (String state : states) {
-                        if (!negatedStates.contains(state)) {
-                            stateExpressions.add(state);
-                        }
+        } else if (expr instanceof UnaryExpression unary) {
+            if (unary.getOp().equals("!")) {
+                // all except those in the expression
+                List<String> negatedStates = getStateExpressions(unary.getExpression(), states);
+                for (String state : states) {
+                    if (!negatedStates.contains(state)) {
+                        stateExpressions.add(state);
                     }
                 }
             }
-            case Ite ite -> {
-                // combine states from then and else branches
-                // TODO: handle conditional transitions
-                stateExpressions.addAll(getStateExpressions(ite.getThen(), states));
-                stateExpressions.addAll(getStateExpressions(ite.getElse(), states));
-            }
-            default -> {}
+        } else if (expr instanceof Ite ite) {
+            // combine states from then and else branches
+            // TODO: handle conditional transitions
+            stateExpressions.addAll(getStateExpressions(ite.getThen(), states));
+            stateExpressions.addAll(getStateExpressions(ite.getElse(), states));
         }
         return stateExpressions;
     }
