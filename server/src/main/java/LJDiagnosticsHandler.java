@@ -14,6 +14,7 @@ import liquidjava.api.CommandLineLauncher;
 import liquidjava.diagnostics.Diagnostics;
 import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.LJDiagnostic;
+import liquidjava.diagnostics.errors.CustomError;
 import liquidjava.diagnostics.errors.LJError;
 import liquidjava.diagnostics.warnings.LJWarning;
 import utils.PathUtils;
@@ -31,19 +32,25 @@ public class LJDiagnosticsHandler {
     public static LJDiagnostics getLJDiagnostics(String path) {
         List<LJError> errors = new ArrayList<>();
         List<LJWarning> warnings = new ArrayList<>();
-    
-        CommandLineLauncher.launch(path);
-        Diagnostics diagnostics = Diagnostics.getInstance();
-        if (diagnostics.foundWarning()) {
-            warnings.addAll(diagnostics.getWarnings());
+        try {
+            CommandLineLauncher.launch(path);
+            Diagnostics diagnostics = Diagnostics.getInstance();
+            if (diagnostics.foundWarning()) {
+                warnings.addAll(diagnostics.getWarnings());
+            }
+            if (diagnostics.foundError()) {
+                System.out.println("Failed verification");
+                errors.addAll(diagnostics.getErrors());
+            } else {
+                System.out.println("Passed verification");
+            }
+            return new LJDiagnostics(errors, warnings);
+        } catch (Exception e) {
+            System.err.println("LiquidJava verifier exception: " + e.getMessage());
+            e.printStackTrace();
+            errors.add(new CustomError("LiquidJava verification failed, check for Java errors"));
+            return new LJDiagnostics(errors, warnings);
         }
-        if (diagnostics.foundError()) {
-            System.out.println("Failed verification");
-            errors.addAll(diagnostics.getErrors());
-        } else {
-            System.out.println("Passed verification");
-        }
-        return new LJDiagnostics(errors, warnings);
     }
 
     /**
