@@ -1,12 +1,15 @@
 import type { StateMachine } from "../../types/fsm";
 import { renderMainHeader, type NavTab } from "./sections";
 
-export function renderStateMachineView(sm: StateMachine, diagram: string, selectedTab: NavTab = 'state-machine'): string {
+export function renderStateMachineView(sm: StateMachine, diagram: string, selectedTab: NavTab = 'state-machine', orientation: "LR" | "TB"): string {
     return /*html*/`
         <div>
             ${renderMainHeader("", selectedTab)}
             ${sm ? /*html*/`
                 <div class="diagram-section">
+                     <button id="diagram-orientation-btn" class="underline-button">
+                        ${orientation === "TB" ? `Show diagram horizontally` : `Show diagram vertically`}
+                    </button>
                     <div class="diagram-container">
                         <pre class="mermaid">${diagram}</pre>
                     </div>

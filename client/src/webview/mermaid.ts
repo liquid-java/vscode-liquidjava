@@ -5,7 +5,7 @@ import type { StateMachine } from "../types/fsm";
  * @param sm 
  * @returns Mermaid diagram string
  */
-export function createMermaidDiagram(sm: StateMachine): string {
+export function createMermaidDiagram(sm: StateMachine, orientation: "LR" | "TB"): string {
     if (!sm) return '';
     
     const lines: string[] = [];
@@ -15,6 +15,7 @@ export function createMermaidDiagram(sm: StateMachine): string {
     lines.push(`title: ${sm.className}`);
     lines.push('---');
     lines.push('stateDiagram-v2');
+    lines.push(`    direction ${orientation}`);
     
     // initial state
     lines.push(`    [*] --> ${sm.initial}`);
