@@ -2,6 +2,7 @@ package fsm;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,8 +14,7 @@ import spoon.Launcher;
 import spoon.reflect.CtModel;
 import spoon.reflect.declaration.CtAnnotation;
 import spoon.reflect.declaration.CtClass;
-import spoon.reflect.declaration.CtConstructor;
-import spoon.reflect.declaration.CtInterface;
+import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.declaration.CtType;
 
@@ -41,32 +41,21 @@ public class StateMachineParser {
 
             // get class or interface
             CtType<?> ctType = getType(model);
-            if (ctType == null) {
-                return null;
-            }
+            if (ctType == null)
+                return null; // no class or interface found
 
             // extract class name and states
             List<String> states = getStates(ctType);
-            if (states == null || states.isEmpty()) {
-                return null;
-            }
-
+            if (states == null || states.isEmpty())
+                return null; // no states found
             String className = getClassName(ctType);
 
-            // extract initial state and transitions
-            List<String> initialStates;
-            List<StateMachineTransition> transitions;
-            if (ctType instanceof CtClass<?> ctClass) {
-                initialStates = getInitialStatesFromClass(ctClass, states);
-                transitions = getTransitionsFromClass(ctClass, states);
-            } else if (ctType instanceof CtInterface<?> ctInterface) {
-                initialStates = getInitialStatesFromInterface(ctInterface, className, states);
-                transitions = getTransitionsFromInterface(ctInterface, className, states);
-            } else {
-                return null;
-            }
-            if (transitions.isEmpty()) return null; // no transitions found
-            
+            // get initial states and transitions
+            List<String> initialStates = getInitialStates(ctType, className, states);
+            List<StateMachineTransition> transitions = getTransitions(ctType, className, states);
+            if (transitions.isEmpty())
+                return null; // no transitions found
+
             return new StateMachine(className, initialStates, states, transitions);
 
         } catch (Exception e) {
@@ -82,9 +71,8 @@ public class StateMachineParser {
      */
     private static CtType<?> getType(CtModel model) {
         for (CtType<?> type : model.getAllTypes()) {
-            if (type instanceof CtClass<?> || type instanceof CtInterface<?>) {
+            if (type.isClass() || type.isInterface())
                 return type;
-            }
         }
         return null;
     }
@@ -99,7 +87,7 @@ public class StateMachineParser {
         for (CtAnnotation<?> annotation : ctType.getAnnotations()) {
             if (annotation.getAnnotationType().getSimpleName().equals(EXTERNAL_REFINEMENTS_FOR_ANNOTATION)) {
                 String qualifiedName = (String) annotation.getValueAsObject("value");
-                return Utils.getSimpleName(qualifiedName);                
+                return Utils.getSimpleName(qualifiedName);
             }
         }
         return ctType.getSimpleName();
@@ -121,16 +109,31 @@ public class StateMachineParser {
     }
 
     /**
-     * Gets the initial states from a class
-     * If not explicitely defined, uses the first state in the state set
-     * @param ctClass the CtClass
+     * Gets the elements that represent constructors (actual constructors for classes, methods named after the class for interfaces)
+     * @param ctType the CtType (class or interface)
+     * @param className the class name
+     * @return collection of constructor elements
+     */
+    private static Collection<? extends CtElement> getConstructorElements(CtType<?> ctType, String className) {
+        if (ctType instanceof CtClass<?> ctClass) {
+            return ctClass.getConstructors();
+        }
+        // for interfaces the constructors are methods with the same name as the class
+        return ctType.getMethods().stream().filter(m -> m.getSimpleName().equals(className)).toList();
+    }
+
+    /**
+     * Gets the initial states from a class or interface
+     * If not explicitly defined, uses the first state in the state set
+     * @param ctType the CtType (class or interface)
+     * @param className the class name
      * @param states the list of states
      * @return initial states
      */
-    private static List<String> getInitialStatesFromClass(CtClass<?> ctClass, List<String> states) {
+    private static List<String> getInitialStates(CtType<?> ctType, String className, List<String> states) {
         Set<String> initialStates = new HashSet<>();
-        for (CtConstructor<?> constructor : ctClass.getConstructors()) {
-            for (CtAnnotation<?> annotation : constructor.getAnnotations()) {
+        for (CtElement element : getConstructorElements(ctType, className)) {
+            for (CtAnnotation<?> annotation : element.getAnnotations()) {
                 if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
                     String to = annotation.getValueAsString("to");
                     List<String> parsedStates = parseStateExpression(to, states);
@@ -142,59 +145,18 @@ public class StateMachineParser {
     }
 
     /**
-     * Gets the initial state from an interface
-     * If not explicitely defined, uses the first state in the state set
-     * @param ctInterface the CtInterface
-     * @param className the class name
-     * @return initial states
-     */
-    private static List<String> getInitialStatesFromInterface(CtInterface<?> ctInterface, String className, List<String> states) {
-        Set<String> initialStates = new HashSet<>();
-        for (CtMethod<?> method : ctInterface.getMethods()) {
-            if (method.getSimpleName().equals(className)) {
-                for (CtAnnotation<?> annotation : method.getAnnotations()) {
-                    if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
-                        String to = annotation.getValueAsString("to");
-                        List<String> parsedStates = parseStateExpression(to, states);
-                        initialStates.addAll(parsedStates);
-                    }
-                }
-            }
-        }
-        return initialStates.isEmpty() ? List.of(states.get(0)) : initialStates.stream().toList();
-    }
-
-    /**
-     * Gets transitions from a class
-     * @param ctClass the CtClass
-     * @param states the list of states
-     * @return list of StateMachineTransition
-     */
-    private static List<StateMachineTransition> getTransitionsFromClass(CtClass<?> ctClass, List<String> states) {
-        List<StateMachineTransition> transitions = new ArrayList<>();
-        for (CtMethod<?> method : ctClass.getMethods()) {
-            for (CtAnnotation<?> annotation : method.getAnnotations()) {
-                if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
-                    List<StateMachineTransition> extracted = getTransitions(annotation, method.getSimpleName(), states);
-                    transitions.addAll(extracted);
-                }
-            }
-        }
-
-        return transitions;
-    }
-
-    /**
-     * Gets transitions from an interface
-     * @param ctInterface the CtInterface
+     * Gets transitions from a class or interface
+     * @param ctType the CtType (class or interface)
      * @param className the class name
      * @param states the list of states
      * @return list of StateMachineTransition
      */
-    private static List<StateMachineTransition> getTransitionsFromInterface(CtInterface<?> ctInterface, String className, List<String> states) {
+    private static List<StateMachineTransition> getTransitions(CtType<?> ctType, String className, List<String> states) {
         List<StateMachineTransition> transitions = new ArrayList<>();
-        for (CtMethod<?> method : ctInterface.getMethods()) {
-            if (method.getSimpleName().equals(className)) continue; // skip constructor method
+        for (CtMethod<?> method : ctType.getMethods()) {
+            // for interfaces we skip constructor methods (methods with same name as class)
+            if (ctType.isInterface() && method.getSimpleName().equals(className))
+                continue;
 
             for (CtAnnotation<?> annotation : method.getAnnotations()) {
                 if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
