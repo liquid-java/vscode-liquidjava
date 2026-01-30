@@ -2,7 +2,7 @@
 
 export type StateMachine = {
     className: string;
-    initial: string;
+    initialStates: string[];
     states: string[];
     transitions: { from: string; to: string; label: string }[];
 };

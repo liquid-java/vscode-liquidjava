@@ -15,7 +15,7 @@ export function renderStateMachineView(sm: StateMachine, diagram: string, select
                     </div>
                     <div>
                         <p><strong>States:</strong> ${sm.states.join(', ')}</p>
-                        <p><strong>Initial state:</strong> ${sm.initial}</p>
+                        <p><strong>Initial state${sm.initialStates.length > 1 ? 's' : ''}:</strong> ${sm.initialStates.join(', ')}</p>
                         <p><strong>Number of states:</strong> ${sm.states.length}</p>
                         <p><strong>Number of transitions:</strong> ${sm.transitions.length + 1}</p>
                     </div>

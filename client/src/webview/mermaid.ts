@@ -17,12 +17,24 @@ export function createMermaidDiagram(sm: StateMachine, orientation: "LR" | "TB")
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
     
-    // initial state
-    lines.push(`    [*] --> ${sm.initial}`);
+    // initial states
+    sm.initialStates.forEach(state => {
+        lines.push(`    [*] --> ${state}`);
+    });
     
-    // transitions
+    // group transitions by from/to states and merge labels
+    const transitionMap = new Map<string, string[]>();
     sm.transitions.forEach(transition => {
-        lines.push(`    ${transition.from} --> ${transition.to} : ${transition.label}`);
+        const key = `${transition.from}|${transition.to}`;
+        if (!transitionMap.has(key)) transitionMap.set(key, []);
+        transitionMap.get(key).push(transition.label);
+    });
+
+    // add transitions
+    transitionMap.forEach((labels, key) => {
+        const [from, to] = key.split('|');
+        const mergedLabel = labels.join(', ');
+        lines.push(`    ${from} --> ${to} : ${mergedLabel}`);
     });
     
     return lines.join('\n');
