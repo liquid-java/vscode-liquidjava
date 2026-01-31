@@ -1,9 +1,6 @@
 import * as vscode from "vscode";
 import { LiquidJavaWebviewProvider } from "../webview/provider";
 import { extension } from "../state";
-import { StatusBarState, updateStatusBar } from "./status-bar";
-import type { StateMachine } from "../types/fsm";
-import type { LJDiagnostic } from "../types/diagnostics";
 
 /**
  * Initializes the webview panel for the extension
@@ -33,27 +30,4 @@ export function registerWebview(context: vscode.ExtensionContext) {
             }
         })
     );
-}
-
-
-/**
- * Handles LiquidJava diagnostics received from the language server
- * @param diagnostics The array of diagnostics received
- */
-export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
-    const containsError = diagnostics.some(d => d.category === "error");
-    const statusBarState: StatusBarState = containsError ? "failed" : "passed";
-    updateStatusBar(statusBarState);
-    extension.webview?.sendMessage({ type: "diagnostics", diagnostics });
-    extension.diagnostics = diagnostics;
-}
-
-/**
- * Requests the state machine for the given document from the language server
- * @param document The text document
- */
-export async function updateStateMachine(document: vscode.TextDocument) {
-    const sm: StateMachine = await extension.client?.sendRequest("liquidjava/fsm", { uri: document.uri.toString() });
-    extension.webview?.sendMessage({ type: "fsm", sm });
-    extension.stateMachine = sm;
 }

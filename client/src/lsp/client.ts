@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, State } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 import { connectToPort } from '../utils/utils';
 import { extension } from '../state';
 import { updateStatusBar } from '../services/status-bar';
-import { handleLJDiagnostics } from '../services/webview';
+import { handleLJDiagnostics } from '../services/diagnostics';
 import { onActiveFileChange } from '../services/events';
 import type { LJDiagnostic } from "../types/diagnostics";
 

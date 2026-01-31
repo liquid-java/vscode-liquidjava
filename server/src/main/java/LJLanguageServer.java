@@ -88,4 +88,9 @@ public class LJLanguageServer implements LanguageServer {
             return StateMachineParser.parse(uri.uri());
         });
     }
+
+    @JsonNotification("liquidjava/verify")
+    public void verify(Uri uri) {
+        diagnosticsService.generateDiagnostics(uri.uri());
+    }
 }

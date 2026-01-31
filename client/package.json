@@ -115,6 +115,11 @@
 				"command": "liquidjava.restart",
 				"title": "Restart",
 				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.verify",
+				"title": "Verify",
+				"category": "LiquidJava"
 			}
 		],
 		"menus": {},

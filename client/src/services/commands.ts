@@ -1,5 +1,8 @@
 import * as vscode from "vscode";
 import { startExtension, stopExtension, restartExtension } from "../extension";
+import { extension } from "../state";
+import { updateStatusBar } from "./status-bar";
+import { verifyCurrentFile } from "./diagnostics";
 
 /**
  * Initializes the command palette for the extension
@@ -14,6 +17,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
                 { label: "$(play) Start", command: "liquidjava.start" },
                 { label: "$(debug-stop) Stop", command: "liquidjava.stop" },
                 { label: "$(debug-restart) Restart", command: "liquidjava.restart" },
+                { label: "$(check) Verify", command: "liquidjava.verify" },
             ];
             const placeHolder = "Select a LiquidJava Command";
             const selected = await vscode.window.showQuickPick(commands, { placeHolder });
@@ -27,6 +31,9 @@ export function registerCommands(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand("liquidjava.restart", async () => {
             await restartExtension(context);
+        }),
+        vscode.commands.registerCommand("liquidjava.verify", async () => {
+            await verifyCurrentFile();
         })
     );
 }

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { extension } from '../state';
-import { updateStateMachine } from './webview';
+import { updateStateMachine } from './state-machine';
 
 /**
  * Initializes file system event listeners
