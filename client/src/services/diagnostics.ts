@@ -16,9 +16,9 @@ export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
 }
 
 /**
- * Triggers verification of the current file
+ * Triggers the LiquidJava verification manually
  */
-export async function verifyCurrentFile() {
+export async function verify() {
     const editor = vscode.window.activeTextEditor;
     if (!editor || editor.document.languageId !== "java") {
         vscode.window.showWarningMessage("LiquidJava: No Java file is currently open");

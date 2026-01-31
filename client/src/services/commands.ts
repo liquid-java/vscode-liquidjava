@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { startExtension, stopExtension, restartExtension } from "../extension";
 import { extension } from "../state";
 import { updateStatusBar } from "./status-bar";
-import { verifyCurrentFile } from "./diagnostics";
+import { verify } from "./diagnostics";
 
 /**
  * Initializes the command palette for the extension
@@ -33,7 +33,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
             await restartExtension(context);
         }),
         vscode.commands.registerCommand("liquidjava.verify", async () => {
-            await verifyCurrentFile();
+            await verify();
         })
     );
 }
