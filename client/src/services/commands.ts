@@ -1,39 +1,54 @@
 import * as vscode from "vscode";
 import { startExtension, stopExtension, restartExtension } from "../extension";
-import { extension } from "../state";
-import { updateStatusBar } from "./status-bar";
 import { verify } from "./diagnostics";
 
+const commandIcons: Record<string, string> = {
+    "liquidjava.showLogs": "$(output)",
+    "liquidjava.showView": "$(window)",
+    "liquidjava.start": "$(play)",
+    "liquidjava.stop": "$(debug-stop)",
+    "liquidjava.restart": "$(debug-restart)",
+    "liquidjava.verify": "$(check)",
+}
+
+const commandHandlers: Record<string, (context: vscode.ExtensionContext) => Promise<void>> = {
+    "liquidjava.start": async (context) => await startExtension(context),
+    "liquidjava.stop": async () => await stopExtension(),
+    "liquidjava.restart": async (context) => await restartExtension(context),
+    "liquidjava.verify": async () => await verify(),
+}
+
 /**
- * Initializes the command palette for the extension
+ * Registers all commands for the LiquidJava extension
  * @param context The extension context
  */
 export function registerCommands(context: vscode.ExtensionContext) {
+    const packageJson = context.extension.packageJSON;
+    const commands = (packageJson.contributes?.commands || []) as vscode.Command[];
+
+    // register commands
+    commands.forEach(cmd => {
+        const handler = commandHandlers[cmd.command];
+        if (handler) {
+            context.subscriptions.push(
+                vscode.commands.registerCommand(cmd.command, () => handler(context))
+            );
+        }
+    });
+
+    // register command to show all commands
     context.subscriptions.push(
         vscode.commands.registerCommand("liquidjava.showCommands", async () => {
-            const commands = [
-                { label: "$(output) Show Logs", command: "liquidjava.showLogs" },
-                { label: "$(window) Show View", command: "liquidjava.showView" },
-                { label: "$(play) Start", command: "liquidjava.start" },
-                { label: "$(debug-stop) Stop", command: "liquidjava.stop" },
-                { label: "$(debug-restart) Restart", command: "liquidjava.restart" },
-                { label: "$(check) Verify", command: "liquidjava.verify" },
-            ];
+            const quickPickItems = commands
+                .filter(cmd => cmd.command !== "liquidjava.showCommands")
+                .map(cmd => ({
+                    label: `${commandIcons[cmd.command] || "$(symbol-misc)"} ${cmd.title}`,
+                    command: cmd.command,
+                }));
+            
             const placeHolder = "Select a LiquidJava Command";
-            const selected = await vscode.window.showQuickPick(commands, { placeHolder });
+            const selected = await vscode.window.showQuickPick(quickPickItems, { placeHolder });
             if (selected) vscode.commands.executeCommand(selected.command);
-        }),
-        vscode.commands.registerCommand("liquidjava.start", async () => {
-            await startExtension(context);
-        }),
-        vscode.commands.registerCommand("liquidjava.stop", async () => {
-            await stopExtension();
-        }),
-        vscode.commands.registerCommand("liquidjava.restart", async () => {
-            await restartExtension(context);
-        }),
-        vscode.commands.registerCommand("liquidjava.verify", async () => {
-            await verify();
         })
-    );
+    );    
 }
