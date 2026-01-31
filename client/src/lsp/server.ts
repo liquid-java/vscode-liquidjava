@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as child_process from 'child_process';
 import * as path from 'path';
-import { getAvailablePort } from '../utils/utils';
+import { getAvailablePort, killProcess } from '../utils/utils';
 import { extension } from '../state';
 import { DEBUG_MODE, DEBUG_PORT, SERVER_JAR } from '../utils/constants';
 
@@ -43,4 +43,13 @@ export async function runLanguageServer(context: vscode.ExtensionContext, javaEx
         extension.client?.stop();
     });
     return port;
+}
+
+/**
+ * Stops the LiquidJava language server
+ * @returns A promise that resolves when the server is stopped
+ */
+export async function stopLanguageServer() {
+    await killProcess(extension.serverProcess);
+    extension.serverProcess = undefined;
 }

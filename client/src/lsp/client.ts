@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, State } from 'vscode-languageclient/node';
 import { connectToPort } from '../utils/utils';
-import { killProcess } from '../utils/utils';
 import { extension } from '../state';
 import { updateStatusBar } from '../services/status-bar';
 import { handleLJDiagnostics } from '../services/webview';
 import { onActiveFileChange } from '../services/events';
+import { stopLanguageServer } from './server';
 import type { LJDiagnostic } from "../types/diagnostics";
 
 /**
@@ -100,8 +100,4 @@ export async function stopClient(reason: string) {
     } finally {
         extension.socket = undefined;
     }
-
-    // kill server process
-    await killProcess(extension.serverProcess);
-    extension.serverProcess = undefined;
 }
