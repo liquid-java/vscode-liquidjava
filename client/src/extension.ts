@@ -91,7 +91,7 @@ export async function restartExtension(context: vscode.ExtensionContext) {
     
     // stop if running
     if (extension.client || extension.serverProcess) {
-        await stopClient("Restarting extension");
+        await stopExtension();
         // ensure clean shutdown
         await new Promise(resolve => setTimeout(resolve, 500));
     }

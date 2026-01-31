@@ -5,7 +5,6 @@ import { extension } from '../state';
 import { updateStatusBar } from '../services/status-bar';
 import { handleLJDiagnostics } from '../services/webview';
 import { onActiveFileChange } from '../services/events';
-import { stopLanguageServer } from './server';
 import type { LJDiagnostic } from "../types/diagnostics";
 
 /**
@@ -32,16 +31,8 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
         documentSelector: [{ language: "java" }],
     };
     extension.client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
-    extension.client.onDidChangeState((e) => {
-        if (e.newState === State.Stopped) {
-            stopClient("Client stopped");
-        }
-    });
     
-    context.subscriptions.push(extension.client); // client teardown
-    context.subscriptions.push({
-        dispose: () => stopClient("Client was disposed"), // server teardown
-    });
+    context.subscriptions.push(extension.client); // disposed on deactivation
 
     try {
         await extension.client.start();

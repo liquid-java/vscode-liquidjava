@@ -40,7 +40,7 @@ export async function runLanguageServer(context: vscode.ExtensionContext, javaEx
     });
     extension.serverProcess.on("close", (code) => {
         extension.logger.server.info(`Process exited with code ${code}`);
-        extension.client?.stop();
+        extension.serverProcess = undefined;
     });
     return port;
 }
