@@ -1,7 +1,7 @@
 import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/verification/derivation-nodes";
 import { renderLoading } from "./views/loading";
 import { renderStateMachineView } from "./views/diagram";
-import { createMermaidDiagram, renderMermaidDiagram } from "./mermaid";
+import { applyTransform, createMermaidDiagram, renderMermaidDiagram, resetZoom, registerPanListeners, zoomIn, zoomOut } from "./diagram";
 import type { LJDiagnostic } from "../types/diagnostics";
 import type { StateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
@@ -82,6 +82,27 @@ export function getScript(vscode: any, document: any, window: any) {
             e.stopPropagation();
             diagramOrientation = diagramOrientation === "TB" ? "LR" : "TB";
             updateView();
+            return;
+        }
+
+        // zoom in
+        if (target.id === 'zoom-in-btn') {
+            e.stopPropagation();
+            zoomIn(document);
+            return;
+        }
+
+        // zoom out
+        if (target.id === 'zoom-out-btn') {
+            e.stopPropagation();
+            zoomOut(document);
+            return;
+        }
+
+        // reset zoom
+        if (target.id === 'zoom-reset-btn') {
+            e.stopPropagation();
+            resetZoom(document);
             return;
         }
 
