@@ -81,6 +81,7 @@ export function getScript(vscode: any, document: any, window: any) {
         if (target.id === 'diagram-orientation-btn') {
             e.stopPropagation();
             diagramOrientation = diagramOrientation === "TB" ? "LR" : "TB";
+            resetZoom(document);
             updateView();
             return;
         }

@@ -11,7 +11,7 @@ export function renderStateMachineView(sm: StateMachine, diagram: string, select
                     <div class="diagram-container">
                         <div class="diagram-controls">
                             <button id="zoom-in-btn" class="diagram-control-btn" title="Zoom In">+</button>
-                            <button id="zoom-out-btn" class="diagram-control-btn" title="Zoom Out">−</button>
+                            <button id="zoom-out-btn" class="diagram-control-btn" title="Zoom Out">-</button>
                             <button id="zoom-reset-btn" class="diagram-control-btn" title="Reset Zoom">⟲</button>
                             <button id="diagram-orientation-btn" class="diagram-control-btn" title="Rotate Diagram">${orientation === "TB" ? "↓" : "→"}</button>
                         </div>

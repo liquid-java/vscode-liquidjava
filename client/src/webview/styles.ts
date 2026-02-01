@@ -64,7 +64,7 @@ export function getStyles(): string {
         nav .selected {
             opacity: 1;
             text-decoration: underline;
-            text-decoration-color: #0078D5;
+            text-decoration-color: var(--vscode-activityBar-activeBorder);
             text-underline-offset: 6px;
             text-decoration-thickness: 1px;
         }
@@ -328,15 +328,15 @@ export function getStyles(): string {
         }
         .diagram-controls {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
+            top: 0.5rem;
+            right: 0.5rem;
             display: flex;
             gap: 0.5rem;
             z-index: 10;
         }
         .diagram-control-btn {
-            font-size: 1.5rem;
-            padding: 0.5rem;
+            font-size: clamp(0.75rem, 5vw, 1.5rem);
+            padding: clamp(0.25rem, 1vw, 0.5rem);
             color: var(--vscode-foreground);
             background: none;
             border: none;
