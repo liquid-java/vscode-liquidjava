@@ -3,9 +3,10 @@ import type { StateMachine } from "../types/fsm";
 // constants
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 5;
-const ZOOM_BUTTON_FACTOR = 1.2;
+const ZOOM_BUTTON_FACTOR = 1.5;
 const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
+const COPY_TIMEOUT_MS = 2000;
 
 // state variables
 let zoomLevel = 1;
@@ -208,4 +209,25 @@ export function registerPanListeners(document: any) {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
     container.addEventListener('wheel', onWheel, { passive: false });
+}
+
+export async function copyDiagramToClipboard(target: any, diagram: string) {
+    const textContent = target.textContent;
+    const title = target.getAttribute('title');
+    try {
+        target.disabled = true;
+        await navigator.clipboard.writeText(diagram);
+        target.textContent = '✓';
+        target.setAttribute('title', 'Copied!');
+    } catch (e) {
+        target.textContent = '✗';
+        target.setAttribute('title', 'Copy failed');
+    } finally {
+        // reset button after timeout
+        setTimeout(() => {
+            target.textContent = textContent;
+            target.setAttribute('title', title);
+            target.disabled = false;
+        }, COPY_TIMEOUT_MS);
+    }
 }

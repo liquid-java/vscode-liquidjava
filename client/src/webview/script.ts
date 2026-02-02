@@ -1,7 +1,7 @@
 import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/verification/derivation-nodes";
 import { renderLoading } from "./views/loading";
 import { renderStateMachineView } from "./views/diagram";
-import { applyTransform, createMermaidDiagram, renderMermaidDiagram, resetZoom, registerPanListeners, zoomIn, zoomOut } from "./diagram";
+import { createMermaidDiagram, renderMermaidDiagram, resetZoom, registerPanListeners, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
 import type { LJDiagnostic } from "../types/diagnostics";
 import type { StateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
@@ -22,6 +22,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let stateMachine: StateMachine | undefined;
     let selectedTab: NavTab = 'verification';
     let diagramOrientation: "LR" | "TB" = "TB";
+    let currentDiagram: string = '';
 
     // initial state
     root.innerHTML = renderLoading();
@@ -107,6 +108,14 @@ export function getScript(vscode: any, document: any, window: any) {
             return;
         }
 
+        // copy diagram source
+        if (target.id === 'copy-diagram-btn') {
+            e.stopPropagation();
+            if (!currentDiagram) return
+            copyDiagramToClipboard(target, currentDiagram);
+            return;
+        }
+
         // toggle show more/less for errors
         if (target.classList.contains('show-more-button')) {
             e.stopPropagation();
@@ -134,6 +143,7 @@ export function getScript(vscode: any, document: any, window: any) {
         }
     });
     
+    // message event listener from extension
     window.addEventListener('message', event => {
         const msg = event.data;
         if (msg.type === 'diagnostics') {
@@ -161,6 +171,7 @@ export function getScript(vscode: any, document: any, window: any) {
             root.innerHTML = renderVerificationView(diagnostics, showAllDiagnostics, currentFile, expandedErrors, selectedTab)
         } else {
             const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
+            currentDiagram = diagram;
             root.innerHTML = renderStateMachineView(stateMachine, diagram, selectedTab, diagramOrientation);
             if (stateMachine) renderMermaidDiagram(document, window);
         }
