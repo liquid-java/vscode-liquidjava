@@ -2,7 +2,7 @@
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
 	"description": "Extending Java with Liquid Types",
-	"version": "0.0.54",
+	"version": "0.0.55",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
@@ -99,7 +99,11 @@
 			{
 				"command": "liquidjava.showView",
 				"title": "Show View",
-				"category": "LiquidJava"
+				"category": "LiquidJava",
+				"icon": {
+					"light": "media/java-icon.svg",
+					"dark": "media/java-icon-white.svg"
+				}
 			},
 			{
 				"command": "liquidjava.start",
@@ -122,7 +126,15 @@
 				"category": "LiquidJava"
 			}
 		],
-		"menus": {},
+		"menus": {
+			"editor/title": [
+				{
+					"command": "liquidjava.showView",
+					"group": "navigation",
+					"when": "editorLangId == java"
+				}
+			]
+		},
 		"grammars": [
 			{
 				"path": "./syntaxes/liquidjava.json",
