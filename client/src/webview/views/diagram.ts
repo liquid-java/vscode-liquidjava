@@ -7,11 +7,18 @@ export function renderStateMachineView(sm: StateMachine, diagram: string, select
             ${renderMainHeader("", selectedTab)}
             ${sm ? /*html*/`
                 <div class="diagram-section">
-                     <button id="diagram-orientation-btn" class="underline-button">
-                        ${orientation === "TB" ? `Show diagram horizontally` : `Show diagram vertically`}
-                    </button>
+                    
                     <div class="diagram-container">
-                        <pre class="mermaid">${diagram}</pre>
+                        <div class="diagram-controls">
+                            <button id="zoom-in-btn" class="diagram-control-btn" title="Zoom In">+</button>
+                            <button id="zoom-out-btn" class="diagram-control-btn" title="Zoom Out">-</button>
+                            <button id="zoom-reset-btn" class="diagram-control-btn" title="Reset Zoom">⟲</button>
+                            <button id="diagram-orientation-btn" class="diagram-control-btn" title="Rotate Diagram">${orientation === "TB" ? "↓" : "→"}</button>
+                            <button id="copy-diagram-btn" class="diagram-control-btn" title="Copy Mermaid Source">⎘</button>
+                        </div>
+                        <div id="diagram-wrapper" class="diagram-wrapper">
+                            <pre class="mermaid">${diagram}</pre>
+                        </div>
                     </div>
                     <div>
                         <p><strong>States:</strong> ${sm.states.join(', ')}</p>

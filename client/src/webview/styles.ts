@@ -64,7 +64,7 @@ export function getStyles(): string {
         nav .selected {
             opacity: 1;
             text-decoration: underline;
-            text-decoration-color: #0078D5;
+            text-decoration-color: var(--vscode-activityBar-activeBorder);
             text-underline-offset: 6px;
             text-decoration-thickness: 1px;
         }
@@ -300,7 +300,23 @@ export function getStyles(): string {
             background-color: var(--vscode-editor-background);
             border-radius: 4px;
             padding: 1rem;
-            overflow-x: auto;
+            overflow: hidden;
+            position: relative;
+            cursor: grab;
+            user-select: none;
+        }
+        .diagram-container:active {
+            cursor: grabbing;
+        }
+        .diagram-wrapper {
+            transition: transform 0.1s ease-out;
+            transform-origin: 0 0;
+            display: inline-block;
+            min-width: 100%;
+            pointer-events: none;
+        }
+        .diagram-wrapper * {
+            pointer-events: auto;
         }
         .diagram-container .mermaid {
             display: flex;
@@ -310,8 +326,29 @@ export function getStyles(): string {
             max-width: 100%;
             height: auto;
         }
+        .diagram-controls {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        .diagram-control-btn {
+            font-size: clamp(0.75rem, 5vw, 1.5rem);
+            padding: clamp(0.25rem, 1vw, 0.5rem);
+            color: var(--vscode-foreground);
+            background: none;
+            border: none;
+            font-family: 'Courier New', Courier, monospace;
+            opacity: 0.7;
+        }
+        .diagram-control-btn:hover {
+            background: none;
+            opacity: 1;
+        }
         .mermaid .statediagramTitleText {
-            font-size: 22px!important;
+            font-size: 30px!important;
         }
     `;
 }

@@ -1,7 +1,7 @@
 import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/verification/derivation-nodes";
 import { renderLoading } from "./views/loading";
 import { renderStateMachineView } from "./views/diagram";
-import { createMermaidDiagram, renderMermaidDiagram } from "./mermaid";
+import { createMermaidDiagram, renderMermaidDiagram, resetZoom, registerPanListeners, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
 import type { LJDiagnostic } from "../types/diagnostics";
 import type { StateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
@@ -22,6 +22,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let stateMachine: StateMachine | undefined;
     let selectedTab: NavTab = 'verification';
     let diagramOrientation: "LR" | "TB" = "TB";
+    let currentDiagram: string = '';
 
     // initial state
     root.innerHTML = renderLoading();
@@ -81,7 +82,37 @@ export function getScript(vscode: any, document: any, window: any) {
         if (target.id === 'diagram-orientation-btn') {
             e.stopPropagation();
             diagramOrientation = diagramOrientation === "TB" ? "LR" : "TB";
+            resetZoom(document);
             updateView();
+            return;
+        }
+
+        // zoom in
+        if (target.id === 'zoom-in-btn') {
+            e.stopPropagation();
+            zoomIn(document);
+            return;
+        }
+
+        // zoom out
+        if (target.id === 'zoom-out-btn') {
+            e.stopPropagation();
+            zoomOut(document);
+            return;
+        }
+
+        // reset zoom
+        if (target.id === 'zoom-reset-btn') {
+            e.stopPropagation();
+            resetZoom(document);
+            return;
+        }
+
+        // copy diagram source
+        if (target.id === 'copy-diagram-btn') {
+            e.stopPropagation();
+            if (!currentDiagram) return
+            copyDiagramToClipboard(target, currentDiagram);
             return;
         }
 
@@ -112,6 +143,7 @@ export function getScript(vscode: any, document: any, window: any) {
         }
     });
     
+    // message event listener from extension
     window.addEventListener('message', event => {
         const msg = event.data;
         if (msg.type === 'diagnostics') {
@@ -139,6 +171,7 @@ export function getScript(vscode: any, document: any, window: any) {
             root.innerHTML = renderVerificationView(diagnostics, showAllDiagnostics, currentFile, expandedErrors, selectedTab)
         } else {
             const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
+            currentDiagram = diagram;
             root.innerHTML = renderStateMachineView(stateMachine, diagram, selectedTab, diagramOrientation);
             if (stateMachine) renderMermaidDiagram(document, window);
         }
