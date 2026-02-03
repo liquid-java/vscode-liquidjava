@@ -100,6 +100,26 @@
 				"command": "liquidjava.showView",
 				"title": "Show View",
 				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.start",
+				"title": "Start",
+				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.stop",
+				"title": "Stop",
+				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.restart",
+				"title": "Restart",
+				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.verify",
+				"title": "Verify",
+				"category": "LiquidJava"
 			}
 		],
 		"menus": {},

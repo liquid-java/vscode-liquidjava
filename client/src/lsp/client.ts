@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, State } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 import { connectToPort } from '../utils/utils';
-import { killProcess } from '../utils/utils';
 import { extension } from '../state';
 import { updateStatusBar } from '../services/status-bar';
-import { handleLJDiagnostics } from '../services/webview';
+import { handleLJDiagnostics } from '../services/diagnostics';
 import { onActiveFileChange } from '../services/events';
 import type { LJDiagnostic } from "../types/diagnostics";
 
@@ -32,16 +31,8 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
         documentSelector: [{ language: "java" }],
     };
     extension.client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
-    extension.client.onDidChangeState((e) => {
-        if (e.newState === State.Stopped) {
-            stopClient("Client stopped");
-        }
-    });
     
-    context.subscriptions.push(extension.client); // client teardown
-    context.subscriptions.push({
-        dispose: () => stopClient("Client was disposed"), // server teardown
-    });
+    context.subscriptions.push(extension.client); // disposed on deactivation
 
     try {
         await extension.client.start();
@@ -100,8 +91,4 @@ export async function stopClient(reason: string) {
     } finally {
         extension.socket = undefined;
     }
-
-    // kill server process
-    await killProcess(extension.serverProcess);
-    extension.serverProcess = undefined;
 }
