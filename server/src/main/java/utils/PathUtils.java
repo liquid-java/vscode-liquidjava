@@ -1,6 +1,9 @@
 package utils;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -34,12 +37,27 @@ public class PathUtils {
      * @return base path
      */
     public static String extractBasePath(String fullPath) {
+        fullPath = convertUTFtoCharacters(fullPath);
         fullPath = fullPath.replace(FILE_PREFIX, "");
         int suffixIndex = fullPath.indexOf(SRC_SUFFIX);
         int nextSlashIndex = fullPath.indexOf("/", suffixIndex + SRC_SUFFIX.length());
         if (suffixIndex == -1 || nextSlashIndex == -1)
             return fullPath; // cannot extract base path
         return fullPath.substring(0, nextSlashIndex); // up to and including the next slash after /src/
+    }
+
+    /**
+     * Converts a UTF-8 encoded string to a regular string
+     * @param source
+     * @return converted string
+     */
+    private static String convertUTFtoCharacters(String source) {
+        try {
+            return URLDecoder.decode(source, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            // not going to happen - value came from JDK's own StandardCharsets
+            return null;
+        }
     }
 
     /**
