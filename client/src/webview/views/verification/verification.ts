@@ -10,7 +10,7 @@ export function renderVerificationView(
     expandedErrors: Set<number>,
     selectedTab: NavTab
 ): string {
-    const fileDiagnostics = diagnostics.filter(diagnostic => diagnostic.file?.toLowerCase() === currentFile?.toLowerCase());
+    const fileDiagnostics = diagnostics.filter(diagnostic => diagnostic.file?.toLowerCase() === currentFile?.toLowerCase() || !diagnostic.file);
     const displayDiagnostics = showAll ? diagnostics : fileDiagnostics;
     const errors = displayDiagnostics.filter(d => d.category === 'error') as LJError[];
     const warnings = displayDiagnostics.filter(d => d.category === 'warning') as LJWarning[];
