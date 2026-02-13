@@ -25,7 +25,7 @@ To set up the extension locally, install the LiquidJava extension in the [VS Cod
 <dependency>
     <groupId>io.github.liquid-java</groupId>
     <artifactId>liquidjava-api</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
 </dependency>
 ```
 
@@ -36,7 +36,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.liquid-java:liquidjava-api:0.0.3'
+    implementation 'io.github.liquid-java:liquidjava-api:0.0.4'
 }
 ```
 

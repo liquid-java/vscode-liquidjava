@@ -67,6 +67,7 @@ export type RefinementError = BaseDiagnostic & {
     translationTable: TranslationTable;
     expected: ValDerivationNode;
     found: ValDerivationNode;
+    customMessage: string;
 }
 
 export type StateConflictError = BaseDiagnostic & {
@@ -82,6 +83,7 @@ export type StateRefinementError = BaseDiagnostic & {
     translationTable: TranslationTable;
     expected: string;
     found: string;
+    customMessage: string;
 }
 
 export type ArgumentMismatchError = BaseDiagnostic & {
