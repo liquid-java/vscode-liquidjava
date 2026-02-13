@@ -22,7 +22,7 @@ Additionally, to use LiquidJava in your project, you'll need the following depen
 <dependency>
     <groupId>io.github.liquid-java</groupId>
     <artifactId>liquidjava-api</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
 </dependency>
 ```
 
@@ -33,7 +33,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.liquid-java:liquidjava-api:0.0.3'
+    implementation 'io.github.liquid-java:liquidjava-api:0.0.4'
 }
 ```
 

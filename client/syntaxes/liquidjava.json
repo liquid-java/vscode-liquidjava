@@ -10,6 +10,18 @@
       "name": "meta.annotation.refinement.liquidjava",
       "patterns": [
         {
+          "begin": "\\b(msg)\\s*=\\s*(\")",
+          "beginCaptures": {
+            "1": { "name": "variable.parameter.annotation.liquidjava" },
+            "2": { "name": "string.quoted.double.java" }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": { "name": "string.quoted.double.java" }
+          },
+          "contentName": "string.quoted.double.java"
+        },
+        {
           "begin": "\"",
           "end": "\"",
           "contentName": "source.liquidjava",
@@ -32,6 +44,18 @@
         {
           "match": "\\b(from|to)\\b",
           "name": "variable.parameter.annotation.liquidjava"
+        },
+        {
+          "begin": "\\b(msg)\\s*=\\s*(\")",
+          "beginCaptures": {
+            "1": { "name": "variable.parameter.annotation.liquidjava" },
+            "2": { "name": "string.quoted.double.java" }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": { "name": "string.quoted.double.java" }
+          },
+          "contentName": "string.quoted.double.java"
         },
         {
           "begin": "\"",
