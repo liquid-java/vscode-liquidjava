@@ -5,14 +5,12 @@ export function handleContextHistory(contextHistory: ContextHistory) {
     extension.contextHistory = contextHistory;
 }
 
-// Gets the variables in scope for a given file and position
-// Returns null if position not in any scope
-export function getVariablesInScope(file: string, selection: Selection): Variable[] | null {
-    if (!extension.contextHistory || !selection || !file) return null;
+export function getVariablesInScope(file: string, selection: Selection): Variable[] {
+    if (!extension.contextHistory || !selection || !file) return [];
 
     // get variables in file
     const fileVars = extension.contextHistory.vars[file];
-    if (!fileVars) return null;
+    if (!fileVars) return [];
 
     // get variables in the current scope based on the selection
     let mostSpecificScope: string | null = null;
@@ -29,13 +27,10 @@ export function getVariablesInScope(file: string, selection: Selection): Variabl
             }
         }
     }
-    if (mostSpecificScope === null)
-        return null;
+    const variablesInScope = mostSpecificScope ? fileVars[mostSpecificScope] : [];
 
     // filter variables to only include those that are reachable based on their position
-    const variablesInScope = fileVars[mostSpecificScope];
-    const reachableVariables = getReachableVariables(variablesInScope, selection);
-    return reachableVariables.filter(v => !v.name.startsWith("this#"));
+    return getReachableVariables(variablesInScope, selection);
 }
 
 function parseScopeString(scope: string): Selection {

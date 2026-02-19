@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { Selection } from '../types/context';
-import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 let currentSelection: Selection = { startLine: 0, startColumn: 0, endLine: 0, endColumn: 0 };
+const SELECTION_DEBOUNCE_TIME = 250; // ms
 
 /**
  * Initializes file system event listeners
@@ -56,5 +56,7 @@ export async function onSelectionChange(event: vscode.TextEditorSelectionChangeE
     };
     // debounce selection changes
     if (selectionTimeout) clearTimeout(selectionTimeout);
-    selectionTimeout = setTimeout(() => extension.selection = currentSelection, SELECTION_DEBOUNCE_MS);
+    selectionTimeout = setTimeout(() => {
+        extension.selection = currentSelection;
+    }, SELECTION_DEBOUNCE_TIME);
 }
