@@ -123,3 +123,8 @@ export async function killProcess(proc?: child_process.ChildProcess) {
         }
     });
 }
+
+export function getSimpleName(qualifiedName: string): string {
+    const parts = qualifiedName.split(".");
+    return parts[parts.length - 1];
+}

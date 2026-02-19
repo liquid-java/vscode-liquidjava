@@ -8,6 +8,7 @@ import { registerStatusBar, updateStatusBar } from "./services/status-bar";
 import { registerWebview } from "./services/webview";
 import { registerHover } from "./services/hover";
 import { registerEvents } from "./services/events";
+import { registerAutocomplete } from "./services/autocomplete";
 import { runLanguageServer, stopLanguageServer } from "./lsp/server";
 import { runClient, stopClient } from "./lsp/client";
 
@@ -21,6 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
     registerCommands(context);
     registerWebview(context);
     registerEvents(context);
+    registerAutocomplete(context);
     registerHover();
 
     extension.logger.client.info("Activating LiquidJava extension...");

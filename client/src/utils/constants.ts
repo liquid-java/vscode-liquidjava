@@ -17,3 +17,12 @@ export const LIQUIDJAVA_SCOPES = [
     "constant.language.boolean.liquidjava",
     "constant.numeric.liquidjava",
 ];
+export const LIQUIDJAVA_ANNOTATIONS = [
+    "Refinement",
+    "RefinementAlias",
+    "RefinementPredicate",
+    "StateSet",
+    "Ghost",
+    "StateRefinement",
+    "ExternalRefinementsFor",
+]

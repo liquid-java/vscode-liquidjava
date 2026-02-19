@@ -8,9 +8,8 @@ import liquidjava.processor.context.PlacementInCode;
 public record PlacementInCodeDTO(String text, PositionDTO position) {
 
     public static PlacementInCodeDTO from(PlacementInCode placement) {
-        return new PlacementInCodeDTO(
-            placement.getText(),
-            PositionDTO.from(placement.getPosition())
-        );
+        if (placement == null)
+            return null;
+        return new PlacementInCodeDTO(placement.getText(), PositionDTO.from(placement.getPosition()));
     }
 }

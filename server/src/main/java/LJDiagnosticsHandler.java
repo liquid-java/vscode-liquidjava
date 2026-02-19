@@ -46,7 +46,6 @@ public class LJDiagnosticsHandler {
             }
             return new LJDiagnostics(errors, warnings);
         } catch (Exception e) {
-            System.err.println("LiquidJava verifier exception: " + e.getMessage());
             e.printStackTrace();
             errors.add(new CustomError("LiquidJava verification failed, check for Java errors"));
             return new LJDiagnostics(errors, warnings);
