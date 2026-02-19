@@ -1,11 +1,9 @@
 import * as vscode from "vscode";
 import { extension } from "../state";
 import type { Variable, ContextHistory, Ghost, Alias } from "../types/context";
-import { LIQUIDJAVA_ANNOTATIONS } from "../utils/constants";
 import { getSimpleName } from "../utils/utils";
 import { getVariablesInScope } from "./context";
-
-const LIQUIDJAVA_ANNOTATION_START = new RegExp(`@(liquidjava\\.specification\\.)?(${LIQUIDJAVA_ANNOTATIONS.join("|")})\\s*\\(`, "g");
+import { LIQUIDJAVA_ANNOTATION_START } from "../utils/constants";
 
 /**
  * Registers a completion provider for LiquidJava annotations, providing context-aware suggestions based on the current context history
@@ -162,14 +160,13 @@ function isInsideLiquidJavaAnnotationString(document: vscode.TextDocument, posit
         lastAnnotationStart = match.index;
     }
     if (lastAnnotationStart === -1) return false;
+    
     const fromLastAnnotation = textUntilCursor.slice(lastAnnotationStart);
-
     let parenthesisDepth = 0;
     let isInsideString = false;
     for (let i = 0; i < fromLastAnnotation.length; i++) {
         const char = fromLastAnnotation[i];
         const previousChar = i > 0 ? fromLastAnnotation[i - 1] : "";
-
         if (char === '"' && previousChar !== "\\") {
             isInsideString = !isInsideString;
             continue;
