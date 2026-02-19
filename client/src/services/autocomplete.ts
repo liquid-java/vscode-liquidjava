@@ -114,14 +114,14 @@ function getKeywordsCompletionItems(triggerParameterHints: boolean): vscode.Comp
         insertText: triggerParameterHints ? "old($1)" : "old",
         triggerParameterHints,
     });
-    const resultItem = createCompletionItem({
+    const returnItem = createCompletionItem({
         name: "return",
         kind: vscode.CompletionItemKind.Keyword,
         description: "",
         detail: "keyword",
         documentationBlocks: ["Keyword referring to the **method return value**"],
     });
-    return [thisItem, oldItem, resultItem];
+    return [thisItem, oldItem, returnItem];
 }
 
 type CompletionItemOptions = {
@@ -160,7 +160,7 @@ function isInsideLiquidJavaAnnotationString(document: vscode.TextDocument, posit
         lastAnnotationStart = match.index;
     }
     if (lastAnnotationStart === -1) return false;
-    
+
     const fromLastAnnotation = textUntilCursor.slice(lastAnnotationStart);
     let parenthesisDepth = 0;
     let isInsideString = false;
