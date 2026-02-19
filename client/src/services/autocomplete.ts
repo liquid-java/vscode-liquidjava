@@ -16,32 +16,27 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
             provideCompletionItems(document, position) {
                 if (!isInsideLiquidJavaAnnotationString(document, position) || !extension.contextHistory) return null;
                 const file = document.uri.toString().replace("file://", "");
-                return getContextCompletionItems(extension.contextHistory, file);
+                const nextChar = document.getText(new vscode.Range(position, position.translate(0, 1)));
+                return getContextCompletionItems(extension.contextHistory, file, nextChar);
             },
         })
     );
 }
 
-function getContextCompletionItems(context: ContextHistory, file: string): vscode.CompletionItem[] {
-    const variables: Variable[] = [];
+function getContextCompletionItems(context: ContextHistory, file: string, nextChar: string): vscode.CompletionItem[] {
     const variablesInScope = getVariablesInScope(file, extension.selection);
-    variables.push(...variablesInScope);
-    variables.push(...context.instanceVars);
-    variables.push(...context.globalVars);
-
-    const variableItems = getVariableCompletionItems(variablesInScope);
-    const ghostItems = getGhostCompletionItems(context.ghosts);
-    const aliasItems = getAliasCompletionItems(context.aliases);
-    const keywordItems = getKeywordsCompletionItems();
+    const triggerParameterHints = nextChar !== "(";
+    const variableItems = getVariableCompletionItems([...variablesInScope, ...context.instanceVars, ...context.globalVars]);
+    const ghostItems = getGhostCompletionItems(context.ghosts, triggerParameterHints);
+    const aliasItems = getAliasCompletionItems(context.aliases, triggerParameterHints);
+    const keywordItems = getKeywordsCompletionItems(triggerParameterHints);
     const allItems = [...variableItems, ...ghostItems, ...aliasItems, ...keywordItems];
     
     // remove duplicates
     const uniqueItems = new Map<string, vscode.CompletionItem>();
     allItems.forEach(item => {
         const label = typeof item.label === "string" ? item.label : item.label.label;
-        if (!uniqueItems.has(label)) {
-            uniqueItems.set(label, item);
-        }
+        if (!uniqueItems.has(label)) uniqueItems.set(label, item);
     });
     return Array.from(uniqueItems.values());
 }
@@ -63,7 +58,7 @@ function getVariableCompletionItems(variables: Variable[]): vscode.CompletionIte
     });
 }
 
-function getGhostCompletionItems(ghosts: Ghost[]): vscode.CompletionItem[] {
+function getGhostCompletionItems(ghosts: Ghost[], triggerParameterHints: boolean): vscode.CompletionItem[] {
     return ghosts.map(ghost => {
         const parameters = ghost.parameterTypes.map(getSimpleName).join(", ");
         const parametersStr = `(${parameters})`;
@@ -75,13 +70,13 @@ function getGhostCompletionItems(ghosts: Ghost[]): vscode.CompletionItem[] {
             description: ghost.returnType,
             detail: "ghost",
             codeBlocks: [ghostSig],
-            insertText: `${ghost.name}($1)`,
-            triggerParameterHints: true,
+            insertText: triggerParameterHints ? `${ghost.name}($1)` : ghost.name,
+            triggerParameterHints,
         });
     });
 }
 
-function getAliasCompletionItems(aliases: Alias[]): vscode.CompletionItem[] {
+function getAliasCompletionItems(aliases: Alias[], triggerParameterHints: boolean): vscode.CompletionItem[] {
     return aliases.map(alias => {
         const parameters = alias.parameters
             .map((parameter, index) => {
@@ -98,13 +93,13 @@ function getAliasCompletionItems(aliases: Alias[]): vscode.CompletionItem[] {
             description: alias.predicate,
             detail: "alias",
             codeBlocks: [aliasSig],
-            insertText: `${alias.name}($1)`,
-            triggerParameterHints: true,
+            insertText: triggerParameterHints ? `${alias.name}($1)` : alias.name,
+            triggerParameterHints,
         });
     });
 }
 
-function getKeywordsCompletionItems(): vscode.CompletionItem[] {
+function getKeywordsCompletionItems(triggerParameterHints: boolean): vscode.CompletionItem[] {
     const thisItem = createCompletionItem({
         name: "this",
         kind: vscode.CompletionItemKind.Keyword,
@@ -118,8 +113,8 @@ function getKeywordsCompletionItems(): vscode.CompletionItem[] {
         description: "",
         detail: "keyword",
         documentationBlocks: ["Keyword referring to the **previous state of the current instance**"],
-        insertText: "old($1)",
-        triggerParameterHints: true,
+        insertText: triggerParameterHints ? "old($1)" : "old",
+        triggerParameterHints,
     });
     const resultItem = createCompletionItem({
         name: "return",
