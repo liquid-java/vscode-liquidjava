@@ -118,6 +118,7 @@ function getKeywordsCompletionItems(): vscode.CompletionItem[] {
         description: "",
         detail: "keyword",
         documentationBlocks: ["Keyword referring to the **previous state of the current instance**"],
+        insertText: "old($1)",
         triggerParameterHints: true,
     });
     const resultItem = createCompletionItem({
