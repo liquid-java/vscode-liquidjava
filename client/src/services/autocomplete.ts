@@ -36,7 +36,7 @@ function getContextCompletionItems(context: ContextHistory, file: string, nextCh
     const uniqueItems = new Map<string, vscode.CompletionItem>();
     allItems.forEach(item => {
         const label = typeof item.label === "string" ? item.label : item.label.label;
-        if (!uniqueItems.has(label)) uniqueItems.set(label, item);
+        if (!uniqueItems.has(label) && !label.startsWith("this#")) uniqueItems.set(label, item);
     });
     return Array.from(uniqueItems.values());
 }
