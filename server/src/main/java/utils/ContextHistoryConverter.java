@@ -11,6 +11,7 @@ import dtos.context.ContextHistoryDTO;
 import dtos.context.GhostDTO;
 import dtos.context.VariableDTO;
 import liquidjava.processor.context.ContextHistory;
+import liquidjava.processor.context.GhostState;
 import liquidjava.processor.context.RefinedVariable;
 
 /**
@@ -28,7 +29,7 @@ public class ContextHistoryConverter {
             toVariablesMap(contextHistory.getVars()),
             contextHistory.getInstanceVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
             contextHistory.getGlobalVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
-            contextHistory.getGhosts().stream().map(GhostDTO::from).collect(Collectors.toList()),
+            toGhostsMap(contextHistory.getGhosts()),
             contextHistory.getAliases().stream().map(AliasDTO::from).collect(Collectors.toList())
         );
     }
@@ -42,6 +43,15 @@ public class ContextHistoryConverter {
                 (left, right) -> left,
                 HashMap::new
             )),
+            (left, right) -> left,
+            HashMap::new
+        ));
+    }
+
+    private static Map<String, List<GhostDTO>> toGhostsMap(Map<String, Set<GhostState>> ghosts) {
+        return ghosts.entrySet().stream().collect(Collectors.toMap(
+            Map.Entry::getKey,
+            entry -> entry.getValue().stream().map(GhostDTO::from).collect(Collectors.toList()),
             (left, right) -> left,
             HashMap::new
         ));

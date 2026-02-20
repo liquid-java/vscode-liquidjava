@@ -26,7 +26,9 @@ function getContextCompletionItems(context: ContextHistory, file: string, nextCh
     const inScope = variablesInScope !== null;
     const triggerParameterHints = nextChar !== "(";
     const variableItems = getVariableCompletionItems([...(variablesInScope || []), ...context.globalVars]); // not including instance vars
-    const ghostItems = getGhostCompletionItems(context.ghosts, triggerParameterHints);
+
+    const ghostsInFile = context.ghosts[file] || [];
+    const ghostItems = getGhostCompletionItems(ghostsInFile, triggerParameterHints);
     const aliasItems = getAliasCompletionItems(context.aliases, triggerParameterHints);
     const keywordItems = getKeywordsCompletionItems(triggerParameterHints, inScope);
     const allItems = [...variableItems, ...ghostItems, ...aliasItems, ...keywordItems];

@@ -2,7 +2,6 @@ package dtos.context;
 
 import dtos.diagnostics.PlacementInCodeDTO;
 import liquidjava.processor.context.RefinedVariable;
-import spoon.reflect.reference.CtTypeReference;
 
 /**
  * DTO for serializing RefinedVariable instances to JSON.

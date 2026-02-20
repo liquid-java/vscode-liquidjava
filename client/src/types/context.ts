@@ -27,9 +27,9 @@ export type Alias = {
 
 export type ContextHistory = {
   vars: Record<string, Record<string, Variable[]>>; // file -> (scope -> variables in scope)
+  ghosts: Record<string, Ghost[]>; // file -> ghosts in file
   instanceVars: Variable[];
   globalVars: Variable[];
-  ghosts: Ghost[];
   aliases: Alias[];
 }
 
