@@ -23,11 +23,12 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
 
 function getContextCompletionItems(context: ContextHistory, file: string, nextChar: string): vscode.CompletionItem[] {
     const variablesInScope = getVariablesInScope(file, extension.selection);
+    const inScope = variablesInScope !== null;
     const triggerParameterHints = nextChar !== "(";
-    const variableItems = getVariableCompletionItems([...variablesInScope, ...context.globalVars]); // not including instance vars
+    const variableItems = getVariableCompletionItems([...(variablesInScope || []), ...context.globalVars]); // not including instance vars
     const ghostItems = getGhostCompletionItems(context.ghosts, triggerParameterHints);
     const aliasItems = getAliasCompletionItems(context.aliases, triggerParameterHints);
-    const keywordItems = getKeywordsCompletionItems(triggerParameterHints);
+    const keywordItems = getKeywordsCompletionItems(triggerParameterHints, inScope);
     const allItems = [...variableItems, ...ghostItems, ...aliasItems, ...keywordItems];
     
     // remove duplicates
@@ -96,7 +97,7 @@ function getAliasCompletionItems(aliases: Alias[], triggerParameterHints: boolea
     });
 }
 
-function getKeywordsCompletionItems(triggerParameterHints: boolean): vscode.CompletionItem[] {
+function getKeywordsCompletionItems(triggerParameterHints: boolean, inScope: boolean): vscode.CompletionItem[] {
     const thisItem = createCompletionItem({
         name: "this",
         kind: vscode.CompletionItemKind.Keyword,
@@ -113,14 +114,18 @@ function getKeywordsCompletionItems(triggerParameterHints: boolean): vscode.Comp
         insertText: triggerParameterHints ? "old($1)" : "old",
         triggerParameterHints,
     });
-    const returnItem = createCompletionItem({
-        name: "return",
-        kind: vscode.CompletionItemKind.Keyword,
-        description: "",
-        detail: "keyword",
-        documentationBlocks: ["Keyword referring to the **method return value**"],
-    });
-    return [thisItem, oldItem, returnItem];
+    const items: vscode.CompletionItem[] = [thisItem, oldItem];
+    if (!inScope) {
+        const returnItem = createCompletionItem({
+            name: "return",
+            kind: vscode.CompletionItemKind.Keyword,
+            description: "",
+            detail: "keyword",
+            documentationBlocks: ["Keyword referring to the **method return value**"],
+        });
+        items.push(returnItem);
+    }
+    return items;
 }
 
 type CompletionItemOptions = {
