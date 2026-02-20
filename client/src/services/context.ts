@@ -30,7 +30,8 @@ export function getVariablesInScope(file: string, selection: Selection): Variabl
     const variablesInScope = mostSpecificScope ? fileVars[mostSpecificScope] : [];
 
     // filter variables to only include those that are reachable based on their position
-    return getReachableVariables(variablesInScope, selection);
+    const reachableVariables = getReachableVariables(variablesInScope, selection);
+    return reachableVariables.filter(v => !v.name.startsWith("this#"))
 }
 
 function parseScopeString(scope: string): Selection {

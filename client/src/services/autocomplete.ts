@@ -24,7 +24,7 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
 function getContextCompletionItems(context: ContextHistory, file: string, nextChar: string): vscode.CompletionItem[] {
     const variablesInScope = getVariablesInScope(file, extension.selection);
     const triggerParameterHints = nextChar !== "(";
-    const variableItems = getVariableCompletionItems([...variablesInScope, ...context.instanceVars, ...context.globalVars]);
+    const variableItems = getVariableCompletionItems([...variablesInScope, ...context.globalVars]); // not including instance vars
     const ghostItems = getGhostCompletionItems(context.ghosts, triggerParameterHints);
     const aliasItems = getAliasCompletionItems(context.aliases, triggerParameterHints);
     const keywordItems = getKeywordsCompletionItems(triggerParameterHints);
@@ -34,7 +34,7 @@ function getContextCompletionItems(context: ContextHistory, file: string, nextCh
     const uniqueItems = new Map<string, vscode.CompletionItem>();
     allItems.forEach(item => {
         const label = typeof item.label === "string" ? item.label : item.label.label;
-        if (!uniqueItems.has(label) && !label.startsWith("this#")) uniqueItems.set(label, item);
+        if (!uniqueItems.has(label)) uniqueItems.set(label, item);
     });
     return Array.from(uniqueItems.values());
 }
@@ -45,7 +45,6 @@ function getVariableCompletionItems(variables: Variable[]): vscode.CompletionIte
         const codeBlocks: string[] = [];
         if (variable.mainRefinement !== "true") codeBlocks.push(`@Refinement("${variable.mainRefinement}")`);
         codeBlocks.push(varSig);
-
         return createCompletionItem({
             name: variable.name,
             kind: vscode.CompletionItemKind.Variable,
@@ -59,14 +58,15 @@ function getVariableCompletionItems(variables: Variable[]): vscode.CompletionIte
 function getGhostCompletionItems(ghosts: Ghost[], triggerParameterHints: boolean): vscode.CompletionItem[] {
     return ghosts.map(ghost => {
         const parameters = ghost.parameterTypes.map(getSimpleName).join(", ");
-        const parametersStr = `(${parameters})`;
-        const ghostSig = `${ghost.returnType} ${ghost.name}${parametersStr}`;
+        const ghostSig = `${ghost.returnType} ${ghost.name}(${parameters})`;
+        const isState = /^state\d+\(_\) == \d+$/.test(ghost.refinement);
+        const description = isState ? "state" : "ghost";
         return createCompletionItem({
             name: ghost.name,
             kind: vscode.CompletionItemKind.Function,
-            labelDetail: parametersStr,
-            description: ghost.returnType,
-            detail: "ghost",
+            labelDetail: `(${parameters})`,
+            description,
+            detail: description,
             codeBlocks: [ghostSig],
             insertText: triggerParameterHints ? `${ghost.name}($1)` : ghost.name,
             triggerParameterHints,
@@ -81,15 +81,14 @@ function getAliasCompletionItems(aliases: Alias[], triggerParameterHints: boolea
                 const type = getSimpleName(alias.types[index]);
                 return `${type} ${parameter}`;
             }).join(", ");
-        const parametersStr = `(${parameters})`;
-        const aliasSig = `${alias.name}${parametersStr} { ${alias.predicate} }`;
-
+        const aliasSig = `${alias.name}(${parameters}) { ${alias.predicate} }`;
+        const description = "alias";
         return createCompletionItem({
             name: alias.name,
             kind: vscode.CompletionItemKind.Function,
-            labelDetail: parametersStr,
-            description: alias.predicate,
-            detail: "alias",
+            labelDetail: `(${parameters}){ ${alias.predicate} }`,
+            description,
+            detail: description,
             codeBlocks: [aliasSig],
             insertText: triggerParameterHints ? `${alias.name}($1)` : alias.name,
             triggerParameterHints,
