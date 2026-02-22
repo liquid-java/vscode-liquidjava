@@ -16,7 +16,7 @@ type CompletionItemOptions = {
     insertText?: string;
     triggerParameterHints?: boolean;
 }
-type CompletionItemKind = "vars" | "ghosts" | "aliases" | "keywords" | "types" | "decls" | "imports";
+type CompletionItemKind = "vars" | "ghosts" | "aliases" | "keywords" | "types" | "decls" | "packages";
 
 /**
  * Registers a completion provider for LiquidJava annotations, providing context-aware suggestions based on the current context history
@@ -46,7 +46,7 @@ function getContextCompletionItems(context: ContextHistory, file: string, annota
         keywords: () => getKeywordsCompletionItems(triggerParameterHints, inScope),
         types: () => getTypesCompletionItems(),
         decls: () => getDeclsCompletionItems(),
-        imports: () => [], // TODO: implement imports completion
+        packages: () => [], // TODO: implement packages completion
     }
     const itemsMap: Record<LJAnnotation, CompletionItemKind[]> = {
         Refinement: ["vars", "ghosts", "aliases", "keywords"],
@@ -55,7 +55,7 @@ function getContextCompletionItems(context: ContextHistory, file: string, annota
         RefinementAlias: ["types"],
         RefinementPredicate: ["types", "decls"],
         StateSet: [],
-        ExternalRefinementsFor: ["imports"]
+        ExternalRefinementsFor: ["packages"]
     }
     const items: vscode.CompletionItem[] = itemsMap[annotation].map(key => itemsHandlers[key]()).flat();
     const uniqueItems = new Map<string, vscode.CompletionItem>();
