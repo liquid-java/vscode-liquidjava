@@ -3,7 +3,20 @@ import { extension } from "../state";
 import type { Variable, ContextHistory, Ghost, Alias } from "../types/context";
 import { getSimpleName } from "../utils/utils";
 import { getVariablesInScope } from "./context";
-import { LIQUIDJAVA_ANNOTATION_START } from "../utils/constants";
+import { LIQUIDJAVA_ANNOTATION_START, LJAnnotation } from "../utils/constants";
+
+type CompletionItemOptions = {
+    name: string;
+    kind: vscode.CompletionItemKind;
+    description?: string;
+    labelDetail?: string;
+    detail: string;
+    documentationBlocks?: string[];
+    codeBlocks?: string[];
+    insertText?: string;
+    triggerParameterHints?: boolean;
+}
+type CompletionItemKind = "vars" | "ghosts" | "aliases" | "keywords" | "types" | "decls" | "imports";
 
 /**
  * Registers a completion provider for LiquidJava annotations, providing context-aware suggestions based on the current context history
@@ -12,30 +25,41 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider("java", {
             provideCompletionItems(document, position) {
-                if (!isInsideLiquidJavaAnnotationString(document, position) || !extension.contextHistory) return null;
+                const annotation = getActiveLiquidJavaAnnotation(document, position);
+                if (!annotation || !extension.contextHistory) return null;
                 const file = document.uri.toString().replace("file://", "");
                 const nextChar = document.getText(new vscode.Range(position, position.translate(0, 1)));
-                return getContextCompletionItems(extension.contextHistory, file, nextChar);
+                return getContextCompletionItems(extension.contextHistory, file, annotation, nextChar);
             },
         })
     );
 }
 
-function getContextCompletionItems(context: ContextHistory, file: string, nextChar: string): vscode.CompletionItem[] {
+function getContextCompletionItems(context: ContextHistory, file: string, annotation: LJAnnotation, nextChar: string): vscode.CompletionItem[] {   
+    const triggerParameterHints = nextChar !== "(";
     const variablesInScope = getVariablesInScope(file, extension.selection);
     const inScope = variablesInScope !== null;
-    const triggerParameterHints = nextChar !== "(";
-    const variableItems = getVariableCompletionItems([...(variablesInScope || []), ...context.globalVars]); // not including instance vars
-
-    const ghostsInFile = context.ghosts[file] || [];
-    const ghostItems = getGhostCompletionItems(ghostsInFile, triggerParameterHints);
-    const aliasItems = getAliasCompletionItems(context.aliases, triggerParameterHints);
-    const keywordItems = getKeywordsCompletionItems(triggerParameterHints, inScope);
-    const allItems = [...variableItems, ...ghostItems, ...aliasItems, ...keywordItems];
-    
-    // remove duplicates
+    const itemsHandlers: Record<CompletionItemKind, () => vscode.CompletionItem[]> = {
+        vars: () => getVariableCompletionItems(variablesInScope || []),
+        ghosts: () => getGhostCompletionItems(context.ghosts[file] || [], triggerParameterHints),
+        aliases: () => getAliasCompletionItems(context.aliases, triggerParameterHints),
+        keywords: () => getKeywordsCompletionItems(triggerParameterHints, inScope),
+        types: () => getTypesCompletionItems(),
+        decls: () => getDeclsCompletionItems(),
+        imports: () => [], // TODO: implement imports completion
+    }
+    const itemsMap: Record<LJAnnotation, CompletionItemKind[]> = {
+        Refinement: ["vars", "ghosts", "aliases", "keywords"],
+        StateRefinement: ["vars", "ghosts", "aliases", "keywords"],
+        Ghost: ["types"],
+        RefinementAlias: ["types"],
+        RefinementPredicate: ["types", "decls"],
+        StateSet: [],
+        ExternalRefinementsFor: ["imports"]
+    }
+    const items: vscode.CompletionItem[] = itemsMap[annotation].map(key => itemsHandlers[key]()).flat();
     const uniqueItems = new Map<string, vscode.CompletionItem>();
-    allItems.forEach(item => {
+    items.forEach(item => {
         const label = typeof item.label === "string" ? item.label : item.label.label;
         if (!uniqueItems.has(label)) uniqueItems.set(label, item);
     });
@@ -116,7 +140,20 @@ function getKeywordsCompletionItems(triggerParameterHints: boolean, inScope: boo
         insertText: triggerParameterHints ? "old($1)" : "old",
         triggerParameterHints,
     });
-    const items: vscode.CompletionItem[] = [thisItem, oldItem];
+    const trueItem = createCompletionItem({
+        name: "true",
+        kind: vscode.CompletionItemKind.Keyword,
+        description: "",
+        detail: "keyword",
+    });
+
+    const falseItem = createCompletionItem({
+        name: "false",
+        kind: vscode.CompletionItemKind.Keyword,
+        description: "",
+        detail: "keyword",
+    });
+    const items: vscode.CompletionItem[] = [thisItem, oldItem, trueItem, falseItem];
     if (!inScope) {
         const returnItem = createCompletionItem({
             name: "return",
@@ -130,16 +167,24 @@ function getKeywordsCompletionItems(triggerParameterHints: boolean, inScope: boo
     return items;
 }
 
-type CompletionItemOptions = {
-    name: string;
-    kind: vscode.CompletionItemKind;
-    description?: string;
-    labelDetail?: string;
-    detail: string;
-    documentationBlocks?: string[];
-    codeBlocks?: string[];
-    insertText?: string;
-    triggerParameterHints?: boolean;
+function getTypesCompletionItems(): vscode.CompletionItem[] {
+    const types = ["int", "double", "float", "boolean"];
+    return types.map(type => createCompletionItem({
+        name: type,
+        kind: vscode.CompletionItemKind.Keyword,
+        description: "",
+        detail: "keyword",
+    }));
+}
+
+function getDeclsCompletionItems(): vscode.CompletionItem[] {
+    const decls = ["ghost", "type"]
+    return decls.map(decl => createCompletionItem({
+        name: decl,
+        kind: vscode.CompletionItemKind.Keyword,
+        description: "",
+        detail: "keyword",
+    }));
 }
 
 function createCompletionItem({ name, kind, labelDetail, description, detail, documentationBlocks, codeBlocks, insertText, triggerParameterHints }: CompletionItemOptions): vscode.CompletionItem {
@@ -157,15 +202,17 @@ function createCompletionItem({ name, kind, labelDetail, description, detail, do
     return item;
 }
 
-function isInsideLiquidJavaAnnotationString(document: vscode.TextDocument, position: vscode.Position): boolean {
+function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, position: vscode.Position): LJAnnotation | null {
     const textUntilCursor = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
     LIQUIDJAVA_ANNOTATION_START.lastIndex = 0;
     let match: RegExpExecArray | null = null;
     let lastAnnotationStart = -1;
+    let lastAnnotationName: LJAnnotation | null = null;
     while ((match = LIQUIDJAVA_ANNOTATION_START.exec(textUntilCursor)) !== null) {
         lastAnnotationStart = match.index;
+        lastAnnotationName = match[2] as LJAnnotation || null;
     }
-    if (lastAnnotationStart === -1) return false;
+    if (lastAnnotationStart === -1 || !lastAnnotationName) return null;
 
     const fromLastAnnotation = textUntilCursor.slice(lastAnnotationStart);
     let parenthesisDepth = 0;
@@ -181,5 +228,5 @@ function isInsideLiquidJavaAnnotationString(document: vscode.TextDocument, posit
         if (char === "(") parenthesisDepth++;
         if (char === ")") parenthesisDepth--;
     }
-    return parenthesisDepth > 0;
+    return parenthesisDepth > 0 ? lastAnnotationName : null;
 }

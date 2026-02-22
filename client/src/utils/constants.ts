@@ -28,3 +28,4 @@ export const LIQUIDJAVA_ANNOTATIONS = [
     "ExternalRefinementsFor",
 ]
 export const LIQUIDJAVA_ANNOTATION_START = new RegExp(`@(liquidjava\\.specification\\.)?(${LIQUIDJAVA_ANNOTATIONS.join("|")})\\s*\\(`, "g");
+export type LJAnnotation = "Refinement" | "RefinementAlias" | "RefinementPredicate" | "StateSet" | "Ghost" | "StateRefinement" | "ExternalRefinementsFor";
