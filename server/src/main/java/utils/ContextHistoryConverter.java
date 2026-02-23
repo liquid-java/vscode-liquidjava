@@ -26,7 +26,7 @@ public class ContextHistoryConverter {
      */
     public static ContextHistoryDTO convertToDTO(ContextHistory contextHistory) {
         return new ContextHistoryDTO(
-            toVariablesMap(contextHistory.getVars()),
+            toVariablesMap(contextHistory.getFileScopeVars()),
             contextHistory.getInstanceVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
             contextHistory.getGlobalVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
             toGhostsMap(contextHistory.getGhosts()),
