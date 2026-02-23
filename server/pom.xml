@@ -172,14 +172,14 @@
 		<!-- <dependency>
 			<groupId>liquidjava</groupId>
 			<artifactId>verifier</artifactId>
-			<version>0.0.1</version>
+			<version>0.0.13</version>
 			<scope>system</scope>
 			<systemPath>${project.basedir}/libs/liquidjava-verifier.jar</systemPath>
 		</dependency> -->
 		<dependency>
 			<groupId>io.github.liquid-java</groupId>
 			<artifactId>liquidjava-verifier</artifactId>
-			<version>0.0.12</version>
+			<version>0.0.13</version>
 		</dependency>
 		<dependency>
 			<groupId>tools.aqua</groupId>
