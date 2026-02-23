@@ -24,19 +24,34 @@ type CompletionItemKind = "vars" | "ghosts" | "aliases" | "keywords" | "types" |
 export function registerAutocomplete(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider("java", {
-            provideCompletionItems(document, position) {
+            provideCompletionItems(document, position, _token, completionContext) {
                 const annotation = getActiveLiquidJavaAnnotation(document, position);
                 if (!annotation || !extension.contextHistory) return null;
+
+                const isDotTrigger =  completionContext.triggerKind === vscode.CompletionTriggerKind.TriggerCharacter && completionContext.triggerCharacter === ".";
+                const receiver = isDotTrigger ? getReceiverBeforeDot(document, position) : null; 
                 const file = document.uri.toString().replace("file://", "");
                 const nextChar = document.getText(new vscode.Range(position, position.translate(0, 1)));
-                return getContextCompletionItems(extension.contextHistory, file, annotation, nextChar);
+                const items = getContextCompletionItems(extension.contextHistory, file, annotation, nextChar, isDotTrigger, receiver);
+                const uniqueItems = new Map<string, vscode.CompletionItem>();
+                items.forEach(item => {
+                    const label = typeof item.label === "string" ? item.label : item.label.label;
+                    if (!uniqueItems.has(label)) uniqueItems.set(label, item);
+                });
+                return Array.from(uniqueItems.values());
             },
-        })
+        }, '.', '"')
     );
 }
 
-function getContextCompletionItems(context: ContextHistory, file: string, annotation: LJAnnotation, nextChar: string): vscode.CompletionItem[] {   
+function getContextCompletionItems(context: ContextHistory, file: string, annotation: LJAnnotation, nextChar: string, isDotTrigger: boolean, receiver: string | null): vscode.CompletionItem[] {
     const triggerParameterHints = nextChar !== "(";
+    if (isDotTrigger) {
+        if (receiver === "this" || receiver === "old(this)") {
+            return getGhostCompletionItems(context.ghosts[file] || [], triggerParameterHints);
+        }
+        return [];
+    } 
     const variablesInScope = getVariablesInScope(file, extension.selection);
     const inScope = variablesInScope !== null;
     const itemsHandlers: Record<CompletionItemKind, () => vscode.CompletionItem[]> = {
@@ -46,7 +61,7 @@ function getContextCompletionItems(context: ContextHistory, file: string, annota
         keywords: () => getKeywordsCompletionItems(triggerParameterHints, inScope),
         types: () => getTypesCompletionItems(),
         decls: () => getDeclsCompletionItems(),
-        packages: () => [], // TODO: implement packages completion
+        packages: () => [], // TODO
     }
     const itemsMap: Record<LJAnnotation, CompletionItemKind[]> = {
         Refinement: ["vars", "ghosts", "aliases", "keywords"],
@@ -57,13 +72,7 @@ function getContextCompletionItems(context: ContextHistory, file: string, annota
         StateSet: [],
         ExternalRefinementsFor: ["packages"]
     }
-    const items: vscode.CompletionItem[] = itemsMap[annotation].map(key => itemsHandlers[key]()).flat();
-    const uniqueItems = new Map<string, vscode.CompletionItem>();
-    items.forEach(item => {
-        const label = typeof item.label === "string" ? item.label : item.label.label;
-        if (!uniqueItems.has(label)) uniqueItems.set(label, item);
-    });
-    return Array.from(uniqueItems.values());
+    return itemsMap[annotation].map(key => itemsHandlers[key]()).flat();
 }
 
 function getVariableCompletionItems(variables: Variable[]): vscode.CompletionItem[] {
@@ -131,15 +140,7 @@ function getKeywordsCompletionItems(triggerParameterHints: boolean, inScope: boo
         detail: "keyword",
         documentationBlocks: ["Keyword referring to the **current instance**"],
     });
-    const oldItem = createCompletionItem({
-        name: "old",
-        kind: vscode.CompletionItemKind.Keyword,
-        description: "",
-        detail: "keyword",
-        documentationBlocks: ["Keyword referring to the **previous state of the current instance**"],
-        insertText: triggerParameterHints ? "old($1)" : "old",
-        triggerParameterHints,
-    });
+    const oldItem = getOldKeywordCompletionItem(triggerParameterHints);
     const trueItem = createCompletionItem({
         name: "true",
         kind: vscode.CompletionItemKind.Keyword,
@@ -165,6 +166,18 @@ function getKeywordsCompletionItems(triggerParameterHints: boolean, inScope: boo
         items.push(returnItem);
     }
     return items;
+}
+
+function getOldKeywordCompletionItem(triggerParameterHints: boolean): vscode.CompletionItem {
+    return createCompletionItem({
+        name: "old",
+        kind: vscode.CompletionItemKind.Keyword,
+        description: "",
+        detail: "keyword",
+        documentationBlocks: ["Keyword referring to the **previous state of the current instance**"],
+        insertText: triggerParameterHints ? "old($1)" : "old",
+        triggerParameterHints,
+    });
 }
 
 function getTypesCompletionItems(): vscode.CompletionItem[] {
@@ -229,4 +242,13 @@ function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, position: 
         if (char === ")") parenthesisDepth--;
     }
     return parenthesisDepth > 0 ? lastAnnotationName : null;
+}
+
+function getReceiverBeforeDot(document: vscode.TextDocument, position: vscode.Position): string | null {
+    const prefix = document.lineAt(position.line).text.slice(0, position.character);
+    const match = prefix.match(/((?:old\s*\(\s*this\s*\))|(?:[A-Za-z_]\w*))\.\w*$/);
+    if (!match) return null;
+    const receiver = match[1].trim();
+    if (/^old\s*\(\s*this\s*\)$/.test(receiver)) return "old(this)";
+    return receiver;
 }
