@@ -68,6 +68,7 @@ export type RefinementError = BaseDiagnostic & {
     expected: ValDerivationNode;
     found: ValDerivationNode;
     customMessage: string;
+    counterexample: string;
 }
 
 export type StateConflictError = BaseDiagnostic & {
