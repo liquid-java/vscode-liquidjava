@@ -33,6 +33,7 @@ const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) =>
         ${e.customMessage ? renderSection('Message', e.customMessage) : ''}
         ${renderSection('Expected', e.expected.value)}
         ${renderCustomSection('Found', renderDerivationNode(e, e.found))}
+        ${e.counterexample ? renderSection('Counterexample', e.counterexample) : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/`
         ${e.customMessage ? renderSection('Message', e.customMessage) : ''}
