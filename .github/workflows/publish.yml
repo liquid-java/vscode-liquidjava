@@ -25,8 +25,8 @@ jobs:
           node-version: 20
 
       - name: Build Server JAR
+        working-directory: ./server
         run: |
-          cd server
           mvn clean package -DskipTests
           mkdir -p ../client/server
           cp target/language-server-liquidjava.jar ../client/server/
