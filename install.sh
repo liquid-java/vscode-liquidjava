@@ -19,7 +19,14 @@ if ! grep -q "\"version\": \"$VERSION\"" ./client/package.json; then
     exit 1
 fi
 
-cd client
+# build server jar
+cd server
+mvn clean package -DskipTests
+mkdir -p ../client/server
+cp target/language-server-liquidjava.jar ../client/server/
+
+# build and install vscode extension
+cd ../client
 vsce package
 code --install-extension liquid-java-$VERSION.vsix
 cd ..
