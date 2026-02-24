@@ -24,9 +24,10 @@ cd server
 mvn clean package -DskipTests
 mkdir -p ../client/server
 cp target/language-server-liquidjava.jar ../client/server/
+cd ..
 
 # build and install vscode extension
-cd ../client
+cd client
 vsce package
 code --install-extension liquid-java-$VERSION.vsix
 cd ..
