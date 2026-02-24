@@ -56,7 +56,7 @@ function isSelectionWithinScope(selection: Selection, scope: Selection): boolean
 function getReachableVariables(variables: Variable[], selection: Selection): Variable[] {
     return variables.filter((variable) => {
         const placement = variable.placementInCode?.position;
-        if (!placement) return true;
+        if (!placement || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the selection (for method and parameter refinements)
         return placement.line < selection.startLine || (placement.line === selection.startLine && placement.column <= selection.startColumn);
     });
 }

@@ -8,6 +8,7 @@ export type Variable = {
   refinement: string;
   mainRefinement: string;
   placementInCode: PlacementInCode | null;
+  isParameter: boolean;
 }
 
 export type Ghost = {
