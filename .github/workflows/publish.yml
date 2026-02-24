@@ -13,10 +13,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Build Server JAR
+        run: |
+          cd server
+          mvn clean package -DskipTests
+          mkdir -p ../client/server
+          cp target/language-server-liquidjava.jar ../client/server/
 
       - name: Install dependencies and build
         working-directory: ./client
