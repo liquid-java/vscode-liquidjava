@@ -1,24 +1,20 @@
 # LiquidJava VS Code Extension
 
-The **LiquidJava VS Code extension** adds support for **refinement types**, extending the Java standard type system directly inside VS Code, using the [LiquidJava](https://github.com/liquid-java/liquidjava) verifier. It provides error diagnostics and syntax highlighting for refinements.
+![](https://raw.githubusercontent.com/liquid-java/liquidjava/refs/heads/main/docs/design/figs/banner.gif)
 
-## Getting Started
+### Extend your Java code with Liquid Types and catch bugs earlier!
 
-### GitHub Codespaces
+[LiquidJava](https://github.com/liquid-java/liquidjava) is an additional type checker for Java, based on **liquid types** and **typestates**, which provides stronger safety guarantees to Java programs at compile-time. With this extension, you can use LiquidJava directly in VS Code, with real-time diagnostic reporting, syntax highlighting for refinements, and an interactive webview for displaying details about diagnostics and state machine diagrams.
 
-To try out the extension on an example project without setting up your local environment:
-1. Log in to GitHub
-2. Click the button below
-3. Select the `4-core` option
-4. Press `Create codespace`
+```java
+@Refinement("a > 0")
+int a = 3; // okay
+a = -8; // type error!
+```
 
-The codespace will open in your browser and automatically install the LiquidJava extension shortly.
+### Installation
 
-   [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/liquid-java/liquidjava-examples)
-
-### Local Setup
-
-To set up the extension locally, install the LiquidJava extension in the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) or the [Open VSX Marketplace](https://open-vsx.org/extension/AlcidesFonseca/liquid-java) and add the `liquidjava-api` dependency to your Java project.
+To try out the extension, install it from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) or the [Open VSX Marketplace](https://open-vsx.org/extension/AlcidesFonseca/liquid-java). Additionally, you'll need the [Language Support for Java(TM) by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java) VS Code extension, and add the `liquidjava-api` dependency to your Java project:
 
 #### Maven
 ```xml
@@ -40,61 +36,105 @@ dependencies {
 }
 ```
 
-## Development
+A repository with LiquidJava examples is available at [liquidjava-examples](https://github.com/liquid-java/liquidjava-examples). You can try them out without setting up your local environment using [GitHub Codespaces](https://codespaces.new/liquid-java/liquidjava-examples).
 
-### Developer Mode
+### What are Liquid Types?
 
-To run the extension in developer mode, which automatically spawns the server in a separate process:
+Liquid types extend a language with **logical predicates** over the basic types. They allow developers to restrict the values that a variable, parameter or return value can have. These kinds of constraints help to catch more bugs before the program is executed. For example, they allow us to prevent bugs like array index out-of-bounds or division by zero at compile-time.
 
-1. Open the `client` folder in VS Code
-2. Run `npm install`
-3. Make sure you have the Red Hat extension for [Language Support for Java™](https://github.com/redhat-developer/vscode-java) installed and enabled
-4. Go to `Run` > `Run Extension` (or press `F5`)
-5. A new VS Code instance will start with the LiquidJava extension enabled
-6. Open a Java project containing the `liquid-java-api.jar` in the `lib` folder
+### LiquidJava
 
-### Debugging Mode
+#### Refinements
 
-To run the extension in debugging mode by manually starting the server and connecting the client to it:
+To refine a variable, field, parameter or return value, use the `@Refinement` annotation with a predicate as an argument. The predicate must be a boolean expression that uses the name of the variable being refined (or `_`) to refer to its value. You can also provide a custom message to be included in the error message when the refinement is violated. Some examples include:
 
-* Run the server:
-    - Open the `server` folder in your IDE
-    - Run `App.java`, which will start the server on port `50000`
-    - View the server logs in the console
+```java
+@Refinement("x > 0") // x must be greater than 0
+int x;
 
-* Run the client:
-    - Open the `client` folder in VS Code
-    - Set the `DEBUG` variable to `true` in [`client/src/extension.ts`](./client/src/extension.ts)
-    - Go to `Run` > `Run Extension` (or press `F5`)
-    - A new VS Code instance will open with the LiquidJava extension enabled, which will connect to the server on port `50000`
-    - Open a Java project containing the `liquid-java-api.jar` in the `lib` folder
-    - View the client logs in the `LiquidJava` output channel or by clicking the status indicator
+@Refinement("0 <= _ && _ <= 100") // y must be between 0 and 100
+int y;
 
-### Create Server JAR
+@Refinement(value="z % 2 == 0 ? z >= 0 : z < 0", msg="z must be positive if even, negative if odd")
+int z;
 
-To build the language server, export it as a runnable JAR file named `language-server-liquidjava.jar` and place it in `/client/server`.
+@Refinement("_ >= 0")
+int absDiv(int a, @Refinement(value="b != 0", msg="cannot divide by zero") int b) {
+    int res = a / b;
+    return res >= 0 ? res : -res;
+}
+```
 
-- In **Eclipse**:
-    - Open the `server` folder
-    - Select `File > Export > Runnable JAR file`
-    - In the launch configuration, choose `main - vscode-liquid-java-server`
-    - In the output path, choose the `/client/server` folder of this extension
-- In **VS Code**:
-    - Open the `server` folder
-    - Use the Export Jar feature (`Ctrl+Shift+P` > `Java: Export Jar`)
-    - Select `App` as the main class
-    - Select `OK`
-    - Copy the generated JAR from the root directory to the `/client/server` folder
-- In **IntelliJ**:
-    - Open the `server` folder
-    - Go to `File` > `Project Structure` > `Artifacts`
-    - Select `Add a new Jar` > `From modules with dependencies`
-    - Select `App` as the main class
-    - Build the artifact via `Build` > `Build Artifacts` > `Build`
-    - Copy the generated JAR from the `out/artifacts` folder to the `/client/server` folder
+#### Refinement Aliases
 
-### Project Structure
-- `/server` - Implements the [Language Server Protocol (LSP)](https://microsoft.github.io/language-server-protocol/) in Java using the [LSP4J](https://github.com/eclipse/lsp4j) library
-- `/client` - Implements the VS Code extension in TypeScript that connects to the language server using LSP
-    - It depends on [Language Support for Java™](https://github.com/redhat-developer/vscode-java) for regular Java errors
-- `/lib` - Contains the `liquidjava-api.jar` required for the extension to be activated in a Java project
+To simplify the usage of refinements, you can create **predicate aliases** using the `@RefinementAlias` annotation, and apply them inside other refinements:
+
+```java
+@RefinementAlias("Percentage(int v) { 0 <= v && v <= 100 }")
+public class MyClass {
+
+    // x must be between 0 and 100
+    @Refinement("Percentage(x)")
+    int x = 25;
+}
+```
+
+#### Object State Modeling via Typestates
+
+Beyond basic refinements, LiquidJava also supports **object state modeling** via typestates, which allows developers to specify when a method can or cannot be called based on the state of the object. You can also provide a custom error message for when the method precondition is violated. For example:
+
+```java
+@StateSet({"open", "closed"})
+public class MyFile {
+
+    @StateRefinement(to="open(this)")
+    public MyFile() {}
+
+    @StateRefinement(from="open(this)", msg="file must be open to read")
+    public void read() {}
+
+    @StateRefinement(from="open(this)", to="closed(this)", msg="file must be open to close")
+    public void close() {}
+}
+
+MyFile f = new MyFile();
+f.read();
+f.close();
+f.read(); // type error: file must be open to read
+```
+
+#### Ghost Variables and External Refinements
+
+Finally, LiquidJava also provides **ghost variables**, which are used to track additional information about the program state when typestates aren't enough, with the `@Ghost` annotation. Additionally, you can also refine external libraries using the `@ExternalRefinementsFor` annotation. Here is an example of the `java.util.Stack` class refined with LiquidJava, using a `size` ghost variable to track the number of elements in the stack:
+
+```java
+@ExternalRefinementsFor("java.util.Stack")
+@Ghost("int size")
+public interface StackRefinements<E> {
+
+	public void Stack();
+
+	@StateRefinement(to="size(this) == size(old(this)) + 1") // increments size by 1
+	public boolean push(E elem);
+
+	@StateRefinement(from="size(this) > 0", to="size(this) == size(old(this)) - 1", msg="cannot pop from an empty stack") // decrements size by 1
+	public E pop();
+
+	@StateRefinement(from="size(this) > 0", msg="cannot peek from an empty stack")
+	public E peek();
+}
+
+Stack<String> s = new Stack<>();
+s.push("hello");
+s.pop();
+s.pop(); // type error: cannot pop from an empty stack
+
+```
+
+You can find more examples of how to use LiquidJava on the [LiquidJava Website](https://liquid-java.github.io). To learn how to use LiquidJava, you can also follow the [LiquidJava tutorial](https://github.com/liquid-java/liquidjava-tutorial).
+
+For more information, check the following repositories:
+- [liquidjava](https://github.com/liquid-java/liquidjava): Includes the API, verifier and some examples
+- [vscode-liquidjava](https://github.com/liquid-java/vscode-liquidjava): Source code of this VS Code extension
+- [liquidjava-examples](https://github.com/liquid-java/liquidjava-examples): Examples of how to use LiquidJava
+- [liquid-java-external-libs](https://github.com/liquid-java/liquid-java-external-libs): Examples of how to use LiquidJava to refine external libraries

@@ -20,6 +20,6 @@ if ! grep -q "\"version\": \"$VERSION\"" ./client/package.json; then
 fi
 
 cd client
-vsce package
+npx vsce package
 code --install-extension liquid-java-$VERSION.vsix
 cd ..
