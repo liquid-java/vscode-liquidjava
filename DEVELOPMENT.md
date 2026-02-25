@@ -20,13 +20,22 @@ cd client
 npm install
 ```
 
-The language server JAR is already available in the `client/server` directory.
-
 ### Packaging and Installation
 
-To package the extension and install it in your local VS Code instance, run the following command from the repository root:
+To build the language server JAR, run:
 
 ```bash
+cd server
+mvn clean package
+mkdir -p ../client/server
+cp target/language-server-liquidjava.jar ../client/server/
+cd ..
+```
+
+Then, to package the extension and install it in your local VS Code instance, run the following command from the repository root:
+
+```bash
+cd client
 npx vsce package
 ```
 
@@ -36,7 +45,7 @@ This creates a `.vsix` file. You can then install it in VS Code with:
 code --install-extension liquid-java-<version>.vsix
 ```
 
-Alternatively, use the provided install script from the repository root:
+Alternatively, you can use the provided install script from the repository root, which automatically builds the language server and installs the extension:
 
 ```bash
 ./install.sh <version>
