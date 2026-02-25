@@ -22,30 +22,7 @@ npm install
 
 ### Packaging and Installation
 
-To build the language server JAR, run:
-
-```bash
-cd server
-mvn clean package
-mkdir -p ../client/server
-cp target/language-server-liquidjava.jar ../client/server/
-cd ..
-```
-
-Then, to package the extension and install it in your local VS Code instance, run the following command from the repository root:
-
-```bash
-cd client
-npx vsce package
-```
-
-This creates a `.vsix` file. You can then install it in VS Code with:
-
-```bash
-code --install-extension liquid-java-<version>.vsix
-```
-
-Alternatively, you can use the provided install script from the repository root, which automatically builds the language server and installs the extension:
+To build the language server, package the extension, and install it in your local VS Code instance, you can run the provided script from the repository root:
 
 ```bash
 ./install.sh <version>
@@ -55,13 +32,13 @@ Replace `<version>` with the version number in [client/package.json](./client/pa
 
 ### Releasing
 
-1. Increment the version number in [client/package.json](./client/package.json)
+To create and push a git tag that will trigger the GitHub Actions workflow that automatically publishes the extension in both the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) and the [Open VSX Registry](https://open-vsx.org/extension/AlcidesFonseca/liquid-java):
+1. Increment the version in [client/package.json](./client/package.json)
 2. Run the release script from the repository root:
-```bash
-./release.sh <version>
-```
 
-This script will create a git tag that will trigger the GitHub Actions workflow to automatically publish the extension to both the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) and [Open VSX Registry](https://open-vsx.org/extension/AlcidesFonseca/liquid-java).
+```bash
+./release.sh <new-version>
+```
 
 ### Development Mode
 
@@ -70,10 +47,10 @@ To run the extension in development mode, follow these steps:
 2. A new VS Code instance will open with the extension installed, which will automatically run the language server in the background and connect to it
 3. Open a Java project using LiquidJava
 
-To run the language server manually, you can execute the JAR directly, following these steps:
+To run the language server manually, follow these steps:
 
-1. Set the `DEBUG` constant in [client/src/extension.ts](./client/src/extension.ts) to `true`
-2. Run the server (from the JAR or directly from the IDE) in port `50000` (default)
+1. Run the server in port `50000` (default)
+2. In the client, set the `DEBUG` constant in [client/src/extension.ts](./client/src/extension.ts) to `true`
 3. Run the client which will connect to the server in port `50000`
 
 ### Project Structure
