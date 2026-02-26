@@ -1,6 +1,6 @@
 # Java related
 *.class
-# *.jar
+*.jar
 *.war
 *.ear
 *.nar
