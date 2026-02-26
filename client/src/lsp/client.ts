@@ -6,6 +6,8 @@ import { updateStatusBar } from '../services/status-bar';
 import { handleLJDiagnostics } from '../services/diagnostics';
 import { onActiveFileChange } from '../services/events';
 import type { LJDiagnostic } from "../types/diagnostics";
+import { ContextHistory } from '../types/context';
+import { handleContextHistory } from '../services/context';
 
 /**
  * Starts the client and connects it to the language server
@@ -40,6 +42,10 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
         
         extension.client.onNotification("liquidjava/diagnostics", (diagnostics: LJDiagnostic[]) => {
             handleLJDiagnostics(diagnostics);
+        });
+
+        extension.client.onNotification("liquidjava/context", (contextHistory: ContextHistory) => {
+            handleContextHistory(contextHistory);
         });
 
         const editor = vscode.window.activeTextEditor;

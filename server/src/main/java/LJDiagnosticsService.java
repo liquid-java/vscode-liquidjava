@@ -15,6 +15,8 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 import liquidjava.diagnostics.LJDiagnostic;
+import liquidjava.processor.context.ContextHistory;
+import utils.ContextHistoryConverter;
 import utils.DiagnosticConverter;
 import utils.PathUtils;
 
@@ -58,6 +60,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
         });
         List<LJDiagnostic> diagnostics = Stream.concat(ljDiagnostics.errors().stream(), ljDiagnostics.warnings().stream()).collect(Collectors.toList());
         sendDiagnosticsNotification(diagnostics);
+        this.client.sendContext(ContextHistoryConverter.convertToDTO(ContextHistory.getInstance()));
     }
 
     /**

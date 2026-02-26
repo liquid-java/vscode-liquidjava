@@ -91,6 +91,7 @@
   "repository": {
     "keywords": {
       "patterns": [
+        { "match": "\\bthis\\b", "name": "variable.language.this.liquidjava" },
         { "match": "\\bghost\\b|\\balias\\b|\\btype\\b", "name": "keyword.other.liquidjava" }
       ]
     },

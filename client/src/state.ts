@@ -6,6 +6,7 @@ import { LiquidJavaLogger } from "./services/logger";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
 import type { LJDiagnostic } from "./types/diagnostics";
 import type { StateMachine } from "./types/fsm";
+import { ContextHistory, Selection } from "./types/context";
 
 export class ExtensionState {
     // server/client state
@@ -22,6 +23,8 @@ export class ExtensionState {
     file?: string;
     diagnostics?: LJDiagnostic[];
     stateMachine?: StateMachine;
+    contextHistory?: ContextHistory;
+    selection?: Selection;
 }
 
 export const extension = new ExtensionState();
