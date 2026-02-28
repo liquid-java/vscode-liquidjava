@@ -9,7 +9,7 @@ export type ErrorPosition = {
     colEnd: number;
 }
 
-export type Position = {
+export type SourcePosition = {
     file: string;
     line: number;
     column: number;
@@ -17,7 +17,7 @@ export type Position = {
 
 export type PlacementInCode = {
     text: string;
-    position: Position;
+    position: SourcePosition;
 }
 
 export type TranslationTable = Record<string, PlacementInCode>;

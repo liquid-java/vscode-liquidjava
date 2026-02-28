@@ -18,15 +18,14 @@ import { runClient, stopClient } from "./lsp/client";
  */
 export async function activate(context: vscode.ExtensionContext) {
     registerLogger(context);
-    registerStatusBar(context);
-    registerCommands(context);
-    registerWebview(context);
-    registerEvents(context);
-    registerAutocomplete(context);
-    registerHover();
-
     extension.logger.client.info("Activating LiquidJava extension...");
     
+    registerStatusBar(context);
+    registerCommands(context);
+    registerEvents(context);
+    registerWebview(context);
+    registerAutocomplete(context);
+    registerHover();
     await applyItalicOverlay();
     await startExtension(context);
 }

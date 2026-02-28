@@ -1,6 +1,7 @@
 package dtos.context;
 
 import dtos.diagnostics.PlacementInCodeDTO;
+import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.processor.context.RefinedVariable;
 
 /**
@@ -12,7 +13,8 @@ public record VariableDTO(
     String refinement,
     String mainRefinement,
     PlacementInCodeDTO placementInCode,
-    boolean isParameter
+    boolean isParameter,
+    SourcePositionDTO annPosition
 ) {
     public static VariableDTO from(RefinedVariable refinedVariable) {
         return new VariableDTO(
@@ -21,7 +23,8 @@ public record VariableDTO(
             refinedVariable.getRefinement().toString(),
             refinedVariable.getMainRefinement().toString(),
             PlacementInCodeDTO.from(refinedVariable.getPlacementInCode()),
-            refinedVariable.isParameter()
+            refinedVariable.isParameter(),
+            SourcePositionDTO.from(refinedVariable.getAnnPosition())
         );
     }
 }
