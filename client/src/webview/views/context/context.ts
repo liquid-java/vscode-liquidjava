@@ -20,10 +20,12 @@ export function renderContextView(context: LJContext, currentFile: string, secti
     return /*html*/`
         <div>
             ${renderMainHeader("", 'context')}
-            ${total === 0 ? '<p>No context information available for the current position.</p>' : ''}
-            ${renderContextAliases(aliases, sectionState.aliases)}
-            ${renderContextGhosts(ghosts, sectionState.ghosts)}
-            ${renderContextVariables(allVars, sectionState.vars)}
+            ${total === 0
+                ? '<p>No context information available for the current position.</p>'
+                : `${renderContextAliases(aliases, sectionState.aliases)}
+                   ${renderContextGhosts(ghosts, sectionState.ghosts)}
+                   ${renderContextVariables(allVars, sectionState.vars)}
+            `}
         </div>
     `;
 }

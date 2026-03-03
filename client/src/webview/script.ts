@@ -27,9 +27,9 @@ export function getScript(vscode: any, document: any, window: any) {
     let diagramOrientation: "LR" | "TB" = "TB";
     let currentDiagram: string = '';
     const contextSectionState: ContextSectionState = {
-        vars: true,
-        ghosts: true,
-        aliases: true,
+        vars: false,
+        ghosts: false,
+        aliases: false,
     };
 
     // initial state
