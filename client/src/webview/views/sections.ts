@@ -66,7 +66,7 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
 
 export function renderLocationLink(position?: SourcePosition): string {
     if (!position) return 'No location';
-    const file = `${position.file.split('/').pop().trim() || position.file}:${position.line}`;
+    const file = `${position.file.split('/').pop().trim() || position.file}:${position.line + 1}`;
     return /*html*/`<a
         href="#"
         class="link location-link"
