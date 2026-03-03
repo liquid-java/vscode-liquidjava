@@ -1,5 +1,5 @@
 import type { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../../types/diagnostics";
-import { renderHeader, renderLocation, renderSection } from "../sections";
+import { renderDiagnosticHeader, renderLocation, renderSection } from "../sections";
 
 export function renderWarnings(warnings: LJWarning[]): string {
     return /*html*/`
@@ -24,7 +24,7 @@ const warningContentRenderers: Partial<Record<LJWarning['type'], (warning: LJWar
 };
 
 export function renderWarning(warning: LJWarning): string {
-    const header = renderHeader(warning);
+    const header = renderDiagnosticHeader(warning);
     const content = warningContentRenderers[warning.type]?.(warning) ?? '';
     const location = renderLocation(warning);
     return /*html*/`${header}${content}${location}`;

@@ -93,8 +93,7 @@ function getGhostCompletionItems(ghosts: LJGhost[], triggerParameterHints: boole
     return ghosts.map(ghost => {
         const parameters = ghost.parameterTypes.map(getSimpleName).join(", ");
         const ghostSig = `${ghost.returnType} ${ghost.name}(${parameters})`;
-        const isState = /^state\d+\(_\) == \d+$/.test(ghost.refinement);
-        const description = isState ? "state" : "ghost";
+        const description = ghost.isState ? "state" : "ghost";
         return createCompletionItem({
             name: ghost.name,
             kind: vscode.CompletionItemKind.Function,

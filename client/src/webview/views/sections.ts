@@ -13,7 +13,14 @@ export const renderCustomSection = (title: string, body: string): string => /*ht
 export const renderSection = (title: string, body: string): string => /*html*/
     renderCustomSection(title, `<pre>${body}</pre>`);
 
-export const renderHeader = (diagnostic: LJDiagnostic): string => /*html*/
+export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
+    <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
+        <span class="context-toggle-icon">${isExpanded ? '▾' : '▸'}</span>
+        <span>${title}</span>
+    </button>
+    `;
+
+export const renderDiagnosticHeader = (diagnostic: LJDiagnostic): string => /*html*/
     `<h3>${diagnostic.title}</h3><div class="diagnostic-header"><p>${diagnostic.message}</p></div>`;
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {

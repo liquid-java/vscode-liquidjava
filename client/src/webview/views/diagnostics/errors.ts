@@ -1,4 +1,4 @@
-import { renderHeader, renderLocation, renderSection, renderCustomSection, renderTranslationTable,  } from "../sections";
+import { renderDiagnosticHeader, renderLocation, renderSection, renderCustomSection, renderTranslationTable,  } from "../sections";
 import { renderDerivationNode } from "./derivation-nodes";
 import type {
     ArgumentMismatchError,
@@ -58,7 +58,7 @@ const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) =>
 };
 
 export function renderError(error: LJError, errorIndex: number, isExpanded: boolean): string {
-    const header = renderHeader(error);
+    const header = renderDiagnosticHeader(error);
     const content = errorContentRenderers[error.type]?.(error) ?? '';
     const location = renderLocation(error);
     const extra = renderExtra(error, errorIndex, isExpanded);

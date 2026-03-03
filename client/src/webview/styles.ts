@@ -288,6 +288,36 @@ export function getStyles(): string {
             font-family: var(--vscode-editor-font-family);
             font-size: 0.9em;
         }
+        .context-section {
+            margin-bottom: 1rem;
+        }
+        .context-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0;
+            margin: 0 0 0.5rem 0;
+            background: none;
+            border: none;
+            color: var(--vscode-foreground);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: left;
+        }
+        .context-toggle-btn:hover {
+            background: none;
+        }
+        .context-toggle-icon {
+            width: 1rem;
+            text-align: center;
+            flex-shrink: 0;
+            font-size: larger;
+        }
+        .context-section-content.collapsed {
+            display: none;
+        }
         .diagram-section {
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;

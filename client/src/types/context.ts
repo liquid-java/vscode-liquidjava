@@ -18,6 +18,7 @@ export type LJGhost = {
   returnType: string;
   parameterTypes: string[];
   refinement: string;
+  isState: boolean;
 }
 
 export type LJAlias = {

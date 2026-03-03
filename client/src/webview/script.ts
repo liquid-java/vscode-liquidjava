@@ -7,7 +7,7 @@ import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
 import { renderDiagnosticsView } from "./views/diagnostics/diagnostics";
 import { LJContext } from "../types/context";
-import { renderContextView } from "./views/context/context";
+import { ContextSectionState, renderContextView } from "./views/context/context";
 
 /**
  * Initializes the webview script
@@ -26,6 +26,11 @@ export function getScript(vscode: any, document: any, window: any) {
     let selectedTab: NavTab = 'diagnostics';
     let diagramOrientation: "LR" | "TB" = "TB";
     let currentDiagram: string = '';
+    const contextSectionState: ContextSectionState = {
+        vars: true,
+        ghosts: true,
+        aliases: true,
+    };
 
     // initial state
     root.innerHTML = renderLoading();
@@ -35,6 +40,34 @@ export function getScript(vscode: any, document: any, window: any) {
     root.addEventListener('click', (e: any) => {
         const target = e.target as any;
         if (!target) return;
+
+        // context section toggle
+        const contextToggleButton = target.closest?.('.context-toggle-btn');
+        if (contextToggleButton) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const sectionId = contextToggleButton.getAttribute('data-context-toggle');
+            if (!sectionId) return;
+
+            const content = document.getElementById(sectionId);
+            if (!content) return;
+
+            const isExpanded = contextToggleButton.getAttribute('aria-expanded') !== 'false';
+            const nextExpanded = !isExpanded;
+            if (sectionId === 'context-vars') contextSectionState.vars = nextExpanded;
+            if (sectionId === 'context-ghosts') contextSectionState.ghosts = nextExpanded;
+            if (sectionId === 'context-aliases') contextSectionState.aliases = nextExpanded;
+            contextToggleButton.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
+            content.classList.toggle('collapsed', !nextExpanded);
+
+            const icon = contextToggleButton.querySelector('.context-toggle-icon');
+            if (icon) {
+                icon.textContent = nextExpanded ? '▾' : '▸';
+            }
+
+            return;
+        }
 
         // location link or variable click
         if (target.classList.contains('location-link') || target.classList.contains('node-var')) {
@@ -186,7 +219,7 @@ export function getScript(vscode: any, document: any, window: any) {
                 if (stateMachine) renderMermaidDiagram(document, window);
                 break;
             case 'context':
-                root.innerHTML = renderContextView(context, currentFile);
+                root.innerHTML = renderContextView(context, currentFile, contextSectionState);
                 break;
         }
     }
