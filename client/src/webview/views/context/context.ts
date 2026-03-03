@@ -5,9 +5,9 @@ import { renderContextGhosts } from "./ghosts";
 import { renderContextVariables } from "./variables";
 
 export type ContextSectionState = {
-    vars: boolean;
-    ghosts: boolean;
     aliases: boolean;
+    ghosts: boolean;
+    vars: boolean;
 }
 
 export function renderContextView(context: LJContext, currentFile: string, sectionState: ContextSectionState): string {

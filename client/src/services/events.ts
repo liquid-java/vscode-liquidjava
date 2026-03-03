@@ -3,7 +3,7 @@ import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { Selection } from '../types/context';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
-import { getVariablesInScope, getVisibleVariables, filterAndSortVariables, filterInstanceVariables } from './context';
+import { updateContextWithSelection } from './context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 
@@ -38,7 +38,7 @@ export async function onActiveFileChange(editor: vscode.TextEditor) {
     extension.file = editor.document.uri.fsPath;
     extension.webview?.sendMessage({ type: "file", file: extension.file });
     await updateStateMachine(editor.document);
-    updateSelectionAndContext(editor.selection);
+    handleContextUpdate(editor.selection);
 }
 
 /**
@@ -49,7 +49,7 @@ export async function onSelectionChange(event: vscode.TextEditorSelectionChangeE
     // debounce selection changes
     if (selectionTimeout) clearTimeout(selectionTimeout);
     selectionTimeout = setTimeout(() => {
-        updateSelectionAndContext(event.selections[0]);
+        handleContextUpdate(event.selections[0]);
     }, SELECTION_DEBOUNCE_MS);
 }
 
@@ -57,7 +57,8 @@ export async function onSelectionChange(event: vscode.TextEditorSelectionChangeE
  * Updates the current selection and context
  * @param selection The new selection
  */
-function updateSelectionAndContext(selection: vscode.Selection) {
+function handleContextUpdate(selection: vscode.Selection) {
+    if (!extension.file || !extension.context) return;
     const selectionStart = selection.start;
     const selectionEnd = selection.end;
     const currentSelection: Selection = {
@@ -66,14 +67,6 @@ function updateSelectionAndContext(selection: vscode.Selection) {
         endLine: selectionEnd.line,
         endColumn: selectionEnd.character
     };
-    if (extension.context && extension.file) {
-        const variablesInScope = getVariablesInScope(extension.file, currentSelection) || [];
-        const instanceVariables = filterInstanceVariables(extension.context.instanceVars || [], variablesInScope);
-        const globalVariables = extension.context.globalVars || [];
-        const visibleInstanceVariables = getVisibleVariables(instanceVariables, extension.file, currentSelection);
-        const allVars = filterAndSortVariables([...variablesInScope, ...globalVariables, ...visibleInstanceVariables]);
-        extension.context.varsInScope = variablesInScope;
-        extension.context.allVars = allVars;
-        extension.webview?.sendMessage({ type: "context", context: extension.context });
-    }
+    updateContextWithSelection(currentSelection);
+    extension.webview?.sendMessage({ type: "context", context: extension.context });
 }

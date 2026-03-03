@@ -5,6 +5,16 @@ export function handleContext(context: LJContext) {
     extension.context = context;
 }
 
+export function updateContextWithSelection(selection: Selection) {
+    const variablesInScope = getVariablesInScope(extension.file, selection) || [];
+    const instanceVariables = filterInstanceVariables(extension.context.instanceVars || [], variablesInScope);
+    const globalVariables = extension.context.globalVars || [];
+    const visibleInstanceVariables = getVisibleVariables(instanceVariables, extension.file, selection);
+    const allVars = sortVariables(filterDuplicateVariables([...variablesInScope, ...globalVariables, ...visibleInstanceVariables]));
+    extension.context.varsInScope = variablesInScope;
+    extension.context.allVars = allVars;
+}
+
 // Gets the variables in scope for a given file and position
 // Returns null if position not in any scope
 export function getVariablesInScope(file: string, selection: Selection): LJVariable[] | null {
@@ -38,6 +48,34 @@ export function getVariablesInScope(file: string, selection: Selection): LJVaria
     return visibleVariables;
 }
 
+function getVisibleVariables(variables: LJVariable[], file: string, selection: Selection, useAnnotationPositions: boolean = false): LJVariable[] {
+    const isCollapsedSelection =
+        selection.startLine === selection.endLine &&
+        selection.startColumn === selection.endColumn;
+
+    return variables.filter((variable) => {
+        if (variable.placementInCode?.position.file !== file) return false; // variable is not in the current file
+       
+        const placement = variable.placementInCode?.position;
+       
+        // single point cursor
+        if (isCollapsedSelection) {
+            const position = useAnnotationPositions ? variable.annPosition || placement : placement;
+            if (!position || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the selection (for method and parameter refinements)
+
+            // variable was declared before the cursor line or its in the same line but before the cursor column
+            return (
+                position.line < selection.startLine ||
+                (position.line === selection.startLine && position.column + 1 <= selection.startColumn)
+            );
+        }
+        // range selection, filter variables that are only within the selection
+        const varSelection: Selection = { startLine: placement.line, startColumn: placement.column, endLine: placement.line, endColumn: placement.column }
+        return isSelectionWithinAnother(varSelection, selection);
+    });
+}
+
+// Normalizes the selection to ensure start is before end
 function normalizeSelection(selection: Selection): Selection {
     const startsBeforeEnds =
         selection.startLine < selection.endLine ||
@@ -68,16 +106,19 @@ function isSelectionWithinAnother(selection: Selection, another: Selection): boo
     return startsWithin && endsWithin;
 }
 
-export function filterAndSortVariables(variables: LJVariable[]): LJVariable[] {
-    // remove duplicates
+function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] {
     const uniqueVariables: Map<string, LJVariable> = new Map();
     for (const variable of variables) {
         if (!uniqueVariables.has(variable.name)) {
             uniqueVariables.set(variable.name, variable);
         }
     }
-    // sort by position in code (if available) and then by name
-    return Array.from(uniqueVariables.values()).sort((left, right) => {
+    return Array.from(uniqueVariables.values());
+}
+
+function sortVariables(variables: LJVariable[]): LJVariable[] {
+    // sort by position or name
+    return variables.sort((left, right) => {
         const leftPosition = left.placementInCode?.position
         const rightPosition = right.placementInCode?.position
 
@@ -99,33 +140,6 @@ function normalizeVariableName(name: string): string {
     return name.startsWith("#") ? name.split("#")[1] : name;
 }
 
-export function getVisibleVariables(variables: LJVariable[], file: string, selection: Selection, useAnnotationPositions: boolean = false): LJVariable[] {
-    const isCollapsedSelection =
-        selection.startLine === selection.endLine &&
-        selection.startColumn === selection.endColumn;
-
-    return variables.filter((variable) => {
-        if (variable.placementInCode?.position.file !== file) return false; // variable is not in the current file
-       
-        const placement = variable.placementInCode?.position;
-       
-        // single point cursor
-        if (isCollapsedSelection) {
-            const position = useAnnotationPositions ? variable.annPosition || placement : placement;
-            if (!position || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the selection (for method and parameter refinements)
-
-            // variable was declared before the cursor line or its in the same line but before the cursor column
-            return (
-                position.line < selection.startLine ||
-                (position.line === selection.startLine && position.column + 1 <= selection.startColumn)
-            );
-        }
-        // range selection, filter variables that are only within the selection
-        const varSelection: Selection = { startLine: placement.line, startColumn: placement.column, endLine: placement.line, endColumn: placement.column }
-        return isSelectionWithinAnother(varSelection, selection);
-    });
-}
-
-export function filterInstanceVariables(instanceVars: LJVariable[], variablesInScope: LJVariable[]): LJVariable[] {
+function filterInstanceVariables(instanceVars: LJVariable[], variablesInScope: LJVariable[]): LJVariable[] {
     return instanceVars.filter(v => variablesInScope.some(s => s.name === v.name.split("_")[0].replace(/^#/, '')));
 }
