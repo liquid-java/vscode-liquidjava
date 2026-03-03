@@ -10,7 +10,7 @@ export function renderContextGhosts(ghosts: LJGhost[], isExpanded: boolean): str
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>Ghost</th>
                             <th>Kind</th>
                             <th>Parameters</th>
                         </tr>

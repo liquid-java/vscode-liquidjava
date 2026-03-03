@@ -117,7 +117,7 @@ export function getVisibleVariables(variables: LJVariable[], file: string, selec
             // variable was declared before the cursor line or its in the same line but before the cursor column
             return (
                 position.line < selection.startLine ||
-                (position.line === selection.startLine && position.column <= selection.startColumn)
+                (position.line === selection.startLine && position.column + 1 <= selection.startColumn)
             );
         }
         // range selection, filter variables that are only within the selection

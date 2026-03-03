@@ -20,7 +20,11 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                             <tr>
                                 <td><code>${variable.type} ${variable.name}</code></td>
                                 <td><code>${variable.refinement}</code></td>
-                                <td>${variable.placementInCode ? `<code>${renderLocationLink(variable.placementInCode.position)}</code>` : '<span>Unknown</span>'}</td>
+                                <td>
+                                    ${variable.placementInCode
+                                    ?`<code>${renderLocationLink({ ...variable.placementInCode.position, column: variable.placementInCode.position.column + 1 })}</code>`
+                                    : '<span>Unknown</span>'}
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>

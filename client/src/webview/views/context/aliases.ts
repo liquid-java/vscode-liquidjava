@@ -11,7 +11,7 @@ export function renderContextAliases(aliases: LJAlias[], isExpanded: boolean): s
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>Alias</th>
                             <th>Predicate</th>
                         </tr>
                     </thead>
