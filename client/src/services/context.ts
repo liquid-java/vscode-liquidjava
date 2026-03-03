@@ -125,3 +125,7 @@ export function getVisibleVariables(variables: LJVariable[], file: string, selec
         return isSelectionWithinAnother(varSelection, selection);
     });
 }
+
+export function filterInstanceVariables(instanceVars: LJVariable[], variablesInScope: LJVariable[]): LJVariable[] {
+    return instanceVars.filter(v => variablesInScope.some(s => s.name === v.name.split("_")[0].replace(/^#/, '')));
+}

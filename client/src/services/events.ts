@@ -3,7 +3,7 @@ import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { Selection } from '../types/context';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
-import { getVariablesInScope, getVisibleVariables, filterAndSortVariables } from './context';
+import { getVariablesInScope, getVisibleVariables, filterAndSortVariables, filterInstanceVariables } from './context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 
@@ -68,9 +68,11 @@ function updateSelectionAndContext(selection: vscode.Selection) {
     };
     if (extension.context && extension.file) {
         const variablesInScope = getVariablesInScope(extension.file, currentSelection) || [];
-        const otherVars = getVisibleVariables([...(extension.context.instanceVars || []), ...(extension.context.globalVars || [])], extension.file, currentSelection);
-        const allVars = filterAndSortVariables([...variablesInScope, ...otherVars]);
-        extension.context.varsInScope = variablesInScope || [];
+        const instanceVariables = filterInstanceVariables(extension.context.instanceVars || [], variablesInScope);
+        const globalVariables = extension.context.globalVars || [];
+        const visibleInstanceVariables = getVisibleVariables(instanceVariables, extension.file, currentSelection);
+        const allVars = filterAndSortVariables([...variablesInScope, ...globalVariables, ...visibleInstanceVariables]);
+        extension.context.varsInScope = variablesInScope;
         extension.context.allVars = allVars;
         extension.webview?.sendMessage({ type: "context", context: extension.context });
     }
