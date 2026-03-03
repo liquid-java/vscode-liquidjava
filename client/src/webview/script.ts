@@ -6,7 +6,7 @@ import type { LJDiagnostic } from "../types/diagnostics";
 import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
 import { renderDiagnosticsView } from "./views/diagnostics/diagnostics";
-import { LJContext } from "../types/context";
+import { LJContext, Selection } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
 
 /**
@@ -164,6 +164,32 @@ export function getScript(vscode: any, document: any, window: any) {
                 }
                 updateView();
             }
+            return;
+        }
+
+        // highlight variable 
+        if (target.classList.contains('highlight-btn')) {
+            e.stopPropagation();
+
+            const previousSelected = root.querySelector('.highlight-btn.selected');        
+            if (previousSelected) {
+                // unselect previous
+                previousSelected.classList.remove('selected');
+                if (previousSelected === target) {
+                    // remove highlight
+                    vscode.postMessage({ type: 'highlight', selection: null });
+                    return;
+                }
+            }
+            target.classList.add('selected');
+
+            const startLine = parseInt(target.getAttribute('data-start-line') || '', 10);
+            const startColumn = parseInt(target.getAttribute('data-start-column') || '', 10);
+            const endLine = parseInt(target.getAttribute('data-end-line') || '', 10);
+            const endColumn = parseInt(target.getAttribute('data-end-column') || '', 10);
+            if ([startLine, startColumn, endLine, endColumn].some(Number.isNaN)) return;
+            const selection: Selection = { startLine, startColumn, endLine, endColumn };
+            vscode.postMessage({ type: 'highlight', selection });
             return;
         }
 

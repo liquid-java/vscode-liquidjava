@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getHtml } from './html';
+import { highlightRange } from '../services/highlight';
 
 /**
  * Webview provider for the LiquidJava extension
@@ -42,6 +43,9 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
             editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
           });
         });
+      } else if (message.type === "highlight") {
+        // highlight the specified range in the current editor
+        highlightRange(vscode.window.activeTextEditor, message.selection);
       }
     });
   }

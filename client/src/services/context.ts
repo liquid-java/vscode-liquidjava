@@ -1,5 +1,6 @@
 import { extension } from "../state";
 import { LJContext, Selection, LJVariable } from "../types/context";
+import { getOriginalVariableName } from "../utils/utils";
 
 export function handleContext(context: LJContext) {
     extension.context = context;
@@ -141,5 +142,5 @@ function normalizeVariableName(name: string): string {
 }
 
 function filterInstanceVariables(instanceVars: LJVariable[], variablesInScope: LJVariable[]): LJVariable[] {
-    return instanceVars.filter(v => variablesInScope.some(s => s.name === v.name.split("_")[0].replace(/^#/, '')));
+    return instanceVars.filter(v => variablesInScope.some(s => s.name === getOriginalVariableName(v.name)));
 }

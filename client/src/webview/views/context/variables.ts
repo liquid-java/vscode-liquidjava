@@ -1,5 +1,6 @@
 import { LJVariable } from "../../../types/context";
-import { renderLocationLink, renderToggleSection } from "../sections";
+import { getOriginalVariableName } from "../../utils";
+import { renderToggleSection } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean): string {
     return /*html*/`
@@ -8,23 +9,11 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
             <div id="context-vars" class="context-section-content ${isExpanded ? '' : 'collapsed'}">
                 ${variables.length > 0 ? /*html*/`
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Variable</th>
-                            <th>Refinement</th>
-                            <th>Location</th>
-                        </tr>
-                    </thead>
                     <tbody>
                         ${variables.map(variable => /*html*/`
                             <tr>
-                                <td><code>${variable.type} ${variable.name}</code></td>
-                                <td><code>${variable.refinement}</code></td>
-                                <td>
-                                    ${variable.placementInCode
-                                    ?`<code>${renderLocationLink({ ...variable.placementInCode.position, column: variable.placementInCode.position.column + 1 })}</code>`
-                                    : '<span>Unknown</span>'}
-                                </td>
+                                <td>${renderVariable(variable)}</td>
+                                <td><code>${variable.type}</code></td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -33,4 +22,17 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
             </div>
         </div>
     `;
+}
+
+function renderVariable(variable: LJVariable): string {
+    const position = variable.placementInCode.position;
+    const variableName = getOriginalVariableName(variable.name);
+    return /*html*/`
+        <button
+            class="highlight-btn"
+            data-start-line="${position.line}"
+            data-start-column="${position.column}"
+            data-end-line="${position.line}"
+            data-end-column="${position.column + variableName.length}"
+        ><code>${variable.refinement.replace("==", "=")}</code></button>`;
 }

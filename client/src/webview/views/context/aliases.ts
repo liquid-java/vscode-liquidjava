@@ -9,21 +9,15 @@ export function renderContextAliases(aliases: LJAlias[], isExpanded: boolean): s
             <div id="context-aliases" class="context-section-content ${isExpanded ? '' : 'collapsed'}">
                 ${aliases.length > 0 ? /*html*/`
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Alias</th>
-                            <th>Predicate</th>
-                        </tr>
-                    </thead>
                     <tbody>
                         ${aliases.map(alias => /*html*/`
                             <tr>
                                 <td>
                                     <code>
-                                        ${alias.name}(${alias.parameters.map((parameter, index) => `${getSimpleName(alias.types[index])} ${parameter}`).join(", ")})
+                                        ${alias.name}(${alias.parameters.map((parameter, index) => `${getSimpleName(alias.types[index])} ${parameter}`).join(", ")}) { ${alias.predicate} }
                                     </code>
                                 </td>
-                                <td><code>${alias.predicate}</code></td>
+                                <td><code>alias</code></td>
                             </tr>
                         `).join('')}
                     </tbody>
