@@ -1,11 +1,13 @@
-import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/verification/derivation-nodes";
+import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/diagnostics/derivation-nodes";
 import { renderLoading } from "./views/loading";
-import { renderStateMachineView } from "./views/diagram";
-import { createMermaidDiagram, renderMermaidDiagram, resetZoom, registerPanListeners, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
+import { renderStateMachineView } from "./views/fsm/fsm";
+import { createMermaidDiagram, renderMermaidDiagram, resetZoom, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
 import type { LJDiagnostic } from "../types/diagnostics";
-import type { StateMachine } from "../types/fsm";
+import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
-import { renderVerificationView } from "./views/verification/verification";
+import { renderDiagnosticsView } from "./views/diagnostics/diagnostics";
+import { LJContext } from "../types/context";
+import { renderContextView } from "./views/context/context";
 
 /**
  * Initializes the webview script
@@ -19,8 +21,9 @@ export function getScript(vscode: any, document: any, window: any) {
     let showAllDiagnostics = false;
     let currentFile: string | undefined;
     let expandedErrors = new Set<number>();
-    let stateMachine: StateMachine | undefined;
-    let selectedTab: NavTab = 'verification';
+    let stateMachine: LJStateMachine | undefined;
+    let context: LJContext | undefined;
+    let selectedTab: NavTab = 'diagnostics';
     let diagramOrientation: "LR" | "TB" = "TB";
     let currentDiagram: string = '';
 
@@ -135,7 +138,9 @@ export function getScript(vscode: any, document: any, window: any) {
         if (target.classList.contains('nav-tab')) {
             e.stopPropagation();
             const tab = target.getAttribute('data-tab') as NavTab;
+            console.log('Tab click:', tab);
             if (tab && tab !== selectedTab) {
+                console.log('Switching to tab:', tab);
                 selectedTab = tab;
                 updateView();
             }
@@ -146,20 +151,23 @@ export function getScript(vscode: any, document: any, window: any) {
     // message event listener from extension
     window.addEventListener('message', event => {
         const msg = event.data;
-        if (msg.type === 'diagnostics') {
-            diagnostics = msg.diagnostics as LJDiagnostic[];
-            updateView();
-        } else if (msg.type === 'file') {
-            currentFile = msg.file;
-            if (!showAllDiagnostics) updateView();
-        } else if (msg.type === 'fsm') {
-            if (!msg.sm) {
-                stateMachine = undefined;
+        switch (msg.type) {
+            case 'diagnostics':
+                diagnostics = msg.diagnostics as LJDiagnostic[];
                 updateView();
-                return;
-            }
-            stateMachine = msg.sm as StateMachine;
-            updateView();
+                break;
+            case 'file':
+                currentFile = msg.file;
+                if (!showAllDiagnostics) updateView();
+                break;
+            case 'fsm':
+                stateMachine = msg.sm as LJStateMachine | undefined;
+                updateView();
+                break;
+            case 'context':
+                context = msg.context as LJContext;
+                updateView();
+                break;
         }
     });
 
@@ -167,13 +175,19 @@ export function getScript(vscode: any, document: any, window: any) {
      * Updates the webview content based on the current state
      */
     function updateView() {
-        if (selectedTab === 'verification') {
-            root.innerHTML = renderVerificationView(diagnostics, showAllDiagnostics, currentFile, expandedErrors, selectedTab)
-        } else {
-            const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
-            currentDiagram = diagram;
-            root.innerHTML = renderStateMachineView(stateMachine, diagram, selectedTab, diagramOrientation);
-            if (stateMachine) renderMermaidDiagram(document, window);
+        switch (selectedTab) {
+            case 'diagnostics':
+                root.innerHTML = renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors);
+                break;
+            case 'fsm':
+                const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
+                currentDiagram = diagram;
+                root.innerHTML = renderStateMachineView(stateMachine, diagram, diagramOrientation);
+                if (stateMachine) renderMermaidDiagram(document, window);
+                break;
+            case 'context':
+                root.innerHTML = renderContextView(context, currentFile);
+                break;
         }
     }
 }

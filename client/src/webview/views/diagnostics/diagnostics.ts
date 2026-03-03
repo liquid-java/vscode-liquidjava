@@ -1,14 +1,13 @@
 import { LJDiagnostic, LJError, LJWarning } from "../../../types/diagnostics";
 import { renderErrors } from "./errors";
-import { NavTab, renderMainHeader } from "../sections";
+import { renderMainHeader } from "../sections";
 import { renderWarnings } from "./warnings";
 
-export function renderVerificationView(
+export function renderDiagnosticsView(
     diagnostics: LJDiagnostic[],
     showAll: boolean,
     currentFile: string,
     expandedErrors: Set<number>,
-    selectedTab: NavTab
 ): string {
     const fileDiagnostics = diagnostics.filter(diagnostic => diagnostic.file?.toLowerCase() === currentFile?.toLowerCase() || !diagnostic.file);
     const displayDiagnostics = showAll ? diagnostics : fileDiagnostics;
@@ -24,7 +23,7 @@ export function renderVerificationView(
     
     return /*html*/`
         <div>
-            ${renderMainHeader(titleMessage, selectedTab)}
+            ${renderMainHeader(titleMessage, 'diagnostics')}
             <p class="info">${infoMessage}</p>
             ${
                 diagnostics.length === 0 ? '' : /*html*/`

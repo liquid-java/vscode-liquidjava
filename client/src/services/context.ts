@@ -1,18 +1,17 @@
 import { extension } from "../state";
-import { ContextHistory, Selection, Variable } from "../types/context";
+import { LJContext, Selection, LJVariable } from "../types/context";
 
-export function handleContextHistory(contextHistory: ContextHistory) {
-    extension.contextHistory = contextHistory;
+export function handleContext(context: LJContext) {
+    extension.context = context;
 }
 
 // Gets the variables in scope for a given file and position
 // Returns null if position not in any scope
-export function getVariablesInScope(file: string, selection: Selection): Variable[] | null {
-    if (!extension.contextHistory || !selection || !file) return null;
-
+export function getVariablesInScope(file: string, selection: Selection): LJVariable[] | null {
     // get variables in file
-    const fileVars = extension.contextHistory.vars[file];
+    const fileVars = extension.context.vars[file];
     if (!fileVars) return null;
+    const normalizedSelection = normalizeSelection(selection);
 
     // get variables in the current scope based on the selection
     let mostSpecificScope: string | null = null;
@@ -21,7 +20,7 @@ export function getVariablesInScope(file: string, selection: Selection): Variabl
     // find the most specific scope that contains the selection
     for (const scope of Object.keys(fileVars)) {
         const scopeSelection = parseScopeString(scope);
-        if (isSelectionWithinScope(selection, scopeSelection)) {
+        if (isSelectionWithinAnother(normalizedSelection, scopeSelection)) {
             const scopeSize = (scopeSelection.endLine - scopeSelection.startLine) * 10000 + (scopeSelection.endColumn - scopeSelection.startColumn);
             if (scopeSize < minScopeSize) {
                 mostSpecificScope = scope;
@@ -34,8 +33,24 @@ export function getVariablesInScope(file: string, selection: Selection): Variabl
 
     // filter variables to only include those that are reachable based on their position
     const variablesInScope = fileVars[mostSpecificScope];
-    const reachableVariables = getReachableVariables(variablesInScope, selection);
-    return reachableVariables.filter(v => !v.name.startsWith("this#"));
+    const reachableVariables = getVisibleVariables(variablesInScope, file, normalizedSelection);
+    const visibleVariables = reachableVariables.filter(v => !v.name.includes("this#"));
+    return visibleVariables;
+}
+
+function normalizeSelection(selection: Selection): Selection {
+    const startsBeforeEnds =
+        selection.startLine < selection.endLine ||
+        (selection.startLine === selection.endLine && selection.startColumn <= selection.endColumn);
+
+    if (startsBeforeEnds) return selection;
+
+    return {
+        startLine: selection.endLine,
+        startColumn: selection.endColumn,
+        endLine: selection.startLine,
+        endColumn: selection.startColumn,
+    };
 }
 
 function parseScopeString(scope: string): Selection {
@@ -45,21 +60,68 @@ function parseScopeString(scope: string): Selection {
     return { startLine, startColumn, endLine, endColumn };
 }
 
-function isSelectionWithinScope(selection: Selection, scope: Selection): boolean {
-    const startsWithin = selection.startLine > scope.startLine || 
-        (selection.startLine === scope.startLine && selection.startColumn >= scope.startColumn);
-    const endsWithin = selection.endLine < scope.endLine || 
-        (selection.endLine === scope.endLine && selection.endColumn <= scope.endColumn);
+function isSelectionWithinAnother(selection: Selection, another: Selection): boolean {
+    const startsWithin = selection.startLine > another.startLine || 
+        (selection.startLine === another.startLine && selection.startColumn >= another.startColumn);
+    const endsWithin = selection.endLine < another.endLine || 
+        (selection.endLine === another.endLine && selection.endColumn <= another.endColumn);
     return startsWithin && endsWithin;
 }
 
-function getReachableVariables(variables: Variable[], selection: Selection): Variable[] {
+export function filterAndSortVariables(variables: LJVariable[]): LJVariable[] {
+    // remove duplicates
+    const uniqueVariables: Map<string, LJVariable> = new Map();
+    for (const variable of variables) {
+        if (!uniqueVariables.has(variable.name)) {
+            uniqueVariables.set(variable.name, variable);
+        }
+    }
+    // sort by position in code (if available) and then by name
+    return Array.from(uniqueVariables.values()).sort((left, right) => {
+        const leftPosition = left.placementInCode?.position
+        const rightPosition = right.placementInCode?.position
+
+        if (!leftPosition && !rightPosition) return compareVariableNames(left, right);
+        if (!leftPosition) return 1;
+        if (!rightPosition) return -1;
+        if (leftPosition.line !== rightPosition.line) return leftPosition.line - rightPosition.line;
+        if (leftPosition.column !== rightPosition.column) return leftPosition.column - rightPosition.column;
+
+        return compareVariableNames(left, right);
+    });
+}
+
+function compareVariableNames(a: LJVariable, b: LJVariable): number {
+    return normalizeVariableName(a.name).localeCompare(normalizeVariableName(b.name));
+}
+
+function normalizeVariableName(name: string): string {
+    return name.startsWith("#") ? name.split("#")[1] : name;
+}
+
+export function getVisibleVariables(variables: LJVariable[], file: string, selection: Selection, useAnnotationPositions: boolean = false): LJVariable[] {
+    const isCollapsedSelection =
+        selection.startLine === selection.endLine &&
+        selection.startColumn === selection.endColumn;
+
     return variables.filter((variable) => {
+        if (variable.placementInCode?.position.file !== file) return false; // variable is not in the current file
+       
         const placement = variable.placementInCode?.position;
-        const startPosition = variable.annPosition || placement;
-        if (!startPosition || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the selection (for method and parameter refinements)
-        
-        // variable was declared before the cursor line or its in the same line but before the cursor column
-        return startPosition.line < selection.startLine || startPosition.line === selection.startLine && startPosition.column <= selection.startColumn;
+       
+        // single point cursor
+        if (isCollapsedSelection) {
+            const position = useAnnotationPositions ? variable.annPosition || placement : placement;
+            if (!position || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the selection (for method and parameter refinements)
+
+            // variable was declared before the cursor line or its in the same line but before the cursor column
+            return (
+                position.line < selection.startLine ||
+                (position.line === selection.startLine && position.column + 1 <= selection.startColumn)
+            );
+        }
+        // range selection, filter variables that are only within the selection
+        const varSelection: Selection = { startLine: placement.line, startColumn: placement.column, endLine: placement.line, endColumn: placement.column }
+        return isSelectionWithinAnother(varSelection, selection);
     });
 }

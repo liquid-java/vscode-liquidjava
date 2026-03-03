@@ -1,4 +1,4 @@
-import type { LJDiagnostic, TranslationTable } from "../../types/diagnostics";
+import type { LJDiagnostic, SourcePosition, TranslationTable } from "../../types/diagnostics";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
     <div class="header">
@@ -17,12 +17,13 @@ export const renderHeader = (diagnostic: LJDiagnostic): string => /*html*/
     `<h3>${diagnostic.title}</h3><div class="diagnostic-header"><p>${diagnostic.message}</p></div>`;
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {
-    if (!diagnostic.position) return "";
-    const line = diagnostic.position?.lineStart ?? 0;
-    const column = diagnostic.position?.colStart ?? 0;
-    const simpleFile = diagnostic.file.split('/').pop() || diagnostic.file;
-    const link = /*html*/`<a href="#" class="link location-link" data-file="${diagnostic.file}" data-line="${line}" data-column="${column}">${simpleFile}:${line}</a>`;
-    return renderCustomSection("Location", /*html*/`<pre>${link}</pre>`);
+    if (!diagnostic.position || !diagnostic.file) return "";
+    const position: SourcePosition = {
+        file: diagnostic.file,
+        line: diagnostic.position.lineStart,
+        column: diagnostic.position.colStart
+    }
+    return renderCustomSection("Location", /*html*/`<pre>${renderLocationLink(position)}</pre>`);
 };
 
 export function renderTranslationTable(translationTable: TranslationTable): string {  
@@ -42,22 +43,11 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                 </thead>
                 <tbody>
                     ${entries.map(([variable, placement]: [string, any]) => {
-                        const simpleFile = placement.position.file.split('/').pop() || placement.position.file;
-                        const link = 
-                            /*html*/`<a
-                                href="#"
-                                class="link location-link"
-                                data-file="${placement.position.file}"
-                                data-line="${placement.position.line}"
-                                data-column="${placement.position.column}"
-                            >
-                                ${simpleFile}:${placement.position.line}
-                            </a>`;
                         return /*html*/`
                             <tr>
                                 <td><code>${variable}</code></td>
                                 <td><code>${placement.text}</code></td>
-                                <td>${link}</td>
+                                <td>${renderLocationLink(placement.position)}</td>
                             </tr>
                         `;
                     }).join('')}
@@ -67,14 +57,27 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
     `;
 }
 
-export type NavTab = 'verification' | 'state-machine';
+export function renderLocationLink(position?: SourcePosition): string {
+    if (!position) return 'No location';
+    const file = `${position.file.split('/').pop().trim() || position.file}:${position.line}`;
+    return /*html*/`<a
+        href="#"
+        class="link location-link"
+        data-file="${position.file}"
+        data-line="${position.line}"
+        data-column="${position.column}"
+    >${file}</a>`;
+}
+
+export type NavTab = 'diagnostics' | 'fsm' | 'context';
 
 export function renderNav(selectedTab: NavTab): string {
     return /*html*/`
         <nav>
             <ul>
-                <li><button class="nav-tab ${selectedTab === 'verification' ? 'selected' : ''}" data-tab="verification">Verification</button></li>
-                <li><button class="nav-tab ${selectedTab === 'state-machine' ? 'selected' : ''}" data-tab="state-machine">State Machine</button></li>
+                <li><button class="nav-tab ${selectedTab === 'diagnostics' ? 'selected' : ''}" data-tab="diagnostics">Verification</button></li>
+                <li><button class="nav-tab ${selectedTab === 'fsm' ? 'selected' : ''}" data-tab="fsm">State Machine</button></li>
+                <li><button class="nav-tab ${selectedTab === 'context' ? 'selected' : ''}" data-tab="context">Context</button></li>
             </ul>
         </nav>
     `;

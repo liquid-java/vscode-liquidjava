@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
 import { extension } from "../state";
-import type { Variable, ContextHistory, Ghost, Alias } from "../types/context";
+import type { LJVariable, LJContext, LJGhost, LJAlias } from "../types/context";
 import { getSimpleName } from "../utils/utils";
-import { getVariablesInScope } from "./context";
 import { LIQUIDJAVA_ANNOTATION_START, LJAnnotation } from "../utils/constants";
 
 type CompletionItemOptions = {
@@ -19,20 +18,20 @@ type CompletionItemOptions = {
 type CompletionItemKind = "vars" | "ghosts" | "aliases" | "keywords" | "types" | "decls" | "packages";
 
 /**
- * Registers a completion provider for LiquidJava annotations, providing context-aware suggestions based on the current context history
+ * Registers a completion provider for LiquidJava annotations, providing context-aware suggestions based on the current context
  */
 export function registerAutocomplete(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider("java", {
             provideCompletionItems(document, position, _token, completionContext) {
                 const annotation = getActiveLiquidJavaAnnotation(document, position);
-                if (!annotation || !extension.contextHistory) return null;
+                if (!annotation || !extension.context) return null;
 
                 const isDotTrigger =  completionContext.triggerKind === vscode.CompletionTriggerKind.TriggerCharacter && completionContext.triggerCharacter === ".";
                 const receiver = isDotTrigger ? getReceiverBeforeDot(document, position) : null; 
                 const file = document.uri.toString().replace("file://", "");
                 const nextChar = document.getText(new vscode.Range(position, position.translate(0, 1)));
-                const items = getContextCompletionItems(extension.contextHistory, file, annotation, nextChar, isDotTrigger, receiver);
+                const items = getContextCompletionItems(extension.context, file, annotation, nextChar, isDotTrigger, receiver);
                 const uniqueItems = new Map<string, vscode.CompletionItem>();
                 items.forEach(item => {
                     const label = typeof item.label === "string" ? item.label : item.label.label;
@@ -44,7 +43,7 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
     );
 }
 
-function getContextCompletionItems(context: ContextHistory, file: string, annotation: LJAnnotation, nextChar: string, isDotTrigger: boolean, receiver: string | null): vscode.CompletionItem[] {
+function getContextCompletionItems(context: LJContext, file: string, annotation: LJAnnotation, nextChar: string, isDotTrigger: boolean, receiver: string | null): vscode.CompletionItem[] {
     const triggerParameterHints = nextChar !== "(";
     if (isDotTrigger) {
         if (receiver === "this" || receiver === "old(this)") {
@@ -52,10 +51,9 @@ function getContextCompletionItems(context: ContextHistory, file: string, annota
         }
         return [];
     } 
-    const variablesInScope = getVariablesInScope(file, extension.selection);
-    const inScope = variablesInScope !== null;
+    const inScope = extension.context.varsInScope !== null;
     const itemsHandlers: Record<CompletionItemKind, () => vscode.CompletionItem[]> = {
-        vars: () => getVariableCompletionItems(variablesInScope || []),
+        vars: () => getVariableCompletionItems(extension.context.varsInScope || []),
         ghosts: () => getGhostCompletionItems(context.ghosts[file] || [], triggerParameterHints),
         aliases: () => getAliasCompletionItems(context.aliases, triggerParameterHints),
         keywords: () => getKeywordsCompletionItems(triggerParameterHints, inScope),
@@ -75,7 +73,7 @@ function getContextCompletionItems(context: ContextHistory, file: string, annota
     return itemsMap[annotation].map(key => itemsHandlers[key]()).flat();
 }
 
-function getVariableCompletionItems(variables: Variable[]): vscode.CompletionItem[] {
+function getVariableCompletionItems(variables: LJVariable[]): vscode.CompletionItem[] {
     return variables.map(variable => {
         const varSig = `${variable.type} ${variable.name}`;
         const codeBlocks: string[] = [];
@@ -91,7 +89,7 @@ function getVariableCompletionItems(variables: Variable[]): vscode.CompletionIte
     });
 }
 
-function getGhostCompletionItems(ghosts: Ghost[], triggerParameterHints: boolean): vscode.CompletionItem[] {
+function getGhostCompletionItems(ghosts: LJGhost[], triggerParameterHints: boolean): vscode.CompletionItem[] {
     return ghosts.map(ghost => {
         const parameters = ghost.parameterTypes.map(getSimpleName).join(", ");
         const ghostSig = `${ghost.returnType} ${ghost.name}(${parameters})`;
@@ -110,7 +108,7 @@ function getGhostCompletionItems(ghosts: Ghost[], triggerParameterHints: boolean
     });
 }
 
-function getAliasCompletionItems(aliases: Alias[], triggerParameterHints: boolean): vscode.CompletionItem[] {
+function getAliasCompletionItems(aliases: LJAlias[], triggerParameterHints: boolean): vscode.CompletionItem[] {
     return aliases.map(alias => {
         const parameters = alias.parameters
             .map((parameter, index) => {

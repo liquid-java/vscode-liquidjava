@@ -1,13 +1,12 @@
-import type { StateMachine } from "../../types/fsm";
-import { renderMainHeader, type NavTab } from "./sections";
+import type { LJStateMachine } from "../../../types/fsm";
+import { renderMainHeader, type NavTab } from "../sections";
 
-export function renderStateMachineView(sm: StateMachine, diagram: string, selectedTab: NavTab = 'state-machine', orientation: "LR" | "TB"): string {
+export function renderStateMachineView(sm: LJStateMachine, diagram: string, orientation: "LR" | "TB"): string {
     return /*html*/`
         <div>
-            ${renderMainHeader("", selectedTab)}
+            ${renderMainHeader("", 'fsm')}
             ${sm ? /*html*/`
                 <div class="diagram-section">
-                    
                     <div class="diagram-container">
                         <div class="diagram-controls">
                             <button id="zoom-in-btn" class="diagram-control-btn" title="Zoom In">+</button>

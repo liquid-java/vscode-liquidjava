@@ -1,6 +1,6 @@
 // Type definitions used for representing finite state machines
 
-export type StateMachine = {
+export type LJStateMachine = {
     className: string;
     initialStates: string[];
     states: string[];

@@ -36,9 +36,7 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
         const uri = vscode.Uri.file(message.filePath);
         vscode.workspace.openTextDocument(uri).then(doc => {
           vscode.window.showTextDocument(doc).then(editor => {
-            const line = message.line - 1;
-            const character = message.character - 1;
-            const position = new vscode.Position(line, character);
+            const position = new vscode.Position(message.line, message.character);
             const range = new vscode.Range(position, position);
             editor.selection = new vscode.Selection(position, position);
             editor.revealRange(range, vscode.TextEditorRevealType.InCenter);

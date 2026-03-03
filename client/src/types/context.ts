@@ -2,7 +2,7 @@ import { PlacementInCode, SourcePosition } from "./diagnostics";
 
 // Type definitions used for LiquidJava context information
 
-export type Variable = {
+export type LJVariable = {
   name: string;
   type: string;
   refinement: string;
@@ -12,7 +12,7 @@ export type Variable = {
   annPosition: SourcePosition | null;
 }
 
-export type Ghost = {
+export type LJGhost = {
   name: string;
   qualifiedName: string;
   returnType: string;
@@ -20,19 +20,21 @@ export type Ghost = {
   refinement: string;
 }
 
-export type Alias = {
+export type LJAlias = {
   name: string;
   parameters: string[];
   types: string[];
   predicate: string;
 }
 
-export type ContextHistory = {
-  vars: Record<string, Record<string, Variable[]>>; // file -> (scope -> variables in scope)
-  ghosts: Record<string, Ghost[]>; // file -> ghosts in file
-  instanceVars: Variable[];
-  globalVars: Variable[];
-  aliases: Alias[];
+export type LJContext = {
+  vars: Record<string, Record<string, LJVariable[]>>; // file -> (scope -> variables in scope)
+  ghosts: Record<string, LJGhost[]>; // file -> ghosts in file
+  instanceVars: LJVariable[];
+  globalVars: LJVariable[];
+  aliases: LJAlias[];
+  varsInScope: LJVariable[]; // variables in scope for the current selection
+  allVars: LJVariable[]; // instance vars + global vars + vars in scope
 }
 
 export type Selection = {

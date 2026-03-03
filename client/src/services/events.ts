@@ -3,9 +3,9 @@ import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { Selection } from '../types/context';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
+import { getVariablesInScope, getVisibleVariables, filterAndSortVariables } from './context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
-let currentSelection: Selection = { startLine: 0, startColumn: 0, endLine: 0, endColumn: 0 };
 
 /**
  * Initializes file system event listeners
@@ -38,23 +38,40 @@ export async function onActiveFileChange(editor: vscode.TextEditor) {
     extension.file = editor.document.uri.fsPath;
     extension.webview?.sendMessage({ type: "file", file: extension.file });
     await updateStateMachine(editor.document);
+    updateSelectionAndContext(editor.selection);
 }
 
 /**
  * Handles selection change events
  * @param event The selection change event
  */
-export async function onSelectionChange(event: vscode.TextEditorSelectionChangeEvent) {        
-    // update current selection
-    const selectionStart = event.selections[0].start;
-    const selectionEnd = event.selections[0].end;
-    currentSelection = {
+export async function onSelectionChange(event: vscode.TextEditorSelectionChangeEvent) { 
+    // debounce selection changes
+    if (selectionTimeout) clearTimeout(selectionTimeout);
+    selectionTimeout = setTimeout(() => {
+        updateSelectionAndContext(event.selections[0]);
+    }, SELECTION_DEBOUNCE_MS);
+}
+
+/**
+ * Updates the current selection and context
+ * @param selection The new selection
+ */
+function updateSelectionAndContext(selection: vscode.Selection) {
+    const selectionStart = selection.start;
+    const selectionEnd = selection.end;
+    const currentSelection: Selection = {
         startLine: selectionStart.line,
         startColumn: selectionStart.character,
         endLine: selectionEnd.line,
         endColumn: selectionEnd.character
     };
-    // debounce selection changes
-    if (selectionTimeout) clearTimeout(selectionTimeout);
-    selectionTimeout = setTimeout(() => extension.selection = currentSelection, SELECTION_DEBOUNCE_MS);
+    if (extension.context && extension.file) {
+        const variablesInScope = getVariablesInScope(extension.file, currentSelection) || [];
+        const otherVars = getVisibleVariables([...(extension.context.instanceVars || []), ...(extension.context.globalVars || [])], extension.file, currentSelection);
+        const allVars = filterAndSortVariables([...variablesInScope, ...otherVars]);
+        extension.context.varsInScope = variablesInScope || [];
+        extension.context.allVars = allVars;
+        extension.webview?.sendMessage({ type: "context", context: extension.context });
+    }
 }

@@ -10,6 +10,7 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
+
 import liquidjava.api.CommandLineLauncher;
 import liquidjava.diagnostics.Diagnostics;
 import liquidjava.diagnostics.ErrorPosition;
@@ -107,7 +108,9 @@ public class LJDiagnosticsHandler {
             // no location information available
             return new Range(new Position(0, 0), new Position(0, 0));
         }
-        return new Range(new Position(pos.lineStart() - 1, pos.colStart() - 1),
-                new Position(pos.lineEnd() - 1, pos.colEnd() - 1));
+        return new Range(
+            new Position(pos.lineStart() - 1, pos.colStart() - 1),
+            new Position(pos.lineEnd() - 1, pos.colEnd() - 1)
+        );
     }
 }
