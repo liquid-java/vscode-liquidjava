@@ -25,8 +25,9 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
 }
 
 function renderVariable(variable: LJVariable): string {
-    const position = variable.placementInCode.position;
     const variableName = getOriginalVariableName(variable.name);
+    const refinement = variable.refinement !== "true" ? variable.refinement.replace("==", "=") : variable.name
+    const position = variable.placementInCode.position; // TODO: handle cases where we don't really have the correct position for the variable
     return /*html*/`
         <button
             class="highlight-btn"
@@ -34,5 +35,6 @@ function renderVariable(variable: LJVariable): string {
             data-start-column="${position.column}"
             data-end-line="${position.line}"
             data-end-column="${position.column + variableName.length}"
-        ><code>${variable.refinement.replace("==", "=")}</code></button>`;
+            ${variableName === "ret" ? 'disabled' : ''}
+        ><code>${refinement}</code></button>`;
 }

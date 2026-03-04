@@ -126,6 +126,8 @@ function sortVariables(variables: LJVariable[]): LJVariable[] {
         if (!leftPosition && !rightPosition) return compareVariableNames(left, right);
         if (!leftPosition) return 1;
         if (!rightPosition) return -1;
+        if (getOriginalVariableName(left.name) === "ret") return 1;
+        if (getOriginalVariableName(right.name) === "ret") return -1;
         if (leftPosition.line !== rightPosition.line) return leftPosition.line - rightPosition.line;
         if (leftPosition.column !== rightPosition.column) return leftPosition.column - rightPosition.column;
 
@@ -134,11 +136,7 @@ function sortVariables(variables: LJVariable[]): LJVariable[] {
 }
 
 function compareVariableNames(a: LJVariable, b: LJVariable): number {
-    return normalizeVariableName(a.name).localeCompare(normalizeVariableName(b.name));
-}
-
-function normalizeVariableName(name: string): string {
-    return name.startsWith("#") ? name.split("#")[1] : name;
+    return getOriginalVariableName(a.name).localeCompare(getOriginalVariableName(b.name));
 }
 
 function filterInstanceVariables(instanceVars: LJVariable[], variablesInScope: LJVariable[]): LJVariable[] {
