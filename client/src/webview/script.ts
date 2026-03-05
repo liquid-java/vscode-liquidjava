@@ -6,7 +6,7 @@ import type { LJDiagnostic } from "../types/diagnostics";
 import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
 import { renderDiagnosticsView } from "./views/diagnostics/diagnostics";
-import { LJContext, Selection } from "../types/context";
+import { LJContext, Range } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
 
 /**
@@ -177,7 +177,7 @@ export function getScript(vscode: any, document: any, window: any) {
                 previousSelected.classList.remove('selected');
                 if (previousSelected === target) {
                     // remove highlight
-                    vscode.postMessage({ type: 'highlight', selection: null });
+                    vscode.postMessage({ type: 'range', range: null });
                     return;
                 }
             }
@@ -188,8 +188,8 @@ export function getScript(vscode: any, document: any, window: any) {
             const endLine = parseInt(target.getAttribute('data-end-line') || '', 10);
             const endColumn = parseInt(target.getAttribute('data-end-column') || '', 10);
             if ([startLine, startColumn, endLine, endColumn].some(Number.isNaN)) return;
-            const selection: Selection = { startLine, startColumn, endLine, endColumn };
-            vscode.postMessage({ type: 'highlight', selection });
+            const range: Range = { lineStart: startLine, colStart: startColumn, lineEnd: endLine, colEnd: endColumn };
+            vscode.postMessage({ type: 'range', range });
             return;
         }
 

@@ -1,13 +1,7 @@
 import type { ValDerivationNode } from './derivation-nodes';
+import type { Range } from './context';
 
 // Type definitions used for LiquidJava diagnostics
-
-export type ErrorPosition = {
-    lineStart: number;
-    lineEnd: number;
-    colStart: number;
-    colEnd: number;
-}
 
 export type SourcePosition = {
     file: string;
@@ -34,7 +28,7 @@ type BaseDiagnostic = {
     title: string;
     message: string;
     file: string;
-    position?: ErrorPosition;
+    position?: Range;
 }
 
 export type CustomError = BaseDiagnostic & {

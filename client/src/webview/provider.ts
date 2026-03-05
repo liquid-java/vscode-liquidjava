@@ -45,7 +45,7 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
         });
       } else if (message.type === "highlight") {
         // highlight the specified range in the current editor
-        highlightRange(vscode.window.activeTextEditor, message.selection);
+        highlightRange(vscode.window.activeTextEditor, message.range);
       }
     });
   }

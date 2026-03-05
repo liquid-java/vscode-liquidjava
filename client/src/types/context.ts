@@ -39,9 +39,9 @@ export type LJContext = {
   allVars: LJVariable[]; // instance vars + global vars + vars in scope
 }
 
-export type Selection = {
-  startLine: number;
-  startColumn: number;
-  endLine: number;
-  endColumn: number;
+export type Range = {
+  lineStart: number;
+  colStart: number;
+  lineEnd: number;
+  colEnd: number;
 }

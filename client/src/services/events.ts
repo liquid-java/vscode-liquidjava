@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
-import { Selection } from '../types/context';
+import { Range } from '../types/context';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
-import { updateContextWithSelection } from './context';
+import { updateContext } from './context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 
@@ -59,14 +59,12 @@ export async function onSelectionChange(event: vscode.TextEditorSelectionChangeE
  */
 function handleContextUpdate(selection: vscode.Selection) {
     if (!extension.file || !extension.context) return;
-    const selectionStart = selection.start;
-    const selectionEnd = selection.end;
-    const currentSelection: Selection = {
-        startLine: selectionStart.line,
-        startColumn: selectionStart.character,
-        endLine: selectionEnd.line,
-        endColumn: selectionEnd.character
+    const range: Range = {
+        lineStart: selection.start.line,
+        colStart: selection.start.character,
+        lineEnd: selection.end.line,
+        colEnd: selection.end.character
     };
-    updateContextWithSelection(currentSelection);
+    updateContext(range);
     extension.webview?.sendMessage({ type: "context", context: extension.context });
 }
