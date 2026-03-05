@@ -16,7 +16,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 20
           distribution: temurin
 
       - name: Setup Node.js
@@ -27,7 +27,7 @@ jobs:
       - name: Build Server JAR
         working-directory: ./server
         run: |
-          mvn clean package -DskipTests
+          mvn -B -ntp clean package -DskipTests
           mkdir -p ../client/server
           cp target/language-server-liquidjava.jar ../client/server/
 
