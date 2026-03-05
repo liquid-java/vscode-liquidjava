@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies and build
         working-directory: ./client
         run: |
-          npm ci
+          npm install
           npm run package
 
       - name: Install vsce
