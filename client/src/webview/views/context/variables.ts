@@ -29,12 +29,16 @@ function renderVariable(variable: LJVariable): string {
     const refinement = variable.refinement !== "true" ? variable.refinement.replace("==", "=") : variable.name
     const position = variable.placementInCode.position; // TODO: handle cases where we don't really have the correct position for the variable
     return /*html*/`
-        <button
-            class="highlight-btn"
-            data-start-line="${position.line}"
-            data-start-column="${position.column}"
-            data-end-line="${position.line}"
-            data-end-column="${position.column + variableName.length}"
-            ${variableName === "ret" ? 'disabled' : ''}
-        ><code>${refinement}</code></button>`;
+        <div class="context-variable">
+            <button
+                class="context-variable-btn"
+                data-start-line="${position.line}"
+                data-start-column="${position.column}"
+                data-end-line="${position.line}"
+                data-end-column="${position.column + variableName.length}"
+                ${variableName === "ret" ? 'disabled' : ''}
+            ><code>${refinement}</code>
+            </button>
+            ${variable.failingRefinement ? /*html*/`<code class="failing-refinement">⊢ ${variable.failingRefinement}</code>` : ''}
+        </div>`;
 }

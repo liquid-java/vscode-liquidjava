@@ -318,16 +318,21 @@ export function getStyles(): string {
         .context-section-content.collapsed {
             display: none;
         }
-        .highlight-btn {
+        .context-variable-btn {
             background-color: transparent;
             border: none;
             transition: background-color 0.1s;
         }
-        .highlight-btn code {
+        .context-variable-btn code {
             pointer-events: none;
         }
-        .highlight-btn.selected {
+        .context-variable-btn.selected {
             background-color: var(--vscode-button-background);
+        }
+        .context-variable .failing-refinement {
+            color: var(--vscode-editorError-foreground);
+            font-size: 0.9rem;
+            margin-left: 0.25rem;
         }
         .diagram-section {
             margin-bottom: 1.5rem;

@@ -14,7 +14,8 @@ public record VariableDTO(
     String mainRefinement,
     PlacementInCodeDTO placementInCode,
     boolean isParameter,
-    SourcePositionDTO annPosition
+    SourcePositionDTO annPosition,
+    String failingRefinement
 ) {
     public static VariableDTO from(RefinedVariable refinedVariable) {
         return new VariableDTO(
@@ -24,7 +25,8 @@ public record VariableDTO(
             refinedVariable.getMainRefinement().toString(),
             PlacementInCodeDTO.from(refinedVariable.getPlacementInCode()),
             refinedVariable.isParameter(),
-            SourcePositionDTO.from(refinedVariable.getAnnPosition())
+            SourcePositionDTO.from(refinedVariable.getAnnPosition()),
+            refinedVariable.getFailingRefinement() != null ? refinedVariable.getFailingRefinement().toString() : null
         );
     }
 }

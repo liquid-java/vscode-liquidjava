@@ -10,6 +10,7 @@ export type LJVariable = {
   placementInCode: PlacementInCode | null;
   isParameter: boolean;
   annPosition: SourcePosition | null;
+  failingRefinement: string | null;
 }
 
 export type LJGhost = {
