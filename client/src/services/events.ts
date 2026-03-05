@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
-import { Range } from '../types/context';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
 import { updateContext } from './context';
+import { Range } from '../types/context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 

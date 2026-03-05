@@ -22,7 +22,6 @@ export function registerWebview(context: vscode.ExtensionContext) {
     // listen for messages from the webview
     context.subscriptions.push(
         extension.webview.onDidReceiveMessage(message => {
-            console.log("received message", message);
             if (message.type === "ready") {
                 if (extension.file) extension.webview.sendMessage({ type: "file", file: extension.file });
                 if (extension.diagnostics) extension.webview.sendMessage({ type: "diagnostics", diagnostics: extension.diagnostics });

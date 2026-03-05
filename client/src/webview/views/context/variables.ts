@@ -27,16 +27,15 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
 function renderVariable(variable: LJVariable): string {
     const variableName = getOriginalVariableName(variable.name);
     const refinement = variable.refinement !== "true" ? variable.refinement.replace("==", "=") : variable.name
-    const position = variable.placementInCode.position; // TODO: handle cases where we don't really have the correct position for the variable
+    const offset = variable.position.lineStart === variable.position.lineEnd && variable.position.colStart === variable.position.colEnd ? variableName.length : 0;
     return /*html*/`
         <div class="context-variable">
             <button
                 class="context-variable-btn"
-                data-start-line="${position.line}"
-                data-start-column="${position.column}"
-                data-end-line="${position.line}"
-                data-end-column="${position.column + variableName.length}"
-                ${variableName === "ret" ? 'disabled' : ''}
+                data-start-line="${variable.position.lineStart}"
+                data-start-column="${variable.position.colStart}"
+                data-end-line="${variable.position.lineEnd}"
+                data-end-column="${variable.position.colEnd + offset}"
             ><code>${refinement}</code>
             </button>
             ${variable.failingRefinement ? /*html*/`<code class="failing-refinement">⊢ ${variable.failingRefinement}</code>` : ''}

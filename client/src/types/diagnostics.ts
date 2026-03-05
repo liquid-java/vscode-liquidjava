@@ -4,9 +4,13 @@ import type { Range } from './context';
 // Type definitions used for LiquidJava diagnostics
 
 export type SourcePosition = {
-    file: string;
+    file: string | null;
     line: number;
     column: number;
+}
+
+export type SourceRange = Range & {
+    file: string | null;
 }
 
 export type PlacementInCode = {
@@ -28,7 +32,7 @@ type BaseDiagnostic = {
     title: string;
     message: string;
     file: string;
-    position?: Range;
+    position: SourceRange | null;
 }
 
 export type CustomError = BaseDiagnostic & {

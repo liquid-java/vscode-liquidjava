@@ -1,14 +1,13 @@
 package dtos.diagnostics;
 
-import liquidjava.diagnostics.ErrorPosition;
+import spoon.reflect.cu.SourcePosition;
 
-public record SourceRangeDTO(int lineStart, int colStart, int lineEnd, int colEnd) {
+public record SourceRangeDTO(String file, int lineStart, int colStart, int lineEnd, int colEnd) {
 
-    public static SourceRangeDTO from(ErrorPosition pos) {
-        if (pos == null) {
-            // no location information available
-            return new SourceRangeDTO(0, 0, 0, 0);
-        }
-        return new SourceRangeDTO(pos.lineStart() - 1, pos.colStart() - 1, pos.lineEnd() - 1, pos.colEnd() - 1);
+    public static SourceRangeDTO from(SourcePosition pos) {
+        if (pos == null) return null;
+        String file = pos.getFile() != null ? pos.getFile().getAbsolutePath() : null;
+        return new SourceRangeDTO(file, pos.getLine() - 1, pos.getColumn() - 1, pos.getEndLine() - 1, pos.getEndColumn() - 1);
     }
 }
+

@@ -3,10 +3,11 @@ import { renderLoading } from "./views/loading";
 import { renderStateMachineView } from "./views/fsm/fsm";
 import { createMermaidDiagram, renderMermaidDiagram, resetZoom, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
 import type { LJDiagnostic } from "../types/diagnostics";
+import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
 import { renderDiagnosticsView } from "./views/diagnostics/diagnostics";
-import { LJContext, Range } from "../types/context";
+import { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
 
 /**
@@ -177,19 +178,19 @@ export function getScript(vscode: any, document: any, window: any) {
                 previousSelected.classList.remove('selected');
                 if (previousSelected === target) {
                     // remove highlight
-                    vscode.postMessage({ type: 'range', range: null });
+                    vscode.postMessage({ type: 'highlight', range: null });
                     return;
                 }
             }
             target.classList.add('selected');
 
-            const startLine = parseInt(target.getAttribute('data-start-line') || '', 10);
-            const startColumn = parseInt(target.getAttribute('data-start-column') || '', 10);
-            const endLine = parseInt(target.getAttribute('data-end-line') || '', 10);
-            const endColumn = parseInt(target.getAttribute('data-end-column') || '', 10);
-            if ([startLine, startColumn, endLine, endColumn].some(Number.isNaN)) return;
-            const range: Range = { lineStart: startLine, colStart: startColumn, lineEnd: endLine, colEnd: endColumn };
-            vscode.postMessage({ type: 'range', range });
+            const lineStart = parseInt(target.getAttribute('data-start-line') || '', 10);
+            const colStart = parseInt(target.getAttribute('data-start-column') || '', 10);
+            const lineEnd = parseInt(target.getAttribute('data-end-line') || '', 10);
+            const colEnd = parseInt(target.getAttribute('data-end-column') || '', 10);
+            if ([lineStart, colStart, lineEnd, colEnd].some(Number.isNaN)) return;
+            const range: Range = { lineStart, colStart, lineEnd, colEnd };
+            vscode.postMessage({ type: 'highlight', range });
             return;
         }
 

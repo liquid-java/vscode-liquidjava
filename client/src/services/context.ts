@@ -1,5 +1,6 @@
 import { extension } from "../state";
 import { LJContext, Range, LJVariable } from "../types/context";
+import { SourcePosition } from "../types/diagnostics";
 import { getOriginalVariableName } from "../utils/utils";
 
 export function handleContext(context: LJContext) {
@@ -52,13 +53,12 @@ export function getVariablesInScope(file: string, range: Range): LJVariable[] | 
 function getVisibleVariables(variables: LJVariable[], file: string, range: Range, useAnnotationPositions: boolean = false): LJVariable[] {
     const isCollapsedRange = range.lineStart === range.lineEnd && range.colStart === range.colEnd;
     return variables.filter((variable) => {
-        if (variable.placementInCode?.position.file !== file) return false; // variable is not in the current file
-       
-        const placement = variable.placementInCode?.position;
+        if (variable.position?.file !== file) return false; // variable is not in the current file
        
         // single point cursor
         if (isCollapsedRange) {
-            const position = useAnnotationPositions ? variable.annPosition || placement : placement;
+            const varPosition: SourcePosition = { line: variable.position.lineStart, column: variable.position.colStart, file };
+            const position: SourcePosition = useAnnotationPositions ? variable.annPosition || varPosition : varPosition;
             if (!position || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the range (for method and parameter refinements)
 
             // variable was declared before the cursor line or its in the same line but before the cursor column
@@ -68,8 +68,7 @@ function getVisibleVariables(variables: LJVariable[], file: string, range: Range
             );
         }
         // normal range, filter variables that are only within the range
-        const varRange: Range = { lineStart: placement.line, colStart: placement.column, lineEnd: placement.line, colEnd: placement.column }
-        return isRangeWithin(varRange, range);
+        return isRangeWithin(variable.position, range);
     });
 }
 
@@ -117,16 +116,16 @@ function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] {
 function sortVariables(variables: LJVariable[]): LJVariable[] {
     // sort by position or name
     return variables.sort((left, right) => {
-        const leftPosition = left.placementInCode?.position
-        const rightPosition = right.placementInCode?.position
+        const leftPosition = left.position
+        const rightPosition = right.position
 
         if (!leftPosition && !rightPosition) return compareVariableNames(left, right);
         if (!leftPosition) return 1;
         if (!rightPosition) return -1;
         if (getOriginalVariableName(left.name) === "ret") return 1;
         if (getOriginalVariableName(right.name) === "ret") return -1;
-        if (leftPosition.line !== rightPosition.line) return leftPosition.line - rightPosition.line;
-        if (leftPosition.column !== rightPosition.column) return leftPosition.column - rightPosition.column;
+        if (leftPosition.lineStart !== rightPosition.lineStart) return leftPosition.lineStart - rightPosition.lineStart;
+        if (leftPosition.colStart !== rightPosition.colStart) return leftPosition.colStart - rightPosition.colStart;
 
         return compareVariableNames(left, right);
     });

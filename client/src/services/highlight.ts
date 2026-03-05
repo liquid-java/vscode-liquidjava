@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { Range } from '../types/context'
+import { Range } from '../types/context';
 
 const highlight = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(255, 255, 0, 0.3)'

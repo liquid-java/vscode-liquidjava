@@ -1,4 +1,4 @@
-import { PlacementInCode, SourcePosition } from "./diagnostics";
+import { SourcePosition, SourceRange } from "./diagnostics";
 
 // Type definitions used for LiquidJava context information
 
@@ -7,7 +7,7 @@ export type LJVariable = {
   type: string;
   refinement: string;
   mainRefinement: string;
-  placementInCode: PlacementInCode | null;
+  position: SourceRange| null;
   isParameter: boolean;
   annPosition: SourcePosition | null;
   failingRefinement: string | null;

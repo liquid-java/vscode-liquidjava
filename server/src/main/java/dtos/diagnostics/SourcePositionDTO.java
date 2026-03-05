@@ -7,8 +7,9 @@ import spoon.reflect.cu.SourcePosition;
  */
 public record SourcePositionDTO(String file, int line, int column) {
 
-    public static SourcePositionDTO from(SourcePosition position) {
-        String file = position.getFile() != null ? position.getFile().getAbsolutePath() : "";
-        return new SourcePositionDTO(file, position.getLine() - 1, position.getColumn() - 1);
+    public static SourcePositionDTO from(SourcePosition pos) {
+        if (pos == null) return null;
+        String file = pos.getFile() != null ? pos.getFile().getAbsolutePath() : null;
+        return new SourcePositionDTO(file, pos.getLine() - 1, pos.getColumn() - 1);
     }
 }
