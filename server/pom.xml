@@ -169,13 +169,6 @@
 	</dependencyManagement>
 	
 	<dependencies>
-		<!-- <dependency>
-			<groupId>liquidjava</groupId>
-			<artifactId>verifier</artifactId>
-			<version>0.0.13</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/libs/liquidjava-verifier.jar</systemPath>
-		</dependency> -->
 		<dependency>
 			<groupId>io.github.liquid-java</groupId>
 			<artifactId>liquidjava-verifier</artifactId>

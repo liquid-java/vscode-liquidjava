@@ -1,4 +1,4 @@
-import { PlacementInCode } from "./diagnostics";
+import { PlacementInCode, SourcePosition } from "./diagnostics";
 
 // Type definitions used for LiquidJava context information
 
@@ -8,6 +8,8 @@ export type Variable = {
   refinement: string;
   mainRefinement: string;
   placementInCode: PlacementInCode | null;
+  isParameter: boolean;
+  annPosition: SourcePosition | null;
 }
 
 export type Ghost = {
@@ -27,9 +29,9 @@ export type Alias = {
 
 export type ContextHistory = {
   vars: Record<string, Record<string, Variable[]>>; // file -> (scope -> variables in scope)
+  ghosts: Record<string, Ghost[]>; // file -> ghosts in file
   instanceVars: Variable[];
   globalVars: Variable[];
-  ghosts: Ghost[];
   aliases: Alias[];
 }
 

@@ -1,8 +1,8 @@
 package dtos.context;
 
 import dtos.diagnostics.PlacementInCodeDTO;
+import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.processor.context.RefinedVariable;
-import spoon.reflect.reference.CtTypeReference;
 
 /**
  * DTO for serializing RefinedVariable instances to JSON.
@@ -12,7 +12,9 @@ public record VariableDTO(
     String type,
     String refinement,
     String mainRefinement,
-    PlacementInCodeDTO placementInCode
+    PlacementInCodeDTO placementInCode,
+    boolean isParameter,
+    SourcePositionDTO annPosition
 ) {
     public static VariableDTO from(RefinedVariable refinedVariable) {
         return new VariableDTO(
@@ -20,7 +22,9 @@ public record VariableDTO(
             ContextHistoryDTO.stringifyType(refinedVariable.getType()),
             refinedVariable.getRefinement().toString(),
             refinedVariable.getMainRefinement().toString(),
-            PlacementInCodeDTO.from(refinedVariable.getPlacementInCode())
+            PlacementInCodeDTO.from(refinedVariable.getPlacementInCode()),
+            refinedVariable.isParameter(),
+            SourcePositionDTO.from(refinedVariable.getAnnPosition())
         );
     }
 }
