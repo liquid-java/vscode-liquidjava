@@ -6,7 +6,7 @@ import { LiquidJavaLogger } from "./services/logger";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
 import type { LJDiagnostic } from "./types/diagnostics";
 import type { LJStateMachine } from "./types/fsm";
-import { LJContext } from "./types/context";
+import { LJContext, Range } from "./types/context";
 
 export class ExtensionState {
     // server/client state
@@ -24,6 +24,7 @@ export class ExtensionState {
     diagnostics?: LJDiagnostic[];
     stateMachine?: LJStateMachine;
     context?: LJContext;
+    currentSelection?: Range;
 }
 
 export const extension = new ExtensionState();

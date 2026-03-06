@@ -5,9 +5,12 @@ import { getOriginalVariableName } from "../utils/utils";
 
 export function handleContext(context: LJContext) {
     extension.context = context;
+    updateContext(extension.currentSelection);
+    extension.webview.sendMessage({ type: "context", context: extension.context });
 }
 
 export function updateContext(range: Range) {
+    if (!range) return;
     const variablesInScope = getVariablesInScope(extension.file, range) || [];
     const instanceVariables = filterInstanceVariables(extension.context.instanceVars || [], variablesInScope);
     const globalVariables = extension.context.globalVars || [];

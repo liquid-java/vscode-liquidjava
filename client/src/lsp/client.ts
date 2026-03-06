@@ -45,7 +45,7 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
         });
 
         extension.client.onNotification("liquidjava/context", (context: LJContext) => {
-            handleContext({...context, varsInScope: [], allVars: []});
+            handleContext(context);
         });
 
         const editor = vscode.window.activeTextEditor;

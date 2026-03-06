@@ -11,8 +11,8 @@ export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     const containsError = diagnostics.some(d => d.category === "error");
     const statusBarState: StatusBarState = containsError ? "failed" : "passed";
     updateStatusBar(statusBarState);
-    extension.webview?.sendMessage({ type: "diagnostics", diagnostics });
     extension.diagnostics = diagnostics;
+    extension.webview?.sendMessage({ type: "diagnostics", diagnostics });
 }
 
 /**

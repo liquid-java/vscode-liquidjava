@@ -65,6 +65,7 @@ function handleContextUpdate(selection: vscode.Selection) {
         lineEnd: selection.end.line,
         colEnd: selection.end.character
     };
+    extension.currentSelection = range;
     updateContext(range);
     extension.webview?.sendMessage({ type: "context", context: extension.context });
 }
