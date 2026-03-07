@@ -143,7 +143,12 @@ export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
 }
 
 function normalizeRefinements(variables: LJVariable[]): LJVariable[] {
-    return Array.from(new Map(variables.map(v => [v.refinement, v])).values()) // filter variables with duplicate refinements
-        .filter(v => !v.refinement.includes("==") || v.refinement.split("==").map(s => s.trim()).some((s, _, a) => s !== a[0])) // filter refinements that are just "var == var"
-        .map(v => ({ ...v, refinement: v.refinement.includes("==") ? v.refinement : `${v.name} == ${v.refinement}` })); // ensure refinements are in the form "var == refinement"
+    return Array.from(new Map(variables.map(v => [v.refinement, v])).values()) // remove duplicates based on refinement
+        .flatMap(v => {
+            if (v.refinement.includes("==")) {
+                const [left, right] = v.refinement.split("==").map(s => s.trim());
+                return left === right ? [] : [v]; // remove x == x refinements
+            }
+            return [{ ...v, refinement: `${v.name} == ${v.refinement}` }];
+        });
 }
