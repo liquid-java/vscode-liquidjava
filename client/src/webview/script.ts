@@ -198,11 +198,11 @@ export function getScript(vscode: any, document: any, window: any) {
         if (target.classList.contains('nav-tab')) {
             e.stopPropagation();
             const tab = target.getAttribute('data-tab') as NavTab;
-            console.log('Tab click:', tab);
             if (tab && tab !== selectedTab) {
-                console.log('Switching to tab:', tab);
                 selectedTab = tab;
                 updateView();
+                if (selectedTab !== 'context')
+                    vscode.postMessage({ type: 'highlight', range: null });
             }
             return;
         }
