@@ -318,15 +318,15 @@ export function getStyles(): string {
         .context-section-content.collapsed {
             display: none;
         }
-        .context-variable-btn {
+        .highlight-var-btn {
             background-color: transparent;
             border: none;
             transition: background-color 0.1s;
         }
-        .context-variable-btn code {
+        .highlight-var-btn code {
             pointer-events: none;
         }
-        .context-variable-btn.selected {
+        .highlight-var-btn.selected {
             background-color: var(--vscode-button-background);
         }
         .context-variable .failing-refinement {

@@ -13,10 +13,8 @@ export function updateContext(range: Range) {
     if (!range) return;
     const variablesInScope = getVariablesInScope(extension.file, range) || [];
     const globalVariables = extension.context.globalVars || [];
-    const visibleVariables = getVisibleVariables(variablesInScope, extension.file, range);
-    const allVars = sortVariables(filterDuplicateVariables([...visibleVariables, ...globalVariables]));
-    extension.context.varsInScope = visibleVariables;
-    extension.context.allVars = allVars;
+    extension.context.visibleVars = getVisibleVariables(variablesInScope, extension.file, range);
+    extension.context.allVars = sortVariables(filterDuplicateVariables([...extension.context.visibleVars, ...globalVariables]));
 }
 
 // Gets the variables in scope for a given file and position
@@ -57,14 +55,13 @@ function getVisibleVariables(variables: LJVariable[], file: string, range: Range
        
         // single point cursor
         if (isCollapsedRange) {
-            const varPosition: SourcePosition = { line: variable.position.lineStart, column: variable.position.colStart, file };
-            const position: SourcePosition = useAnnotationPositions ? variable.annPosition || varPosition : varPosition;
+            const position: SourcePosition = useAnnotationPositions ? variable.annPosition || variable.position : variable.position;
             if (!position || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the range (for method and parameter refinements)
 
             // variable was declared before the cursor line or its in the same line but before the cursor column
             return (
-                position.line < range.lineStart ||
-                (position.line === range.lineStart && position.column + 1 <= range.colStart)
+                position.lineStart < range.lineStart ||
+                (position.lineStart === range.lineStart && position.colStart + 1 <= range.colStart)
             );
         }
         // normal range, filter variables that are only within the range

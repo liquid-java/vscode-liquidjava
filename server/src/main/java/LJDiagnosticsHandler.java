@@ -110,7 +110,7 @@ public class LJDiagnosticsHandler {
         }
         return new Range(
             new Position(pos.getLine() - 1, pos.getColumn() - 1),
-            new Position(pos.getEndLine() - 1, pos.getEndColumn() - 1)
+            new Position(pos.getEndLine() - 1, pos.getEndColumn())
         );
     }
 }

@@ -1,6 +1,6 @@
 import { LJVariable } from "../../../types/context";
 import { getOriginalVariableName, getSimpleName } from "../../utils";
-import { renderToggleSection } from "../sections";
+import { renderToggleSection, renderVariableHighlightButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean): string {
     return /*html*/`
@@ -25,19 +25,10 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
 }
 
 function renderVariable(variable: LJVariable): string {
-    const variableName = getOriginalVariableName(variable.name);
     const refinement = variable.refinement !== "true" ? variable.refinement.replace("==", "=") : variable.name
-    const offset = variable.position.lineStart === variable.position.lineEnd && variable.position.colStart === variable.position.colEnd ? variableName.length : 0;
     return /*html*/`
         <div class="context-variable">
-            <button
-                class="context-variable-btn"
-                data-start-line="${variable.position.lineStart}"
-                data-start-column="${variable.position.colStart}"
-                data-end-line="${variable.position.lineEnd}"
-                data-end-column="${variable.position.colEnd + offset}"
-            ><code>${refinement}</code>
-            </button>
+            ${renderVariableHighlightButton(variable.position, refinement)}
             ${variable.failingRefinement ? /*html*/`<code class="failing-refinement">⊢ ${variable.failingRefinement}</code>` : ''}
         </div>`;
 }

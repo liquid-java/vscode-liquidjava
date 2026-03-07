@@ -1,4 +1,5 @@
-import type { LJDiagnostic, SourcePosition, TranslationTable } from "../../types/diagnostics";
+import type { LJDiagnostic, PlacementInCode, SourcePosition, TranslationTable } from "../../types/diagnostics";
+import { getOriginalVariableName } from "../utils";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
     <div class="header">
@@ -25,12 +26,7 @@ export const renderDiagnosticHeader = (diagnostic: LJDiagnostic): string => /*ht
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {
     if (!diagnostic.position || !diagnostic.file) return "";
-    const position: SourcePosition = {
-        file: diagnostic.file,
-        line: diagnostic.position.lineStart,
-        column: diagnostic.position.colStart
-    }
-    return renderCustomSection("Location", /*html*/`<pre>${renderLocationLink(position)}</pre>`);
+    return renderCustomSection("Location", /*html*/`<pre>${renderLocationLink(diagnostic.position)}</pre>`);
 };
 
 export function renderTranslationTable(translationTable: TranslationTable): string {  
@@ -44,17 +40,15 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                 <thead>
                     <tr>
                         <th>Variable</th>
-                        <th>Source</th>
                         <th>Location</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${entries.map(([variable, placement]: [string, any]) => {
+                    ${entries.map(([variable, placement]: [string, PlacementInCode]) => {
                         return /*html*/`
                             <tr>
                                 <td><code>${variable}</code></td>
-                                <td><code>${placement.text}</code></td>
-                                <td>${renderLocationLink(placement.position)}</td>
+                                <td>${renderVariableHighlightButton(placement.position, placement.text)}</td>
                             </tr>
                         `;
                     }).join('')}
@@ -64,16 +58,33 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
     `;
 }
 
+export function renderVariableHighlightButton(position: SourcePosition, content: string): string {
+    return /*html*/`
+        <button
+            class="highlight-var-btn"
+            data-start-line="${position.lineStart}"
+            data-start-column="${position.colStart}"
+            data-end-line="${position.lineEnd}"
+            data-end-column="${position.colEnd}"
+        >
+            <code>${content}</code>
+        </button>
+    `;
+}
+
 export function renderLocationLink(position?: SourcePosition): string {
     if (!position) return 'No location';
-    const file = `${position.file.split('/').pop().trim() || position.file}:${position.line + 1}`;
     return /*html*/`<a
         href="#"
         class="link location-link"
         data-file="${position.file}"
-        data-line="${position.line}"
-        data-column="${position.column}"
-    >${file}</a>`;
+        data-line="${position.lineStart}"
+        data-column="${position.colStart}"
+    >${getFile(position)}</a>`;
+}
+
+function getFile(position: SourcePosition): string {
+    return `${position.file.split('/').pop().trim() || position.file}:${position.lineStart + 1}`;
 }
 
 export type NavTab = 'diagnostics' | 'fsm' | 'context';

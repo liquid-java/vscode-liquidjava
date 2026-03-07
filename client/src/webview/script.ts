@@ -169,10 +169,10 @@ export function getScript(vscode: any, document: any, window: any) {
         }
 
         // highlight variable 
-        if (target.classList.contains('context-variable-btn')) {
+        if (target.classList.contains('highlight-var-btn')) {
             e.stopPropagation();
 
-            const previousSelected = root.querySelector('.context-variable-btn.selected');        
+            const previousSelected = root.querySelector('.highlight-var-btn.selected');        
             if (previousSelected) {
                 // unselect previous
                 previousSelected.classList.remove('selected');

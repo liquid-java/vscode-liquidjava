@@ -1,4 +1,4 @@
-import { SourcePosition, SourceRange } from "./diagnostics";
+import { SourcePosition } from "./diagnostics";
 
 // Type definitions used for LiquidJava context information
 
@@ -7,7 +7,7 @@ export type LJVariable = {
   type: string;
   refinement: string;
   mainRefinement: string;
-  position: SourceRange| null;
+  position: SourcePosition| null;
   isParameter: boolean;
   annPosition: SourcePosition | null;
   failingRefinement: string | null;
@@ -35,7 +35,7 @@ export type LJContext = {
   instanceVars: LJVariable[];
   globalVars: LJVariable[];
   aliases: LJAlias[];
-  varsInScope: LJVariable[]; // variables in scope for the current selection
+  visibleVars: LJVariable[]; // variables visible in the current selection
   allVars: LJVariable[]; // instance vars + global vars + vars in scope
 }
 
