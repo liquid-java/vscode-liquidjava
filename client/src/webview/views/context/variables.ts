@@ -1,5 +1,5 @@
 import { LJVariable } from "../../../types/context";
-import { getOriginalVariableName } from "../../utils";
+import { getOriginalVariableName, getSimpleName } from "../../utils";
 import { renderToggleSection } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean): string {
@@ -13,7 +13,7 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                         ${variables.map(variable => /*html*/`
                             <tr>
                                 <td>${renderVariable(variable)}</td>
-                                <td><code>${variable.type}</code></td>
+                                <td><code>${getSimpleName(variable.type)}</code></td>
                             </tr>
                         `).join('')}
                     </tbody>

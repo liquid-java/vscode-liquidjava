@@ -331,7 +331,7 @@ export function getStyles(): string {
         }
         .context-variable .failing-refinement {
             color: var(--vscode-editorError-foreground);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
         .diagram-section {
             margin-bottom: 1.5rem;
