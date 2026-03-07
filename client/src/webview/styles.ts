@@ -322,6 +322,7 @@ export function getStyles(): string {
             background-color: transparent;
             border: none;
             transition: background-color 0.1s;
+            text-align: left;
         }
         .highlight-var-btn code {
             pointer-events: none;

@@ -1,4 +1,5 @@
 import { LJContext } from "../../../types/context";
+import { LJDiagnostic, SourcePosition } from "../../../types/diagnostics";
 import { renderMainHeader } from "../sections";
 import { renderContextAliases } from "./aliases";
 import { renderContextGhosts } from "./ghosts";
@@ -10,7 +11,7 @@ export type ContextSectionState = {
     vars: boolean;
 }
 
-export function renderContextView(context: LJContext, currentFile: string, sectionState: ContextSectionState): string {
+export function renderContextView(context: LJContext, currentFile: string, sectionState: ContextSectionState, diagnostics: LJDiagnostic[]): string {
     if (!context || !currentFile) return "";
 
     const allVars = context.allVars || [];
@@ -24,7 +25,7 @@ export function renderContextView(context: LJContext, currentFile: string, secti
                 ? '<p>No context information available for the current position.</p>'
                 : `${renderContextAliases(aliases, sectionState.aliases)}
                    ${renderContextGhosts(ghosts, sectionState.ghosts)}
-                   ${renderContextVariables(allVars, sectionState.vars)}
+                   ${renderContextVariables(allVars, sectionState.vars, diagnostics)}
             `}
         </div>
     `;

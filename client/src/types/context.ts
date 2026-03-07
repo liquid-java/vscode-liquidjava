@@ -10,7 +10,6 @@ export type LJVariable = {
   position: SourcePosition| null;
   isParameter: boolean;
   annPosition: SourcePosition | null;
-  failingRefinement: string | null;
 }
 
 export type LJGhost = {

@@ -1,8 +1,9 @@
 import { LJVariable } from "../../../types/context";
+import { LJDiagnostic, RefinementError, StateRefinementError } from "../../../types/diagnostics";
 import { getOriginalVariableName, getSimpleName } from "../../utils";
 import { renderToggleSection, renderVariableHighlightButton } from "../sections";
 
-export function renderContextVariables(variables: LJVariable[], isExpanded: boolean): string {
+export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, diagnostics: LJDiagnostic[]): string {
     return /*html*/`
         <div class="context-section">
             ${renderToggleSection('Variables', 'context-vars', isExpanded)}
@@ -12,7 +13,7 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                     <tbody>
                         ${variables.map(variable => /*html*/`
                             <tr>
-                                <td>${renderVariable(variable)}</td>
+                                <td>${renderVariable(variable, diagnostics)}</td>
                                 <td><code>${getSimpleName(variable.type)}</code></td>
                             </tr>
                         `).join('')}
@@ -24,10 +25,21 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
     `;
 }
 
-function renderVariable(variable: LJVariable): string {
+function renderVariable(variable: LJVariable, diagnostics: LJDiagnostic[]): string {
+    const failingRefinement = getFailingRefinement(variable, diagnostics);
     return /*html*/`
         <div class="context-variable">
-            ${renderVariableHighlightButton(variable.position, variable.refinement)}
-            ${variable.failingRefinement ? /*html*/`<code class="failing-refinement">⊢ ${variable.failingRefinement}</code>` : ''}
+            ${renderVariableHighlightButton(variable.position, `${variable.name} == ${variable.refinement}`)}
+            ${failingRefinement ? /*html*/`<code class="failing-refinement">⊢ ${failingRefinement}</code>` : ''}
         </div>`;
+}
+
+function getFailingRefinement(variable: LJVariable, diagnostics: LJDiagnostic[]): string | null {
+    const matchingDiagnostic: RefinementError | StateRefinementError | undefined = diagnostics.find(d => 
+        d.position && variable.position &&
+        (d.type === 'refinement-error' || d.type === 'state-refinement-error') &&
+        JSON.stringify(d.position) === JSON.stringify(variable.position)
+    ) as RefinementError | StateRefinementError | undefined;
+    return matchingDiagnostic ? matchingDiagnostic.type === 'refinement-error' ? 
+          matchingDiagnostic.expected.value : matchingDiagnostic.expected : null;
 }

@@ -246,7 +246,7 @@ export function getScript(vscode: any, document: any, window: any) {
                 if (stateMachine) renderMermaidDiagram(document, window);
                 break;
             case 'context':
-                root.innerHTML = renderContextView(context, currentFile, contextSectionState);
+                root.innerHTML = renderContextView(context, currentFile, contextSectionState, diagnostics);
                 break;
         }
     }
