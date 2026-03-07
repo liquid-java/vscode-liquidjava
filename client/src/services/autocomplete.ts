@@ -3,7 +3,7 @@ import { extension } from "../state";
 import type { LJVariable, LJContext, LJGhost, LJAlias } from "../types/context";
 import { getSimpleName } from "../utils/utils";
 import { LIQUIDJAVA_ANNOTATION_START, LJAnnotation } from "../utils/constants";
-import { filterInstanceVariables } from "./context";
+import { filterDuplicateVariables, filterInstanceVariables } from "./context";
 
 type CompletionItemOptions = {
     name: string;
@@ -53,7 +53,7 @@ function getContextCompletionItems(context: LJContext, file: string, annotation:
         return [];
     }
     const inScope = extension.context.visibleVars !== null;
-    const varsInScope = filterInstanceVariables(context.visibleVars || [])
+    const varsInScope = filterDuplicateVariables(filterInstanceVariables(context.visibleVars || []));
     const itemsHandlers: Record<CompletionItemKind, () => vscode.CompletionItem[]> = {
         vars: () => getVariableCompletionItems(varsInScope),
         ghosts: () => getGhostCompletionItems(context.ghosts[file] || [], triggerParameterHints),

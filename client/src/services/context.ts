@@ -13,8 +13,10 @@ export function updateContext(range: Range) {
     if (!range) return;
     const variablesInScope = getVariablesInScope(extension.file, range) || [];
     const globalVariables = extension.context.globalVars || [];
-    extension.context.visibleVars = getVisibleVariables(variablesInScope, extension.file, range);
-    extension.context.allVars = sortVariables(filterDuplicateVariables([...extension.context.visibleVars, ...globalVariables]));
+    const visibleVars = getVisibleVariables(variablesInScope, extension.file, range);
+    const allVars = normalizeRefinements(sortVariables([...visibleVars, ...globalVariables]));
+    extension.context.visibleVars = visibleVars
+    extension.context.allVars = allVars;
 }
 
 // Gets the variables in scope for a given file and position
@@ -43,8 +45,9 @@ export function getVariablesInScope(file: string, range: Range): LJVariable[] | 
         return null;
 
     // filter variables to only include those that are reachable based on their position
-    const variablesInScope = fileVars[mostSpecificScope];
-    variablesInScope.push(...filterRelevantInstanceVariables(extension.context.instanceVars || [], variablesInScope));
+    const scopeVars = fileVars[mostSpecificScope];
+    const instanceScopeVars = filterRelevantInstanceVariables(extension.context.instanceVars || [], scopeVars)
+    const variablesInScope = [...scopeVars, ...instanceScopeVars];
     return getVisibleVariables(variablesInScope, file, range);
 }
 
@@ -99,7 +102,7 @@ function isRangeWithin(range: Range, another: Range): boolean {
     return startsWithin && endsWithin;
 }
 
-function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] {
+export function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] {
     const uniqueVariables: Map<string, LJVariable> = new Map();
     for (const variable of variables) {
         if (!uniqueVariables.has(variable.name)) {
@@ -137,4 +140,10 @@ function filterRelevantInstanceVariables(instanceVars: LJVariable[], variablesIn
 
 export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
     return variables.filter(v => !v.name.includes("#"));
+}
+
+function normalizeRefinements(variables: LJVariable[]): LJVariable[] {
+    return Array.from(new Map(variables.map(v => [v.refinement, v])).values()) // filter variables with duplicate refinements
+        .filter(v => !v.refinement.includes("==") || v.refinement.split("==").map(s => s.trim()).some((s, _, a) => s !== a[0])) // filter refinements that are just "var == var"
+        .map(v => ({ ...v, refinement: v.refinement.includes("==") ? v.refinement : `${v.name} == ${v.refinement}` })); // ensure refinements are in the form "var == refinement"
 }

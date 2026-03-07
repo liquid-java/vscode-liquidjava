@@ -25,10 +25,9 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
 }
 
 function renderVariable(variable: LJVariable): string {
-    const refinement = variable.refinement !== "true" ? variable.refinement.replace("==", "=") : variable.name
     return /*html*/`
         <div class="context-variable">
-            ${renderVariableHighlightButton(variable.position, refinement)}
+            ${renderVariableHighlightButton(variable.position, variable.refinement)}
             ${variable.failingRefinement ? /*html*/`<code class="failing-refinement">⊢ ${variable.failingRefinement}</code>` : ''}
         </div>`;
 }
