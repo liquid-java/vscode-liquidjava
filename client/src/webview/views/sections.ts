@@ -40,7 +40,7 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                 <thead>
                     <tr>
                         <th>Variable</th>
-                        <th>Location</th>
+                        <th>Source</th>
                     </tr>
                 </thead>
                 <tbody>

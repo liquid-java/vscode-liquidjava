@@ -13,7 +13,7 @@ public record VariableDTO(
     String mainRefinement,
     SourcePositionDTO position,
     boolean isParameter,
-    SourcePositionDTO annPosition,
+    SourcePositionDTO annPosition
 ) {
     public static VariableDTO from(RefinedVariable refinedVariable) {
         return new VariableDTO(

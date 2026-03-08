@@ -199,10 +199,9 @@ export function getScript(vscode: any, document: any, window: any) {
             e.stopPropagation();
             const tab = target.getAttribute('data-tab') as NavTab;
             if (tab && tab !== selectedTab) {
+                vscode.postMessage({ type: 'highlight', range: null });
                 selectedTab = tab;
                 updateView();
-                if (selectedTab !== 'context')
-                    vscode.postMessage({ type: 'highlight', range: null });
             }
             return;
         }

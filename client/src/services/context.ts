@@ -12,10 +12,11 @@ export function handleContext(context: LJContext) {
 export function updateContext(range: Range) {
     if (!range) return;
     const variablesInScope = getVariablesInScope(extension.file, range) || [];
-    const globalVariables = extension.context.globalVars || [];
     const visibleVars = getVisibleVariables(variablesInScope, extension.file, range);
-    const allVars = normalizeRefinements(sortVariables([...visibleVars, ...globalVariables]));
-    extension.context.visibleVars = visibleVars
+    const globalVariables = extension.context.globalVars || [];
+    console.log("global vars", globalVariables.length);
+    const allVars = sortVariables(normalizeRefinements([...globalVariables, ...visibleVars]));
+    extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
 }
 
@@ -45,15 +46,14 @@ export function getVariablesInScope(file: string, range: Range): LJVariable[] | 
         return null;
 
     // filter variables to only include those that are reachable based on their position
-    const scopeVars = fileVars[mostSpecificScope];
-    const instanceScopeVars = filterRelevantInstanceVariables(extension.context.instanceVars || [], scopeVars)
-    const variablesInScope = [...scopeVars, ...instanceScopeVars];
+    const variablesInScope = [...fileVars[mostSpecificScope], ...extension.context.instanceVars];
     return getVisibleVariables(variablesInScope, file, range);
 }
 
 function getVisibleVariables(variables: LJVariable[], file: string, range: Range, useAnnotationPositions: boolean = false): LJVariable[] {
     const isCollapsedRange = range.lineStart === range.lineEnd && range.colStart === range.colEnd;
     return variables.filter((variable) => {
+        if (!variable.position) return false; // variable has no position
         if (variable.position?.file !== file) return false; // variable is not in the current file
        
         // single point cursor
@@ -132,10 +132,6 @@ function sortVariables(variables: LJVariable[]): LJVariable[] {
 
 function compareVariableNames(a: LJVariable, b: LJVariable): number {
     return getOriginalVariableName(a.name).localeCompare(getOriginalVariableName(b.name));
-}
-
-function filterRelevantInstanceVariables(instanceVars: LJVariable[], variablesInScope: LJVariable[]): LJVariable[] {
-    return instanceVars.filter(v => variablesInScope.some(s => s.name === getOriginalVariableName(v.name)));
 }
 
 export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
