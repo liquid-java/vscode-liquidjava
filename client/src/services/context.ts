@@ -14,7 +14,6 @@ export function updateContext(range: Range) {
     const variablesInScope = getVariablesInScope(extension.file, range) || [];
     const visibleVars = getVisibleVariables(variablesInScope, extension.file, range);
     const globalVariables = extension.context.globalVars || [];
-    console.log("global vars", globalVariables.length);
     const allVars = sortVariables(normalizeRefinements([...globalVariables, ...visibleVars]));
     extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
