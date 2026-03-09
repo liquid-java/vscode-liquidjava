@@ -15,8 +15,13 @@ export function updateContextForSelection(selection: Range) {
     const globalVars = extension.context.globalVars || [];
     const localVars = extension.context.localVars || [];
     const scope = getMostSpecificScope(extension.file, selection);
-    const variablesInScope = getVariablesInScope(localVars, extension.file, scope);
-    const visibleVars = getVisibleVariables(variablesInScope, extension.file, selection);
+
+    let visibleVars: LJVariable[] = [];
+    if (scope) {
+        const variablesInScope = getVariablesInScope(localVars, extension.file, scope);
+        visibleVars = getVisibleVariables(variablesInScope, extension.file, selection);
+    }
+
     const allVars = sortVariables(normalizeRefinements([...globalVars, ...visibleVars]));
     extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
