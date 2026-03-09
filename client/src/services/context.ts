@@ -139,6 +139,7 @@ export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
 
 function normalizeRefinements(variables: LJVariable[]): LJVariable[] {
     return Array.from(new Map(variables.map(v => [v.refinement, v])).values())
+        .filter(v => v.refinement !== "true")
         .flatMap(v => {
             if (v.refinement.includes("==")) {
                 const [left, right] = v.refinement.split("==").map(s => s.trim());
