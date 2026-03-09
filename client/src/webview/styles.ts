@@ -264,7 +264,7 @@ export function getStyles(): string {
             margin: 0rem 0;
             background-color: var(--vscode-editor-background);
             border-radius: 4px;
-            overflow: hidden;
+            overflow: visible;
         }
         th {
             text-align: left;
