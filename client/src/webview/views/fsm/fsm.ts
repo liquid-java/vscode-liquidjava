@@ -1,5 +1,5 @@
 import type { LJStateMachine } from "../../../types/fsm";
-import { renderMainHeader, type NavTab } from "../sections";
+import { renderMainHeader } from "../sections";
 
 export function renderStateMachineView(sm: LJStateMachine, diagram: string, orientation: "LR" | "TB"): string {
     return /*html*/`

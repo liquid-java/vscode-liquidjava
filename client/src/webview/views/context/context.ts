@@ -1,5 +1,5 @@
 import { LJContext } from "../../../types/context";
-import { LJDiagnostic, SourcePosition } from "../../../types/diagnostics";
+import { LJDiagnostic } from "../../../types/diagnostics";
 import { renderMainHeader } from "../sections";
 import { renderContextAliases } from "./aliases";
 import { renderContextGhosts } from "./ghosts";
