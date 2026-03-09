@@ -115,10 +115,8 @@ function sortVariables(variables: LJVariable[]): LJVariable[] {
         if (!leftPosition && !rightPosition) return compareVariableNames(left, right);
         if (!leftPosition) return 1;
         if (!rightPosition) return -1;
-        if (getOriginalVariableName(left.name) === "ret") return 1;
-        if (getOriginalVariableName(right.name) === "ret") return -1;
         if (leftPosition.lineStart !== rightPosition.lineStart) return leftPosition.lineStart - rightPosition.lineStart;
-        if (leftPosition.colStart !== rightPosition.colStart) return leftPosition.colStart - rightPosition.colStart;
+        if (leftPosition.colStart !== rightPosition.colStart) return rightPosition.colStart - leftPosition.colStart;
 
         return compareVariableNames(left, right);
     });
