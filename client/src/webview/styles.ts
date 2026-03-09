@@ -333,6 +333,34 @@ export function getStyles(): string {
         .context-variable .failing-refinement {
             color: var(--vscode-editorError-foreground);
             font-size: 0.8rem;
+            position: relative;
+        }
+        .context-variable .failing-refinement::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 0.35rem);
+            min-width: 15rem;
+            max-width: 25rem;
+            padding: 0.5rem 0.65rem;
+            border-radius: 4px;
+            background: var(--vscode-editorHoverWidget-background);
+            border: 1px solid var(--vscode-editorHoverWidget-border);
+            color: var(--vscode-editorHoverWidget-foreground);
+            font-size: 0.8rem;
+            line-height: 1.4;
+            white-space: normal;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.08s ease, visibility 0.08s ease;
+            transition-delay: 0.08s;
+            z-index: 10;
+        }
+        .context-variable .failing-refinement:hover::after {
+            opacity: 1;
+            visibility: visible;
         }
         .diagram-section {
             margin-bottom: 1.5rem;

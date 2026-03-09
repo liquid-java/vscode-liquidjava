@@ -1,6 +1,6 @@
 import { LJVariable } from "../../../types/context";
 import { LJDiagnostic, RefinementError, StateRefinementError } from "../../../types/diagnostics";
-import { getOriginalVariableName, getSimpleName } from "../../utils";
+import { escapeHtml, getSimpleName } from "../../utils";
 import { renderToggleSection, renderVariableHighlightButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, diagnostics: LJDiagnostic[]): string {
@@ -26,28 +26,26 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
 }
 
 function renderVariable(variable: LJVariable, diagnostics: LJDiagnostic[]): string {
-    const failingRefinement = getFailingRefinement(variable, diagnostics);
+    const diagnostic = getMatchingDiagnostic(variable, diagnostics);
     return /*html*/`
         <div class="context-variable">
             ${renderVariableHighlightButton(variable.position, `${variable.name} == ${variable.refinement}`)}
-            ${failingRefinement ? /*html*/`<code class="failing-refinement">⊢ ${failingRefinement}</code>` : ''}
+            ${diagnostic ? /*html*/`<code class="failing-refinement" data-tooltip="${escapeHtml(diagnostic.message)}">⊢ ${diagnostic.expected}</code>` : ''}
         </div>`;
 }
 
-function getFailingRefinement(variable: LJVariable, diagnostics: LJDiagnostic[]): string | null {
+function getMatchingDiagnostic(variable: LJVariable, diagnostics: LJDiagnostic[]): { expected: string, message: string} | null {
     // find refinement or state refinement error that matches the variable's position
-    const matchingDiagnostic = diagnostics.find((d): d is RefinementError | StateRefinementError => {
+    const matchingDiagnostic = diagnostics.find(d => {
         if (!d.position || !variable.position) return false;
         if (d.type !== 'refinement-error' && d.type !== 'state-refinement-error') return false;
         return JSON.stringify(d.position) === JSON.stringify(variable.position);
-    });
+    }) as RefinementError | StateRefinementError | undefined;
     if (!matchingDiagnostic) return null;
 
     // get the expected type from diagnostic
-    const expected = matchingDiagnostic.type === 'refinement-error'
-        ? matchingDiagnostic.expected.value
-        : matchingDiagnostic.expected;
+    const expected = matchingDiagnostic.type == "refinement-error" ? matchingDiagnostic.expected.value : matchingDiagnostic.expected;
     
-    // only include those that mention the variable or "(this)"
-    return expected?.includes(variable.name) || expected?.includes('(this)') ? expected : null;
+    // only include those that mention the variable 
+    return expected?.includes(variable.name)  ? { expected, message: `${matchingDiagnostic.title}: ${matchingDiagnostic.message}` } : null;
 }
