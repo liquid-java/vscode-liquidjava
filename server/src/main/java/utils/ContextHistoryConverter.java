@@ -10,8 +10,8 @@ import dtos.context.AliasDTO;
 import dtos.context.ContextHistoryDTO;
 import dtos.context.GhostDTO;
 import dtos.context.VariableDTO;
+import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.processor.context.ContextHistory;
-import liquidjava.processor.context.RefinedVariable;
 
 /**
  * Utility class for converting LiquidJava context objects to DTOs.
@@ -25,23 +25,18 @@ public class ContextHistoryConverter {
      */
     public static ContextHistoryDTO convertToDTO(ContextHistory contextHistory) {
         return new ContextHistoryDTO(
-            toVariablesMap(contextHistory.getFileScopeVars()),
-            contextHistory.getInstanceVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
+            parseFileScopes(contextHistory.getFileScopes()),
+            contextHistory.getLocalVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
             contextHistory.getGlobalVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
             contextHistory.getGhosts().stream().map(GhostDTO::from).collect(Collectors.toList()),
             contextHistory.getAliases().stream().map(AliasDTO::from).collect(Collectors.toList())
         );
     }
 
-    private static Map<String, Map<String, List<VariableDTO>>> toVariablesMap(Map<String, Map<String, Set<RefinedVariable>>> vars) {
-        return vars.entrySet().stream().collect(Collectors.toMap(
+    private static Map<String, List<SourcePositionDTO>> parseFileScopes(Map<String, Set<String>> fileScopes) {
+        return fileScopes.entrySet().stream().collect(Collectors.toMap(
             Map.Entry::getKey,
-            entry -> entry.getValue().entrySet().stream().collect(Collectors.toMap(
-                Map.Entry::getKey,
-                innerEntry -> innerEntry.getValue().stream().map(VariableDTO::from).collect(Collectors.toList()),
-                (left, right) -> left,
-                HashMap::new
-            )),
+            entry -> entry.getValue().stream().map(SourcePositionDTO::from).collect(Collectors.toList()),
             (left, right) -> left,
             HashMap::new
         ));

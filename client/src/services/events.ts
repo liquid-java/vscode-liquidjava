@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
-import { normalizeRange, updateContext } from './context';
+import { normalizeRange, updateContextForSelection } from './context';
 import { Range } from '../types/context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
@@ -67,6 +67,6 @@ function handleContextUpdate(selection: vscode.Selection) {
     };
     const normalizedRange = normalizeRange(range);
     extension.currentSelection = normalizedRange;
-    updateContext(normalizedRange);
+    updateContextForSelection(normalizedRange);
     extension.webview?.sendMessage({ type: "context", context: extension.context });
 }

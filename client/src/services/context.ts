@@ -5,52 +5,49 @@ import { getOriginalVariableName } from "../utils/utils";
 
 export function handleContext(context: LJContext) {
     extension.context = context;
-    updateContext(extension.currentSelection);
+    updateContextForSelection(extension.currentSelection);
     extension.webview.sendMessage({ type: "context", context: extension.context });
 }
 
-export function updateContext(range: Range) {
-    if (!range) return;
-    const variablesInScope = getVariablesInScope(extension.file, range) || [];
-    const visibleVars = getVisibleVariables(variablesInScope, extension.file, range);
-    const globalVariables = extension.context.globalVars || [];
-    const allVars = sortVariables(normalizeRefinements([...globalVariables, ...visibleVars]));
+export function updateContextForSelection(selection: Range) {
+    if (!selection) return;
+
+    const globalVars = extension.context.globalVars || [];
+    const localVars = extension.context.localVars || [];
+    const scope = getMostSpecificScope(extension.file, selection);
+    const variablesInScope = getVariablesInScope(localVars, extension.file, scope);
+    const visibleVars = getVisibleVariables(variablesInScope, extension.file, selection);
+    const allVars = sortVariables(normalizeRefinements([...globalVars, ...visibleVars]));
     extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
 }
 
-// Gets the variables in scope for a given file and position
-// Returns null if position not in any scope
-export function getVariablesInScope(file: string, range: Range): LJVariable[] | null {
-    // get variables in file
-    const fileVars = extension.context.vars[file];
-    if (!fileVars) return null;
-
-    // get variables in the current scope based on the range
-    let mostSpecificScope: string | null = null;
-    let minScopeSize = Infinity;
-
+function getMostSpecificScope(file: string, range: Range): Range | null {
+    // get scopes for the current file
+    const scopes = extension.context.fileScopes[file];
+    if (!scopes) return null;
+    
     // find the most specific scope that contains the range
-    for (const scope of Object.keys(fileVars)) {
-        const scopeRange: Range = parseScopeString(scope);
-        if (isRangeWithin(range, scopeRange)) {
-            const scopeSize = (scopeRange.lineEnd - scopeRange.lineStart) * 10000 + (scopeRange.colEnd - scopeRange.colStart);
+    let mostSpecificScope: Range | null = null;
+    let minScopeSize = Infinity;
+    for (const scope of scopes) {
+        if (isRangeWithin(range, scope)) {
+            const scopeSize = (scope.lineEnd - scope.lineStart) * 10000 + (scope.colEnd - scope.colStart);
             if (scopeSize < minScopeSize) {
                 mostSpecificScope = scope;
                 minScopeSize = scopeSize;
             }
         }
     }
-    if (mostSpecificScope === null)
-        return null;
-
-    // filter variables to only include those that are reachable based on their position
-    const variablesInScope = [...fileVars[mostSpecificScope], ...extension.context.instanceVars];
-    return getVisibleVariables(variablesInScope, file, range);
+    return mostSpecificScope;
 }
 
-function getVisibleVariables(variables: LJVariable[], file: string, range: Range, useAnnotationPositions: boolean = false): LJVariable[] {
-    const isCollapsedRange = range.lineStart === range.lineEnd && range.colStart === range.colEnd;
+function getVariablesInScope(variables: LJVariable[], file: string, scope: Range): LJVariable[] {
+    return variables.filter(v => v.position?.file === file && isRangeWithin(v.position, scope));
+}
+
+function getVisibleVariables(variables: LJVariable[], file: string, selection: Range, useAnnotationPositions: boolean = false): LJVariable[] {
+    const isCollapsedRange = selection.lineStart === selection.lineEnd && selection.colStart === selection.colEnd;
     return variables.filter((variable) => {
         if (!variable.position) return false; // variable has no position
         if (variable.position?.file !== file) return false; // variable is not in the current file
@@ -62,12 +59,12 @@ function getVisibleVariables(variables: LJVariable[], file: string, range: Range
 
             // variable was declared before the cursor line or its in the same line but before the cursor column
             return (
-                position.lineStart < range.lineStart ||
-                (position.lineStart === range.lineStart && position.colStart + 1 <= range.colStart)
+                position.lineStart < selection.lineStart ||
+                (position.lineStart === selection.lineStart && position.colStart + 1 <= selection.colStart)
             );
         }
         // normal range, filter variables that are only within the range
-        return isRangeWithin(variable.position, range);
+        return isRangeWithin(variable.position, selection);
     });
 }
 
@@ -84,13 +81,6 @@ export function normalizeRange(range: Range): Range {
         lineEnd: range.lineStart,
         colEnd: range.colStart,
     };
-}
-
-function parseScopeString(scope: string): Range {
-    const [start, end] = scope.split("-");
-    const [startLine, startColumn] = start.split(":").map(Number);
-    const [endLine, endColumn] = end.split(":").map(Number);
-    return { lineStart: startLine, colStart: startColumn, lineEnd: endLine, colEnd: endColumn };
 }
 
 function isRangeWithin(range: Range, another: Range): boolean {
