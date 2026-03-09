@@ -19,7 +19,7 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                         `).join('')}
                     </tbody>
                 </table>
-                `: '<p>No variables available in the current position.</p>'}
+                `: '<p>No variables declared in the current position.</p>'}
             </div>
         </div>
     `;
