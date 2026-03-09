@@ -18,7 +18,7 @@ export function renderContextGhosts(ghosts: LJGhost[], isExpanded: boolean): str
                         `).join('')}
                     </tbody>
                 </table>
-                ` : '<p>No ghosts declared in the current file.</p>'}
+                ` : '<p>No ghosts or states declared in the current file</p>'}
             </div>
         </div>
     `;

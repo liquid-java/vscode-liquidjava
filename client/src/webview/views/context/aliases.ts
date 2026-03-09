@@ -22,7 +22,7 @@ export function renderContextAliases(aliases: LJAlias[], isExpanded: boolean): s
                         `).join('')}
                     </tbody>
                 </table>
-                ` : '<p>No aliases declared in the current project.</p>'}
+                ` : '<p>No aliases declared in the project</p>'}
             </div>
         </div>
     `;
