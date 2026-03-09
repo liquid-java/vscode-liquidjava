@@ -184,13 +184,19 @@ export function getScript(vscode: any, document: any, window: any) {
             }
             target.classList.add('selected');
 
+            const file = target.getAttribute('data-file');
             const lineStart = parseInt(target.getAttribute('data-start-line') || '', 10);
             const colStart = parseInt(target.getAttribute('data-start-column') || '', 10);
             const lineEnd = parseInt(target.getAttribute('data-end-line') || '', 10);
             const colEnd = parseInt(target.getAttribute('data-end-column') || '', 10);
             if ([lineStart, colStart, lineEnd, colEnd].some(Number.isNaN)) return;
+
             const range: Range = { lineStart, colStart, lineEnd, colEnd };
-            vscode.postMessage({ type: 'highlight', range });
+            if (file !== currentFile) {
+                vscode.postMessage({ type: 'openFile', filePath: file, line: lineStart, character: colStart, highlightRange: range });
+            } else {
+                vscode.postMessage({ type: 'highlight', range })
+            }
             return;
         }
 

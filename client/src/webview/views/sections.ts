@@ -65,6 +65,7 @@ export function renderVariableHighlightButton(position: SourcePosition, content:
             data-start-column="${position.colStart}"
             data-end-line="${position.lineEnd}"
             data-end-column="${position.colEnd}"
+            data-file="${position.file}"
         >
             <code>${content}</code>
         </button>

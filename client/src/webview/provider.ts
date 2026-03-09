@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getHtml } from './html';
-import { highlightRange } from '../services/highlight';
+import { highlightRange, openFile } from '../services/editor';
 
 /**
  * Webview provider for the LiquidJava extension
@@ -33,16 +33,7 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
       
       // handle message
       if (message.type === "openFile") {
-        // open file at the specified location
-        const uri = vscode.Uri.file(message.filePath);
-        vscode.workspace.openTextDocument(uri).then(doc => {
-          vscode.window.showTextDocument(doc).then(editor => {
-            const position = new vscode.Position(message.line, message.character);
-            const range = new vscode.Range(position, position);
-            editor.selection = new vscode.Selection(position, position);
-            editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
-          });
-        });
+        openFile(message.filePath, message.line, message.character, message.highlightRange);
       } else if (message.type === "highlight") {
         // highlight the specified range in the current editor
         highlightRange(vscode.window.activeTextEditor, message.range);

@@ -25,11 +25,11 @@ public class ContextHistoryConverter {
      */
     public static ContextHistoryDTO convertToDTO(ContextHistory contextHistory) {
         return new ContextHistoryDTO(
-            parseFileScopes(contextHistory.getFileScopes()),
             contextHistory.getLocalVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
             contextHistory.getGlobalVars().stream().map(VariableDTO::from).collect(Collectors.toList()),
             contextHistory.getGhosts().stream().map(GhostDTO::from).collect(Collectors.toList()),
-            contextHistory.getAliases().stream().map(AliasDTO::from).collect(Collectors.toList())
+            contextHistory.getAliases().stream().map(AliasDTO::from).collect(Collectors.toList()),
+            parseFileScopes(contextHistory.getFileScopes())
         );
     }
 
