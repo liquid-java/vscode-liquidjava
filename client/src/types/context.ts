@@ -19,6 +19,7 @@ export type LJGhost = {
   parameterTypes: string[];
   refinement: string;
   isState: boolean;
+  file: string;
 }
 
 export type LJAlias = {
@@ -30,9 +31,9 @@ export type LJAlias = {
 
 export type LJContext = {
   vars: Record<string, Record<string, LJVariable[]>>; // file -> (scope -> variables in scope)
-  ghosts: Record<string, LJGhost[]>; // file -> ghosts in file
   instanceVars: LJVariable[];
   globalVars: LJVariable[];
+  ghosts: LJGhost[];
   aliases: LJAlias[];
   visibleVars: LJVariable[]; // variables visible in the current selection
   allVars: LJVariable[]; // instance vars + global vars + vars in scope

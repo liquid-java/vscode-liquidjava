@@ -15,7 +15,8 @@ public record GhostDTO(
     String returnType,
     List<String> parameterTypes,
     String refinement,
-    boolean isState
+    boolean isState,
+    String file
 ) {
     private static final Pattern STATE_REFINEMENT_PATTERN = Pattern.compile("^state\\d+\\(_\\) == \\d+$");
 
@@ -29,7 +30,8 @@ public record GhostDTO(
             ContextHistoryDTO.stringifyType(ghostState.getReturnType()),
             ghostState.getParametersTypes().stream().map(ContextHistoryDTO::stringifyType).collect(Collectors.toList()),
             refinement,
-            isState
+            isState,
+            ghostState.getFile()
         );
     }
 }

@@ -14,9 +14,9 @@ export type ContextSectionState = {
 export function renderContextView(context: LJContext, currentFile: string, sectionState: ContextSectionState, diagnostics: LJDiagnostic[]): string {
     if (!context || !currentFile) return "";
 
-    const allVars = context.allVars || [];
-    const ghosts = context.ghosts[currentFile] || [];
-    const aliases = context.aliases || [];
+    const allVars = context.allVars;
+    const ghosts = context.ghosts.filter(ghost => ghost.file === currentFile);
+    const aliases = context.aliases;
     const total = allVars.length + ghosts.length + aliases.length;
     return /*html*/`
         <div>

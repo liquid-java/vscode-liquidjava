@@ -12,7 +12,7 @@ public record ContextHistoryDTO(
     Map<String, Map<String, List<VariableDTO>>> vars,
     List<VariableDTO> instanceVars,
     List<VariableDTO> globalVars,
-    Map<String, List<GhostDTO>> ghosts,
+    List<GhostDTO> ghosts,
     List<AliasDTO> aliases
 ) {
     public static String stringifyType(CtTypeReference<?> typeReference) {

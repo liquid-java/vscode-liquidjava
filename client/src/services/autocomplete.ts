@@ -46,9 +46,10 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
 
 function getContextCompletionItems(context: LJContext, file: string, annotation: LJAnnotation, nextChar: string, isDotTrigger: boolean, receiver: string | null): vscode.CompletionItem[] {
     const triggerParameterHints = nextChar !== "(";
+    const ghosts = context.ghosts.filter(ghost => ghost.file === file);
     if (isDotTrigger) {
         if (receiver === "this" || receiver === "old(this)") {
-            return getGhostCompletionItems(context.ghosts[file] || [], triggerParameterHints);
+            return getGhostCompletionItems(ghosts, triggerParameterHints);
         }
         return [];
     }
@@ -56,7 +57,7 @@ function getContextCompletionItems(context: LJContext, file: string, annotation:
     const varsInScope = filterDuplicateVariables(filterInstanceVariables(context.visibleVars || []));
     const itemsHandlers: Record<CompletionItemKind, () => vscode.CompletionItem[]> = {
         vars: () => getVariableCompletionItems(varsInScope),
-        ghosts: () => getGhostCompletionItems(context.ghosts[file] || [], triggerParameterHints),
+        ghosts: () => getGhostCompletionItems(ghosts, triggerParameterHints),
         aliases: () => getAliasCompletionItems(context.aliases, triggerParameterHints),
         keywords: () => getKeywordsCompletionItems(triggerParameterHints, inScope),
         types: () => getTypesCompletionItems(),
