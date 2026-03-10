@@ -54,7 +54,7 @@ function getContextCompletionItems(context: LJContext, file: string, annotation:
         return [];
     }
     const inScope = extension.context.visibleVars !== null;
-    const varsInScope = filterDuplicateVariables(filterInstanceVariables(context.visibleVars || []));
+    const varsInScope = filterDuplicateVariables(filterInstanceVariables([...context.visibleVars || []]));
     const itemsHandlers: Record<CompletionItemKind, () => vscode.CompletionItem[]> = {
         vars: () => getVariableCompletionItems(varsInScope),
         ghosts: () => getGhostCompletionItems(ghosts, triggerParameterHints),
