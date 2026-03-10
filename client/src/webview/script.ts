@@ -219,19 +219,19 @@ export function getScript(vscode: any, document: any, window: any) {
         switch (msg.type) {
             case 'diagnostics':
                 diagnostics = msg.diagnostics as LJDiagnostic[];
-                updateView();
+                if (selectedTab === 'diagnostics') updateView();
                 break;
             case 'file':
                 currentFile = msg.file;
-                if (!showAllDiagnostics) updateView();
+                if (!showAllDiagnostics && selectedTab === 'diagnostics') updateView();
                 break;
             case 'fsm':
                 stateMachine = msg.sm as LJStateMachine | undefined;
-                updateView();
+                if (selectedTab === 'fsm') updateView();
                 break;
             case 'context':
                 context = msg.context as LJContext;
-                updateView();
+                if (selectedTab === 'context') updateView();
                 break;
         }
     });
