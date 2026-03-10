@@ -291,6 +291,21 @@ export function getStyles(): string {
         .context-section {
             margin-bottom: 1rem;
         }
+        .context-section table tr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .context-section table td:first-child {
+            text-align: left;
+            flex: 1;
+            min-width: 0;
+        }
+        .context-section table td:last-child {
+            text-align: right;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
         .context-toggle-btn {
             display: flex;
             align-items: center;
