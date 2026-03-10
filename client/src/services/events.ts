@@ -3,6 +3,7 @@ import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
 import { normalizeRange, updateContextForSelection } from './context';
+import { normalizeFilePath } from '../utils/utils';
 import { Range } from '../types/context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
@@ -35,7 +36,7 @@ export function registerEvents(context: vscode.ExtensionContext) {
  * @param editor The active text editor
  */
 export async function onActiveFileChange(editor: vscode.TextEditor) {
-    extension.file = editor.document.uri.fsPath;
+    extension.file = normalizeFilePath(editor.document.uri.fsPath);
     extension.webview?.sendMessage({ type: "file", file: extension.file });
     await updateStateMachine(editor.document);
     handleContextUpdate(editor.selection);

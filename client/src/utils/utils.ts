@@ -132,3 +132,8 @@ export function getSimpleName(qualifiedName: string): string {
 export function getOriginalVariableName(name: string): string {
     return name.split("_")[0].replace(/^#/, '');
 }
+
+export function normalizeFilePath(fsPath: string): string {
+    // uppercase windows drive letter (c:\ -> C:\)
+    return path.normalize(fsPath).replace(/^([a-z]):\\/, (_, drive) => drive.toUpperCase() + ':\\');
+}
