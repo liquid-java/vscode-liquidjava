@@ -29,7 +29,7 @@ function renderVariable(variable: LJVariable, diagnostics: LJDiagnostic[]): stri
     const diagnostic = getMatchingDiagnostic(variable, diagnostics);
     return /*html*/`
         <div class="context-variable">
-            ${renderVariableHighlightButton(variable.position, `${variable.name} == ${variable.refinement}`)}
+            ${renderVariableHighlightButton(variable.position, variable.refinement)}
             ${diagnostic ? /*html*/`<code class="failing-refinement" data-tooltip="${escapeHtml(diagnostic.message)}">⊢ ${diagnostic.expected}</code>` : ''}
         </div>`;
 }
@@ -45,7 +45,8 @@ function getMatchingDiagnostic(variable: LJVariable, diagnostics: LJDiagnostic[]
 
     // get the expected type from diagnostic
     const expected = matchingDiagnostic.type == "refinement-error" ? matchingDiagnostic.expected.value : matchingDiagnostic.expected;
+    if (!expected) return null;
     
     // only include those that mention the variable 
-    return expected?.includes(variable.name)  ? { expected, message: `${matchingDiagnostic.title}: ${matchingDiagnostic.message}` } : null;
+    return expected.includes(variable.name) ? { expected, message: `${matchingDiagnostic.title}: ${matchingDiagnostic.message}` } : null;
 }
