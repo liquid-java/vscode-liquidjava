@@ -137,9 +137,8 @@ export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
 }
 
 function normalizeVariableRefinements(variables: LJVariable[]): LJVariable[] {
-    return variables.flatMap(v => {
-        if (!v.refinement) return [];
-        if (v.refinement === "true") return []; // filter out trivial refinements
+    return Array.from(new Map(variables.map(v => [v.refinement, v])).values()).flatMap(v => {
+        if (!v.refinement || v.refinement === "true") return []; // filter out trivial refinements
         if (v.refinement.includes("==")) {
             const [left, right] = v.refinement.split("==").map(s => s.trim());
             return left !== right ? [v] : []; // filter tautologies like x == x
