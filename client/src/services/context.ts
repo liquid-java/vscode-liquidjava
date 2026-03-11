@@ -22,7 +22,7 @@ export function updateContextForSelection(selection: Range) {
         visibleVars = getVisibleVariables(variablesInScope, extension.file, selection);
     }
 
-    const allVars = sortVariables(normalizeRefinements([...globalVars, ...visibleVars]));
+    const allVars = sortVariables(normalizeVariableRefinements([...globalVars, ...visibleVars]));
     extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
 }
@@ -130,18 +130,15 @@ export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
     return variables.filter(v => !v.name.includes("#"));
 }
 
-function normalizeRefinements(variables: LJVariable[]): LJVariable[] {
-    return variables
-        .filter(v => {
-            if (!v.refinement) return false;
-            if (v.refinement.includes("==")) {
-                const [left, right] = v.refinement.split("==").map(s => s.trim());
-                return left !== right; // filter out tautologies like x == x
-            }
-            return true;
-        })
-        .flatMap(v => {
-            if (v.refinement.includes("==") || v.refinement.includes("!=")) return [v];
-            return [{ ...v, refinement: `${v.name} == ${v.refinement}` }];
-        });
+function normalizeVariableRefinements(variables: LJVariable[]): LJVariable[] {
+    return variables.flatMap(v => {
+        if (!v.refinement) return [];
+        if (v.refinement === "true") return []; // filter out trivial refinements
+        if (v.refinement.includes("==")) {
+            const [left, right] = v.refinement.split("==").map(s => s.trim());
+            return left !== right ? [v] : []; // filter tautologies like x == x
+        }
+        if (v.refinement.includes("!=")) return [v];
+        return [{ ...v, refinement: `${v.name} == ${v.refinement}` }];
+    });
 }
