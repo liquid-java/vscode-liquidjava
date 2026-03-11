@@ -291,11 +291,6 @@ export function getStyles(): string {
         .context-section {
             margin-bottom: 1rem;
         }
-        .context-section table tr {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
         .context-section table td:first-child {
             text-align: left;
             flex: 1;
