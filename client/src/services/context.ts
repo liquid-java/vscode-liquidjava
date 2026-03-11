@@ -131,10 +131,9 @@ export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
 }
 
 function normalizeRefinements(variables: LJVariable[]): LJVariable[] {
-    return Array.from(new Map(variables.map(v => [v.refinement, v])).values())
+    return variables
         .filter(v => {
             if (!v.refinement) return false;
-            if (v.refinement === "true") return false; // filter out trivial refinements
             if (v.refinement.includes("==")) {
                 const [left, right] = v.refinement.split("==").map(s => s.trim());
                 return left !== right; // filter out tautologies like x == x
