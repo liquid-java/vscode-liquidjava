@@ -109,21 +109,20 @@ export function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] 
 function sortVariables(variables: LJVariable[]): LJVariable[] {
     // sort by position or name
     return variables.sort((left, right) => {
-        const leftPosition = left.position
-        const rightPosition = right.position
-
-        if (!leftPosition && !rightPosition) return compareVariableNames(left, right);
-        if (!leftPosition) return 1;
-        if (!rightPosition) return -1;
-        if (leftPosition.lineStart !== rightPosition.lineStart) return leftPosition.lineStart - rightPosition.lineStart;
-        if (leftPosition.colStart !== rightPosition.colStart) return rightPosition.colStart - leftPosition.colStart;
-
+        if (!left.position && !right.position) return compareVariableNames(left, right);
+        if (!left.position) return 1;
+        if (!right.position) return -1;
+        if (left.position.lineStart !== right.position.lineStart) return left.position.lineStart - right.position.lineStart;
+        if (left.position.colStart !== right.position.colStart) return right.position.colStart - left.position.colStart;
         return compareVariableNames(left, right);
     });
 }
 
 function compareVariableNames(a: LJVariable, b: LJVariable): number {
-    return getOriginalVariableName(a.name).localeCompare(getOriginalVariableName(b.name));
+    if (a.name.startsWith("#") && b.name.startsWith("#")) return getOriginalVariableName(a.name).localeCompare(getOriginalVariableName(b.name));
+    if (a.name.startsWith("#")) return 1;
+    if (b.name.startsWith("#")) return -1;
+    return a.name.localeCompare(b.name);
 }
 
 export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
