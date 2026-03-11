@@ -53,6 +53,7 @@ function getVariablesInScope(variables: LJVariable[], file: string, scope: Range
 
 function getVisibleVariables(variables: LJVariable[], file: string, selection: Range, useAnnotationPositions: boolean = false): LJVariable[] {
     const isCollapsedRange = selection.lineStart === selection.lineEnd && selection.colStart === selection.colEnd;
+    const fileScopes = isCollapsedRange ? (extension.context.fileScopes[file] || []) : [];
     return variables.filter((variable) => {
         if (!variable.position) return false; // variable has no position
         if (variable.position?.file !== file) return false; // variable is not in the current file
@@ -63,10 +64,16 @@ function getVisibleVariables(variables: LJVariable[], file: string, selection: R
             if (!position || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the range (for method and parameter refinements)
 
             // variable was declared before the cursor line or its in the same line but before the cursor column
-            return (
+            const isDeclaredBeforeCursor =
                 position.lineStart < selection.lineStart ||
-                (position.lineStart === selection.lineStart && position.colStart + 1 <= selection.colStart)
+                (position.lineStart === selection.lineStart && position.colStart + 1 <= selection.colStart);
+            if (!isDeclaredBeforeCursor) return false;
+
+            // exclude variables that in unreachable scopes
+            const isInUnreachableScope = fileScopes.some(scope =>
+                isRangeWithin(variable.position!, scope) && !isRangeWithin(selection, scope)
             );
+            return !isInUnreachableScope;
         }
         // normal range, filter variables that are only within the range
         return isRangeWithin(variable.position, selection);
