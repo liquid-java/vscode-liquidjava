@@ -51,7 +51,7 @@ function getVariablesInScope(variables: LJVariable[], file: string, scope: Range
     return variables.filter(v => v.position?.file === file && isRangeWithin(v.position, scope));
 }
 
-function getVisibleVariables(variables: LJVariable[], file: string, selection: Range, useAnnotationPositions: boolean = false): LJVariable[] {
+function getVisibleVariables(variables: LJVariable[], file: string, selection: Range): LJVariable[] {
     const isCollapsedRange = selection.lineStart === selection.lineEnd && selection.colStart === selection.colEnd;
     const fileScopes = isCollapsedRange ? (extension.context.fileScopes[file] || []) : [];
     return variables.filter((variable) => {
@@ -60,8 +60,8 @@ function getVisibleVariables(variables: LJVariable[], file: string, selection: R
        
         // single point cursor
         if (isCollapsedRange) {
-            const position: SourcePosition = useAnnotationPositions ? variable.annPosition || variable.position : variable.position;
-            if (!position || variable.isParameter) return true; // if is parameter we need to access it even if it's declared after the range (for method and parameter refinements)
+            const position: SourcePosition = variable.annotationPosition || variable.position!;
+            if (!position) return false;
 
             // variable was declared before the cursor line or its in the same line but before the cursor column
             const isDeclaredBeforeCursor =

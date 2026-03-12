@@ -8,8 +8,7 @@ export type LJVariable = {
   refinement: string;
   mainRefinement: string;
   position: SourcePosition| null;
-  isParameter: boolean;
-  annPosition: SourcePosition | null;
+  annotationPosition: SourcePosition | null;
 }
 
 export type LJGhost = {

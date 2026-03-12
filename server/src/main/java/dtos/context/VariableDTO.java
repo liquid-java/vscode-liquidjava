@@ -13,8 +13,7 @@ public record VariableDTO(
     String refinement,
     String mainRefinement,
     SourcePositionDTO position,
-    boolean isParameter,
-    SourcePositionDTO annPosition
+    SourcePositionDTO annotationPosition
 ) {
     public static VariableDTO from(RefinedVariable refinedVariable) {
         PlacementInCode placement = refinedVariable.getPlacementInCode();
@@ -25,8 +24,7 @@ public record VariableDTO(
             refinedVariable.getRefinement().toString(),
             refinedVariable.getMainRefinement().toString(),
             SourcePositionDTO.from(placement.getPosition()),
-            refinedVariable.isParameter(),
-            SourcePositionDTO.from(refinedVariable.getAnnPosition())
+            SourcePositionDTO.from(placement.getAnnotationPosition())
         );
     }
 }
