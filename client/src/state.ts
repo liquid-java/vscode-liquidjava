@@ -25,7 +25,6 @@ export class ExtensionState {
     stateMachine?: LJStateMachine;
     context?: LJContext;
     currentSelection?: Range;
-    currentScope?: Range;
     errorAtCursor?: RefinementMismatchError;
 }
 

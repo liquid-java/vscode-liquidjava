@@ -13,50 +13,29 @@ export function updateContextForSelection(selection: Range) {
     if (!selection) return;
 
     const globalVars = extension.context.globalVars || [];
-    const localVars = extension.context.localVars || [];
-    const scope = getMostSpecificScope(extension.file, selection);
-    extension.currentScope = scope;
-
-    let visibleVars: LJVariable[] = [];
-    if (scope) {
-        const variablesInScope = getVariablesInScope(localVars, extension.file, scope);
-        visibleVars = getVisibleVariables(variablesInScope, extension.file, selection);
-    }
+    const localVars = extension.context.localVars || []; 
+    const variablesInScope = getVariablesInScope(localVars, extension.file, selection);
+    const visibleVars = getVisibleVariables(variablesInScope, extension.file, selection);
     const allVars = sortVariables(normalizeVariableRefinements([...globalVars, ...visibleVars]));
     extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
 }
 
-function getMostSpecificScope(file: string, range: Range): Range | null {
-    // get scopes for the current file
-    const scopes = extension.context.fileScopes[file];
-    if (!scopes) return null;
-    
-    // find the most specific scope that contains the range
-    let mostSpecificScope: Range | null = null;
-    let minScopeSize = Infinity;
-    for (const scope of scopes) {
-        if (isRangeWithin(range, scope)) {
-            const scopeSize = (scope.lineEnd - scope.lineStart) * 10000 + (scope.colEnd - scope.colStart);
-            if (scopeSize < minScopeSize) {
-                mostSpecificScope = scope;
-                minScopeSize = scopeSize;
-            }
-        }
-    }
-    return mostSpecificScope;
-}
-
-function getVariablesInScope(variables: LJVariable[], file: string, scope: Range): LJVariable[] {
-    return variables.filter(v => v.position?.file === file && isRangeWithin(v.position, scope));
+function getVariablesInScope(variables: LJVariable[], file: string, selection: Range): LJVariable[] {
+    const scopes = extension.context.fileScopes[file] || [];
+    const enclosingScopes = scopes.filter(scope => isRangeWithin(selection, scope));
+    return variables.filter(v =>
+        v.position?.file === file &&
+        enclosingScopes.some(scope => isRangeWithin(v.position, scope))
+    );
 }
 
 function getVisibleVariables(variables: LJVariable[], file: string, selection: Range): LJVariable[] {
     const isCollapsedRange = selection.lineStart === selection.lineEnd && selection.colStart === selection.colEnd;
     const fileScopes = isCollapsedRange ? (extension.context.fileScopes[file] || []) : [];
     return variables.filter((variable) => {
-        if (!variable.position) return false; // variable has no position
-        if (variable.position?.file !== file) return false; // variable is not in the current file
+        // variable must be declared in the same file
+        if (!variable.position || variable.position?.file !== file) return false;
        
         // single point cursor
         if (isCollapsedRange) {
@@ -64,10 +43,8 @@ function getVisibleVariables(variables: LJVariable[], file: string, selection: R
             if (!position) return false;
 
             // variable was declared before the cursor line or its in the same line but before the cursor column
-            const isDeclaredBeforeCursor =
-                position.lineStart < selection.lineStart ||
-                (position.lineStart === selection.lineStart && position.colStart + 1 <= selection.colStart);
-            if (!isDeclaredBeforeCursor) return false;
+            const beforeCursor = isPositionBefore(position, selection);
+            if (!beforeCursor) return false;
 
             // exclude variables that in unreachable scopes
             const isInUnreachableScope = fileScopes.some(scope =>
@@ -75,32 +52,51 @@ function getVisibleVariables(variables: LJVariable[], file: string, selection: R
             );
             return !isInUnreachableScope;
         }
-        // normal range, filter variables that are only within the range
-        return isRangeWithin(variable.position, selection);
+        // normal range, filter variables that intersect the selection
+        return rangesIntersect(variable.position, selection);
     });
 }
 
 // Normalizes the range to ensure start is before end
 export function normalizeRange(range: Range): Range {
-    const isStartBeforeEnd =
-        range.lineStart < range.lineEnd ||
-        (range.lineStart === range.lineEnd && range.colStart <= range.colEnd);
+    const reversedRange: Range = reverseRange(range);
+    if (isPositionBefore(range, reversedRange)) return range;
+    return reversedRange;   
+}
 
-    if (isStartBeforeEnd) return range;
+export function rangesIntersect(a: Range, b: Range): boolean {
+    const aEnd = reverseRange(a);
+    const bEnd = reverseRange(b);
+    return isPositionBeforeOrEqual(a, bEnd) && isPositionBeforeOrEqual(b, aEnd);
+}
+
+export function isRangeWithin(range: Range, another: Range): boolean {
+    const startsWithin = isPositionBeforeOrEqual(another, range);
+    const rangeEnd = reverseRange(range);
+    const anotherEnd = reverseRange(another);
+    const endsWithin = isPositionBeforeOrEqual(rangeEnd, anotherEnd);
+    return startsWithin && endsWithin;
+}
+
+export function isPositionBefore(range: Range, another: Range): boolean {
+    return range.lineStart < another.lineStart || (range.lineStart === another.lineStart && range.colStart < another.colStart);
+}
+
+export function isPositionBeforeOrEqual(range: Range, another: Range): boolean {
+    return range.lineStart < another.lineStart || (range.lineStart === another.lineStart && range.colStart <= another.colStart);
+}
+
+export function reverseRange(range: Range): Range {
     return {
         lineStart: range.lineEnd,
         colStart: range.colEnd,
         lineEnd: range.lineStart,
-        colEnd: range.colStart,
-    };
+        colEnd: range.colStart
+    }
 }
 
-export function isRangeWithin(range: Range, another: Range): boolean {
-    const startsWithin = range.lineStart > another.lineStart || 
-        (range.lineStart === another.lineStart && range.colStart >= another.colStart);
-    const endsWithin = range.lineEnd < another.lineEnd || 
-        (range.lineEnd === another.lineEnd && range.colEnd <= another.colEnd);
-    return startsWithin && endsWithin;
+export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
+    return variables.filter(v => !v.name.includes("#"));
 }
 
 export function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] {
@@ -113,8 +109,8 @@ export function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] 
     return Array.from(uniqueVariables.values());
 }
 
+// Sorts variables by their position or name
 function sortVariables(variables: LJVariable[]): LJVariable[] {
-    // sort by position or name
     return variables.sort((left, right) => {
         if (!left.position && !right.position) return compareVariableNames(left, right);
         if (!left.position) return 1;
@@ -130,10 +126,6 @@ function compareVariableNames(a: LJVariable, b: LJVariable): number {
     if (a.name.startsWith("#")) return 1;
     if (b.name.startsWith("#")) return -1;
     return a.name.localeCompare(b.name);
-}
-
-export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
-    return variables.filter(v => !v.name.includes("#"));
 }
 
 function normalizeVariableRefinements(variables: LJVariable[]): LJVariable[] {
