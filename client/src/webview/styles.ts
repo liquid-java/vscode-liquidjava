@@ -341,13 +341,17 @@ export function getStyles(): string {
         .highlight-var-btn.selected {
             background-color: var(--vscode-button-background);
         }
+        .highlight-var-btn.error {
+            background-color: #d6382f;
+        }
+        .highlight-var-btn.error.selected {
+            background-color: #c92e26;
+        }
+        .highlight-var-btn.error:hover {
+            background-color: #c92e26;
+        }
         .failing-refinement {
             position: relative;
-        }
-        .failing-refinement a {
-            color: var(--vscode-editorError-foreground);
-            font-size: 0.8rem;
-            padding: 0.2rem 0.8rem;
         }
         .failing-refinement::after {
             content: attr(data-tooltip);

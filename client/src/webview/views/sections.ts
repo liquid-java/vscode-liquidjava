@@ -47,7 +47,7 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                         return /*html*/`
                             <tr>
                                 <td><code>${variable}</code></td>
-                                <td>${renderVariableHighlightButton(placement.position, placement.text)}</td>
+                                <td>${renderHighlightButton(placement.position, placement.text)}</td>
                             </tr>
                         `;
                     }).join('')}
@@ -57,10 +57,10 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
     `;
 }
 
-export function renderVariableHighlightButton(position: SourcePosition, content: string): string {
+export function renderHighlightButton(position: SourcePosition, content: string, error: boolean = false): string {
     return /*html*/`
         <button
-            class="highlight-var-btn"
+            class="highlight-var-btn ${error ? 'error' : ''}"
             data-start-line="${position.lineStart}"
             data-start-column="${position.colStart}"
             data-end-line="${position.lineEnd}"
@@ -72,7 +72,7 @@ export function renderVariableHighlightButton(position: SourcePosition, content:
     `;
 }
 
-export function renderLocationLink(position?: SourcePosition, content?: string): string {
+export function renderLocationLink(position?: SourcePosition): string {
     if (!position) return 'No location';
     return /*html*/`<a
         href="#"
@@ -80,7 +80,7 @@ export function renderLocationLink(position?: SourcePosition, content?: string):
         data-file="${position.file}"
         data-line="${position.lineStart}"
         data-column="${position.colStart}"
-    >${content || getFile(position)}</a>`;
+    >${getFile(position)}</a>`;
 }
 
 function getFile(position: SourcePosition): string {
