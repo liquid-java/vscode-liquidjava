@@ -30,11 +30,11 @@ function renderVariable(variable: LJVariable, diagnostics: LJDiagnostic[]): stri
     return /*html*/`
         <div class="context-variable">
             ${renderVariableHighlightButton(variable.position, variable.refinement)}
-            ${diagnostic ? /*html*/`<code class="failing-refinement" data-tooltip="${escapeHtml(diagnostic.message)}">⊢ ${diagnostic.expected}</code>` : ''}
+            ${diagnostic ? /*html*/`<code class="failing-refinement" data-tooltip="${escapeHtml(diagnostic.title)}">⊢ ${diagnostic.expected}</code>` : ''}
         </div>`;
 }
 
-function getMatchingDiagnostic(variable: LJVariable, diagnostics: LJDiagnostic[]): { expected: string, message: string} | null {
+function getMatchingDiagnostic(variable: LJVariable, diagnostics: LJDiagnostic[]): { expected: string, title: string} | null {
     // find refinement or state refinement error that matches the variable's position
     const matchingDiagnostic = diagnostics.find(d => {
         if (!d.position || !variable.position) return false;
@@ -48,5 +48,5 @@ function getMatchingDiagnostic(variable: LJVariable, diagnostics: LJDiagnostic[]
     if (!expected) return null;
     
     // only include those that mention the variable 
-    return expected.includes(variable.name) ? { expected, message: `${matchingDiagnostic.title}: ${matchingDiagnostic.message}` } : null;
+    return expected.includes(variable.name) ? { expected, title: matchingDiagnostic.title } : null;
 }

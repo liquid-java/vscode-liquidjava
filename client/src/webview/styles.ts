@@ -342,7 +342,6 @@ export function getStyles(): string {
         }
         .context-variable .failing-refinement {
             color: var(--vscode-editorError-foreground);
-            font-size: 0.8rem;
             position: relative;
         }
         .context-variable .failing-refinement::after {
@@ -350,16 +349,14 @@ export function getStyles(): string {
             position: absolute;
             left: 0;
             bottom: calc(100% + 0.35rem);
-            min-width: 15rem;
-            max-width: 25rem;
-            padding: 0.5rem 0.65rem;
+            padding: 0.4rem 0.5rem;
             border-radius: 4px;
             background: var(--vscode-editorHoverWidget-background);
             border: 1px solid var(--vscode-editorHoverWidget-border);
             color: var(--vscode-editorHoverWidget-foreground);
             font-size: 0.8rem;
             line-height: 1.4;
-            white-space: normal;
+            white-space: nowrap;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             opacity: 0;
             visibility: hidden;
