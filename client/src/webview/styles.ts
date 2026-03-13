@@ -342,6 +342,7 @@ export function getStyles(): string {
         }
         .context-variable .failing-refinement {
             color: var(--vscode-editorError-foreground);
+            font-size: 0.8rem;
             position: relative;
         }
         .context-variable .failing-refinement::after {
