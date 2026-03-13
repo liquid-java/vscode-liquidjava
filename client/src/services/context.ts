@@ -15,9 +15,10 @@ export function updateContextForSelection(selection: Range) {
     const globalVars = extension.context.globalVars || [];
     const localVars = extension.context.localVars || []; 
     const variablesInScope = getVariablesInScope(localVars, extension.file, selection);
-    const visibleVars = getVisibleVariables(variablesInScope, extension.file, selection);
-    const allVars = sortVariables(normalizeVariableRefinements([...globalVars, ...visibleVars]));
-    extension.context.visibleVars = visibleVars;
+    const visibleVarsByPosition = getVisibleVariables(variablesInScope, extension.file, selection, false);
+    const visibleVarsByAnnotationPosition = getVisibleVariables(variablesInScope, extension.file, selection, true);
+    const allVars = sortVariables(normalizeVariableRefinements([...globalVars, ...visibleVarsByPosition]));
+    extension.context.visibleVars = visibleVarsByAnnotationPosition;
     extension.context.allVars = allVars;
 }
 
@@ -30,7 +31,7 @@ function getVariablesInScope(variables: LJVariable[], file: string, selection: R
     );
 }
 
-function getVisibleVariables(variables: LJVariable[], file: string, selection: Range): LJVariable[] {
+function getVisibleVariables(variables: LJVariable[], file: string, selection: Range, useAnnotationPosition: boolean): LJVariable[] {
     const isCollapsedRange = selection.lineStart === selection.lineEnd && selection.colStart === selection.colEnd;
     const fileScopes = isCollapsedRange ? (extension.context.fileScopes[file] || []) : [];
     return variables.filter((variable) => {
@@ -39,7 +40,7 @@ function getVisibleVariables(variables: LJVariable[], file: string, selection: R
        
         // single point cursor
         if (isCollapsedRange) {
-            const position: SourcePosition = variable.annotationPosition || variable.position;
+            const position: SourcePosition = (useAnnotationPosition && variable.annotationPosition) || variable.position;
 
             // variable was declared before the cursor line or its in the same line but before the cursor column
             const beforeCursor = isPositionBefore(position, selection);
