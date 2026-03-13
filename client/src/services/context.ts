@@ -39,8 +39,7 @@ function getVisibleVariables(variables: LJVariable[], file: string, selection: R
        
         // single point cursor
         if (isCollapsedRange) {
-            const position: SourcePosition = variable.annotationPosition || variable.position!;
-            if (!position) return false;
+            const position: SourcePosition = variable.annotationPosition || variable.position;
 
             // variable was declared before the cursor line or its in the same line but before the cursor column
             const beforeCursor = isPositionBefore(position, selection);
@@ -59,40 +58,30 @@ function getVisibleVariables(variables: LJVariable[], file: string, selection: R
 
 // Normalizes the range to ensure start is before end
 export function normalizeRange(range: Range): Range {
-    const reversedRange: Range = reverseRange(range);
-    if (isPositionBefore(range, reversedRange)) return range;
-    return reversedRange;   
+    if (isBefore(range.lineStart, range.colStart, range.lineEnd, range.colEnd)) return range;
+    return { lineStart: range.lineEnd, colStart: range.colEnd, lineEnd: range.lineStart, colEnd: range.colStart };
 }
 
 export function rangesIntersect(a: Range, b: Range): boolean {
-    const aEnd = reverseRange(a);
-    const bEnd = reverseRange(b);
-    return isPositionBeforeOrEqual(a, bEnd) && isPositionBeforeOrEqual(b, aEnd);
+    return isBeforeOrEqual(a.lineStart, a.colStart, b.lineEnd, b.colEnd) &&
+           isBeforeOrEqual(b.lineStart, b.colStart, a.lineEnd, a.colEnd);
 }
 
 export function isRangeWithin(range: Range, another: Range): boolean {
-    const startsWithin = isPositionBeforeOrEqual(another, range);
-    const rangeEnd = reverseRange(range);
-    const anotherEnd = reverseRange(another);
-    const endsWithin = isPositionBeforeOrEqual(rangeEnd, anotherEnd);
-    return startsWithin && endsWithin;
+    return isBeforeOrEqual(another.lineStart, another.colStart, range.lineStart, range.colStart) &&
+           isBeforeOrEqual(range.lineEnd, range.colEnd, another.lineEnd, another.colEnd);
 }
 
 export function isPositionBefore(range: Range, another: Range): boolean {
-    return range.lineStart < another.lineStart || (range.lineStart === another.lineStart && range.colStart < another.colStart);
+    return isBefore(range.lineStart, range.colStart, another.lineStart, another.colStart);
 }
 
-export function isPositionBeforeOrEqual(range: Range, another: Range): boolean {
-    return range.lineStart < another.lineStart || (range.lineStart === another.lineStart && range.colStart <= another.colStart);
+function isBefore(line1: number, col1: number, line2: number, col2: number): boolean {
+    return line1 < line2 || (line1 === line2 && col1 < col2);
 }
 
-export function reverseRange(range: Range): Range {
-    return {
-        lineStart: range.lineEnd,
-        colStart: range.colEnd,
-        lineEnd: range.lineStart,
-        colEnd: range.colStart
-    }
+function isBeforeOrEqual(line1: number, col1: number, line2: number, col2: number): boolean {
+    return line1 < line2 || (line1 === line2 && col1 <= col2);
 }
 
 export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
