@@ -333,6 +333,7 @@ export function getStyles(): string {
             border: none;
             transition: background-color 0.1s;
             text-align: left;
+            padding: 0.2rem 0.8rem;
         }
         .highlight-var-btn code {
             pointer-events: none;
@@ -340,12 +341,15 @@ export function getStyles(): string {
         .highlight-var-btn.selected {
             background-color: var(--vscode-button-background);
         }
-        .context-variable .failing-refinement {
-            color: var(--vscode-editorError-foreground);
-            font-size: 0.8rem;
+        .failing-refinement {
             position: relative;
         }
-        .context-variable .failing-refinement::after {
+        .failing-refinement a {
+            color: var(--vscode-editorError-foreground);
+            font-size: 0.8rem;
+            padding: 0.2rem 0.8rem;
+        }
+        .failing-refinement::after {
             content: attr(data-tooltip);
             position: absolute;
             left: 0;
@@ -366,7 +370,7 @@ export function getStyles(): string {
             transition-delay: 0.08s;
             z-index: 10;
         }
-        .context-variable .failing-refinement:hover::after {
+        .failing-refinement:hover::after {
             opacity: 1;
             visibility: visible;
         }

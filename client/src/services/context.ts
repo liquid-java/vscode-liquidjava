@@ -6,7 +6,7 @@ import { getOriginalVariableName } from "../utils/utils";
 export function handleContext(context: LJContext) {
     extension.context = context;
     updateContextForSelection(extension.currentSelection);
-    extension.webview.sendMessage({ type: "context", context: extension.context });
+    extension.webview.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }
 
 export function updateContextForSelection(selection: Range) {
@@ -15,13 +15,13 @@ export function updateContextForSelection(selection: Range) {
     const globalVars = extension.context.globalVars || [];
     const localVars = extension.context.localVars || [];
     const scope = getMostSpecificScope(extension.file, selection);
+    extension.currentScope = scope;
 
     let visibleVars: LJVariable[] = [];
     if (scope) {
         const variablesInScope = getVariablesInScope(localVars, extension.file, scope);
         visibleVars = getVisibleVariables(variablesInScope, extension.file, selection);
     }
-
     const allVars = sortVariables(normalizeVariableRefinements([...globalVars, ...visibleVars]));
     extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
@@ -95,7 +95,7 @@ export function normalizeRange(range: Range): Range {
     };
 }
 
-function isRangeWithin(range: Range, another: Range): boolean {
+export function isRangeWithin(range: Range, another: Range): boolean {
     const startsWithin = range.lineStart > another.lineStart || 
         (range.lineStart === another.lineStart && range.colStart >= another.colStart);
     const endsWithin = range.lineEnd < another.lineEnd || 

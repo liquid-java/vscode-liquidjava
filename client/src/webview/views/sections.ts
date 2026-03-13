@@ -72,7 +72,7 @@ export function renderVariableHighlightButton(position: SourcePosition, content:
     `;
 }
 
-export function renderLocationLink(position?: SourcePosition): string {
+export function renderLocationLink(position?: SourcePosition, content?: string): string {
     if (!position) return 'No location';
     return /*html*/`<a
         href="#"
@@ -80,7 +80,7 @@ export function renderLocationLink(position?: SourcePosition): string {
         data-file="${position.file}"
         data-line="${position.lineStart}"
         data-column="${position.colStart}"
-    >${getFile(position)}</a>`;
+    >${content || getFile(position)}</a>`;
 }
 
 function getFile(position: SourcePosition): string {

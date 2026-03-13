@@ -5,6 +5,7 @@ import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
 import { normalizeRange, updateContextForSelection } from './context';
 import { normalizeFilePath } from '../utils/utils';
 import { Range } from '../types/context';
+import { updateErrorAtCursor } from './diagnostics';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 
@@ -69,5 +70,6 @@ function handleContextUpdate(selection: vscode.Selection) {
     const normalizedRange = normalizeRange(range);
     extension.currentSelection = normalizedRange;
     updateContextForSelection(normalizedRange);
-    extension.webview?.sendMessage({ type: "context", context: extension.context });
+    updateErrorAtCursor();
+    extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }

@@ -2,7 +2,7 @@ import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/di
 import { renderLoading } from "./views/loading";
 import { renderStateMachineView } from "./views/fsm/fsm";
 import { createMermaidDiagram, renderMermaidDiagram, resetZoom, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
-import type { LJDiagnostic } from "../types/diagnostics";
+import type { LJDiagnostic, RefinementMismatchError } from "../types/diagnostics";
 import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
@@ -20,10 +20,11 @@ export function getScript(vscode: any, document: any, window: any) {
     const root = document.getElementById('root');
     let diagnostics: LJDiagnostic[] = [];
     let showAllDiagnostics = false;
-    let currentFile: string | undefined;
+    let currentFile: string;
     let expandedErrors = new Set<number>();
-    let stateMachine: LJStateMachine | undefined;
-    let context: LJContext | undefined;
+    let stateMachine: LJStateMachine;
+    let context: LJContext;
+    let errorAtCursor: RefinementMismatchError;
     let selectedTab: NavTab = 'diagnostics';
     let diagramOrientation: "LR" | "TB" = "TB";
     let currentDiagram: string = '';
@@ -226,11 +227,12 @@ export function getScript(vscode: any, document: any, window: any) {
                 if (!showAllDiagnostics && selectedTab === 'diagnostics') updateView();
                 break;
             case 'fsm':
-                stateMachine = msg.sm as LJStateMachine | undefined;
+                stateMachine = msg.sm as LJStateMachine;
                 if (selectedTab === 'fsm') updateView();
                 break;
             case 'context':
                 context = msg.context as LJContext;
+                errorAtCursor = msg.errorAtCursor as RefinementMismatchError;
                 if (selectedTab === 'context') updateView();
                 break;
         }
@@ -251,7 +253,7 @@ export function getScript(vscode: any, document: any, window: any) {
                 if (stateMachine) renderMermaidDiagram(document, window);
                 break;
             case 'context':
-                root.innerHTML = renderContextView(context, currentFile, contextSectionState, diagnostics);
+                root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor);
                 break;
         }
     }

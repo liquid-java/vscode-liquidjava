@@ -109,3 +109,5 @@ export type ExternalMethodNotFoundWarning = BaseDiagnostic & {
     className: string;
     overloads: string[];
 }
+
+export type RefinementMismatchError = RefinementError | StateRefinementError;

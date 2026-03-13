@@ -1,52 +1,28 @@
 import { LJVariable } from "../../../types/context";
-import { LJDiagnostic, RefinementError, StateRefinementError } from "../../../types/diagnostics";
+import { RefinementMismatchError } from "../../../types/diagnostics";
 import { escapeHtml, getSimpleName } from "../../utils";
-import { renderToggleSection, renderVariableHighlightButton } from "../sections";
+import { renderLocationLink, renderToggleSection, renderVariableHighlightButton } from "../sections";
 
-export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, diagnostics: LJDiagnostic[]): string {
+export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
+    const expected  = errorAtCursor ? errorAtCursor.type == "refinement-error" ? errorAtCursor.expected.value : errorAtCursor.expected : undefined;
     return /*html*/`
         <div class="context-section">
             ${renderToggleSection('Variables', 'context-vars', isExpanded)}
             <div id="context-vars" class="context-section-content ${isExpanded ? '' : 'collapsed'}">
                 ${variables.length > 0 ? /*html*/`
-                <table>
-                    <tbody>
-                        ${variables.map(variable => /*html*/`
-                            <tr>
-                                <td>${renderVariable(variable, diagnostics)}</td>
-                                <td><code>${getSimpleName(variable.type)}</code></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                    <table>
+                        <tbody>
+                            ${variables.map(variable => /*html*/`
+                                <tr>
+                                    <td>${renderVariableHighlightButton(variable.position, variable.refinement)}</td>
+                                    <td><code>${getSimpleName(variable.type)}</code></td>
+                                </tr>
+                            `).join('')}
+                            ${errorAtCursor ? /*html*/`<tr><td><code class="failing-refinement" data-tooltip="${escapeHtml(errorAtCursor.title)}">${renderLocationLink(errorAtCursor.position, '⊢ ' + expected)}</code></td><td></td></tr>` : ''}
+                        </tbody>
+                    </table>
                 `: '<p>No variables declared at the cursor position</p>'}
             </div>
         </div>
     `;
-}
-
-function renderVariable(variable: LJVariable, diagnostics: LJDiagnostic[]): string {
-    const diagnostic = getMatchingDiagnostic(variable, diagnostics);
-    return /*html*/`
-        <div class="context-variable">
-            ${renderVariableHighlightButton(variable.position, variable.refinement)}
-            ${diagnostic ? /*html*/`<code class="failing-refinement" data-tooltip="${escapeHtml(diagnostic.title)}">⊢ ${diagnostic.expected}</code>` : ''}
-        </div>`;
-}
-
-function getMatchingDiagnostic(variable: LJVariable, diagnostics: LJDiagnostic[]): { expected: string, title: string} | null {
-    // find refinement or state refinement error that matches the variable's position
-    const matchingDiagnostic = diagnostics.find(d => {
-        if (!d.position || !variable.position) return false;
-        if (d.type !== 'refinement-error' && d.type !== 'state-refinement-error') return false;
-        return JSON.stringify(d.position) === JSON.stringify(variable.position);
-    }) as RefinementError | StateRefinementError | undefined;
-    if (!matchingDiagnostic) return null;
-
-    // get the expected type from diagnostic
-    const expected = matchingDiagnostic.type == "refinement-error" ? matchingDiagnostic.expected.value : matchingDiagnostic.expected;
-    if (!expected) return null;
-    
-    // only include those that mention the variable 
-    return expected.includes(variable.name) ? { expected, title: matchingDiagnostic.title } : null;
 }

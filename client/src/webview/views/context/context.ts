@@ -1,5 +1,5 @@
 import { LJContext } from "../../../types/context";
-import { LJDiagnostic } from "../../../types/diagnostics";
+import { LJDiagnostic, RefinementMismatchError } from "../../../types/diagnostics";
 import { renderMainHeader } from "../sections";
 import { renderContextAliases } from "./aliases";
 import { renderContextGhosts } from "./ghosts";
@@ -11,7 +11,7 @@ export type ContextSectionState = {
     vars: boolean;
 }
 
-export function renderContextView(context: LJContext, currentFile: string, sectionState: ContextSectionState, diagnostics: LJDiagnostic[]): string {
+export function renderContextView(context: LJContext, currentFile: string, sectionState: ContextSectionState, errorAtCursor?: RefinementMismatchError): string {
     if (!context || !currentFile) return "";
 
     const allVars = context.allVars;
@@ -25,7 +25,7 @@ export function renderContextView(context: LJContext, currentFile: string, secti
                 ? '<p>No context information available at the cursor position</p>'
                 : `${renderContextAliases(aliases, sectionState.aliases)}
                    ${renderContextGhosts(ghosts, sectionState.ghosts)}
-                   ${renderContextVariables(allVars, sectionState.vars, diagnostics)}
+                   ${renderContextVariables(allVars, sectionState.vars, errorAtCursor)}
             `}
         </div>
     `;
