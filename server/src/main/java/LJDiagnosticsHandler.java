@@ -10,13 +10,14 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
+
 import liquidjava.api.CommandLineLauncher;
 import liquidjava.diagnostics.Diagnostics;
-import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.errors.CustomError;
 import liquidjava.diagnostics.errors.LJError;
 import liquidjava.diagnostics.warnings.LJWarning;
+import spoon.reflect.cu.SourcePosition;
 import utils.PathUtils;
 
 public class LJDiagnosticsHandler {
@@ -76,7 +77,7 @@ public class LJDiagnosticsHandler {
             .collect(Collectors.groupingBy(
                 d -> PathUtils.toFileUri(d.getFile()),
                 Collectors.mapping(d -> {
-                    Range range = getRangeFromErrorPosition(d.getPosition());
+                    Range range = getRangeFromPosition(d.getPosition());
                     String message = String.format("%s: %s", d.getTitle(), d.getMessage());
                     return new Diagnostic(range, message, severity, SOURCE);
                 }, Collectors.toList())
@@ -98,16 +99,18 @@ public class LJDiagnosticsHandler {
     }
 
     /**
-     * Gets the Range from the given ErrorPosition If the position is null, returns a default Range at (0,0)-(0,0)
-     * @param pos the ErrorPosition
+     * Gets the Range from the given SourcePosition If the position is null, returns a default Range at (0,0)-(0,0)
+     * @param pos the SourcePosition
      * @return Range
      */
-    private static Range getRangeFromErrorPosition(ErrorPosition pos) {
+    public static Range getRangeFromPosition(SourcePosition pos) {
         if (pos == null) {
             // no location information available
             return new Range(new Position(0, 0), new Position(0, 0));
         }
-        return new Range(new Position(pos.lineStart() - 1, pos.colStart() - 1),
-                new Position(pos.lineEnd() - 1, pos.colEnd() - 1));
+        return new Range(
+            new Position(pos.getLine() - 1, pos.getColumn() - 1),
+            new Position(pos.getEndLine() - 1, pos.getEndColumn() - 1)
+        );
     }
 }

@@ -35,10 +35,10 @@ function renderJsonTree(
         
         const filePath = (placement as any)?.file ?? error.file;
         const filename = filePath.split("/").pop() ?? "";
-        const tooltipData = `${filename}:${(placement.position?.line ?? 0) + 1}`;
+        const tooltipData = `${filename}:${(placement.position?.lineStart ?? 0) + 1}`;
         const classes = `node-var tooltip clickable ${hasOrigin ? "derivable-node" : ""}`.trim();
         const attrs = hasOrigin ? ` data-node-path="${path}" data-error-id="${errorId}"` : "";
-        const fileAttr = ` data-file="${filePath}" data-line="${placement.position?.line ?? 0}" data-column="${placement.position?.column ?? 0}"`;
+        const fileAttr = ` data-file="${filePath}" data-line="${placement.position?.lineStart ?? 0}" data-column="${placement.position?.colStart ?? 0}"`;
         return `<span class="${classes}" data-tooltip="${tooltipData}"${fileAttr}${attrs}>${node.var}</span>`;
     }
 

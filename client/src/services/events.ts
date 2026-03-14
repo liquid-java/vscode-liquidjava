@@ -1,11 +1,13 @@
 import * as vscode from 'vscode';
 import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
-import { Selection } from '../types/context';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
+import { normalizeRange, updateContextForSelection } from './context';
+import { normalizeFilePath } from '../utils/utils';
+import { Range } from '../types/context';
+import { updateErrorAtCursor } from './diagnostics';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
-let currentSelection: Selection = { startLine: 0, startColumn: 0, endLine: 0, endColumn: 0 };
 
 /**
  * Initializes file system event listeners
@@ -35,26 +37,39 @@ export function registerEvents(context: vscode.ExtensionContext) {
  * @param editor The active text editor
  */
 export async function onActiveFileChange(editor: vscode.TextEditor) {
-    extension.file = editor.document.uri.fsPath;
+    extension.file = normalizeFilePath(editor.document.uri.fsPath);
     extension.webview?.sendMessage({ type: "file", file: extension.file });
     await updateStateMachine(editor.document);
+    handleContextUpdate(editor.selection);
 }
 
 /**
  * Handles selection change events
  * @param event The selection change event
  */
-export async function onSelectionChange(event: vscode.TextEditorSelectionChangeEvent) {        
-    // update current selection
-    const selectionStart = event.selections[0].start;
-    const selectionEnd = event.selections[0].end;
-    currentSelection = {
-        startLine: selectionStart.line,
-        startColumn: selectionStart.character,
-        endLine: selectionEnd.line,
-        endColumn: selectionEnd.character
-    };
+export async function onSelectionChange(event: vscode.TextEditorSelectionChangeEvent) { 
     // debounce selection changes
     if (selectionTimeout) clearTimeout(selectionTimeout);
-    selectionTimeout = setTimeout(() => extension.selection = currentSelection, SELECTION_DEBOUNCE_MS);
+    selectionTimeout = setTimeout(() => {
+        handleContextUpdate(event.selections[0]);
+    }, SELECTION_DEBOUNCE_MS);
+}
+
+/**
+ * Updates the current selection and context
+ * @param selection The new selection
+ */
+function handleContextUpdate(selection: vscode.Selection) {
+    if (!extension.file || !extension.context) return;
+    const range: Range = {
+        lineStart: selection.start.line,
+        colStart: selection.start.character,
+        lineEnd: selection.end.line,
+        colEnd: selection.end.character
+    };
+    const normalizedRange = normalizeRange(range);
+    extension.currentSelection = normalizedRange;
+    updateContextForSelection(normalizedRange);
+    updateErrorAtCursor();
+    extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }

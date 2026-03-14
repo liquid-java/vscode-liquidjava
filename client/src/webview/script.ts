@@ -1,11 +1,14 @@
-import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/verification/derivation-nodes";
+import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/diagnostics/derivation-nodes";
 import { renderLoading } from "./views/loading";
-import { renderStateMachineView } from "./views/diagram";
-import { createMermaidDiagram, renderMermaidDiagram, resetZoom, registerPanListeners, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
-import type { LJDiagnostic } from "../types/diagnostics";
-import type { StateMachine } from "../types/fsm";
+import { renderStateMachineView } from "./views/fsm/fsm";
+import { createMermaidDiagram, renderMermaidDiagram, resetZoom, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
+import type { LJDiagnostic, RefinementMismatchError } from "../types/diagnostics";
+import type { Range } from "../types/context";
+import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
-import { renderVerificationView } from "./views/verification/verification";
+import { renderDiagnosticsView } from "./views/diagnostics/diagnostics";
+import { LJContext } from "../types/context";
+import { ContextSectionState, renderContextView } from "./views/context/context";
 
 /**
  * Initializes the webview script
@@ -17,12 +20,19 @@ export function getScript(vscode: any, document: any, window: any) {
     const root = document.getElementById('root');
     let diagnostics: LJDiagnostic[] = [];
     let showAllDiagnostics = false;
-    let currentFile: string | undefined;
+    let currentFile: string;
     let expandedErrors = new Set<number>();
-    let stateMachine: StateMachine | undefined;
-    let selectedTab: NavTab = 'verification';
+    let stateMachine: LJStateMachine;
+    let context: LJContext;
+    let errorAtCursor: RefinementMismatchError;
+    let selectedTab: NavTab = 'diagnostics';
     let diagramOrientation: "LR" | "TB" = "TB";
     let currentDiagram: string = '';
+    const contextSectionState: ContextSectionState = {
+        aliases: false,
+        ghosts: false,
+        vars: true,
+    };
 
     // initial state
     root.innerHTML = renderLoading();
@@ -32,6 +42,34 @@ export function getScript(vscode: any, document: any, window: any) {
     root.addEventListener('click', (e: any) => {
         const target = e.target as any;
         if (!target) return;
+
+        // context section toggle
+        const contextToggleButton = target.closest?.('.context-toggle-btn');
+        if (contextToggleButton) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const sectionId = contextToggleButton.getAttribute('data-context-toggle');
+            if (!sectionId) return;
+
+            const content = document.getElementById(sectionId);
+            if (!content) return;
+
+            const isExpanded = contextToggleButton.getAttribute('aria-expanded') !== 'false';
+            const nextExpanded = !isExpanded;
+            if (sectionId === 'context-vars') contextSectionState.vars = nextExpanded;
+            if (sectionId === 'context-ghosts') contextSectionState.ghosts = nextExpanded;
+            if (sectionId === 'context-aliases') contextSectionState.aliases = nextExpanded;
+            contextToggleButton.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
+            content.classList.toggle('collapsed', !nextExpanded);
+
+            const icon = contextToggleButton.querySelector('.context-toggle-icon');
+            if (icon) {
+                icon.textContent = nextExpanded ? '▾' : '▸';
+            }
+
+            return;
+        }
 
         // location link or variable click
         if (target.classList.contains('location-link') || target.classList.contains('node-var')) {
@@ -131,11 +169,44 @@ export function getScript(vscode: any, document: any, window: any) {
             return;
         }
 
+        // highlight variable 
+        if (target.classList.contains('highlight-var-btn')) {
+            e.stopPropagation();
+
+            const previousSelected = root.querySelector('.highlight-var-btn.selected');        
+            if (previousSelected) {
+                // unselect previous
+                previousSelected.classList.remove('selected');
+                if (previousSelected === target) {
+                    // remove highlight
+                    vscode.postMessage({ type: 'highlight', range: null });
+                    return;
+                }
+            }
+            target.classList.add('selected');
+
+            const file = target.getAttribute('data-file');
+            const lineStart = parseInt(target.getAttribute('data-start-line') || '', 10);
+            const colStart = parseInt(target.getAttribute('data-start-column') || '', 10);
+            const lineEnd = parseInt(target.getAttribute('data-end-line') || '', 10);
+            const colEnd = parseInt(target.getAttribute('data-end-column') || '', 10);
+            if ([lineStart, colStart, lineEnd, colEnd].some(Number.isNaN)) return;
+
+            const range: Range = { lineStart, colStart, lineEnd, colEnd };
+            if (file !== currentFile) {
+                vscode.postMessage({ type: 'openFile', filePath: file, line: lineStart, character: colStart, highlightRange: range });
+            } else {
+                vscode.postMessage({ type: 'highlight', range })
+            }
+            return;
+        }
+
         // nav tab click
         if (target.classList.contains('nav-tab')) {
             e.stopPropagation();
             const tab = target.getAttribute('data-tab') as NavTab;
             if (tab && tab !== selectedTab) {
+                vscode.postMessage({ type: 'highlight', range: null });
                 selectedTab = tab;
                 updateView();
             }
@@ -146,20 +217,24 @@ export function getScript(vscode: any, document: any, window: any) {
     // message event listener from extension
     window.addEventListener('message', event => {
         const msg = event.data;
-        if (msg.type === 'diagnostics') {
-            diagnostics = msg.diagnostics as LJDiagnostic[];
-            updateView();
-        } else if (msg.type === 'file') {
-            currentFile = msg.file;
-            if (!showAllDiagnostics) updateView();
-        } else if (msg.type === 'fsm') {
-            if (!msg.sm) {
-                stateMachine = undefined;
-                updateView();
-                return;
-            }
-            stateMachine = msg.sm as StateMachine;
-            updateView();
+        switch (msg.type) {
+            case 'diagnostics':
+                diagnostics = msg.diagnostics as LJDiagnostic[];
+                if (selectedTab === 'diagnostics') updateView();
+                break;
+            case 'file':
+                currentFile = msg.file;
+                if (!showAllDiagnostics && selectedTab === 'diagnostics') updateView();
+                break;
+            case 'fsm':
+                stateMachine = msg.sm as LJStateMachine;
+                if (selectedTab === 'fsm') updateView();
+                break;
+            case 'context':
+                context = msg.context as LJContext;
+                errorAtCursor = msg.errorAtCursor as RefinementMismatchError;
+                if (selectedTab === 'context') updateView();
+                break;
         }
     });
 
@@ -167,13 +242,19 @@ export function getScript(vscode: any, document: any, window: any) {
      * Updates the webview content based on the current state
      */
     function updateView() {
-        if (selectedTab === 'verification') {
-            root.innerHTML = renderVerificationView(diagnostics, showAllDiagnostics, currentFile, expandedErrors, selectedTab)
-        } else {
-            const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
-            currentDiagram = diagram;
-            root.innerHTML = renderStateMachineView(stateMachine, diagram, selectedTab, diagramOrientation);
-            if (stateMachine) renderMermaidDiagram(document, window);
+        switch (selectedTab) {
+            case 'diagnostics':
+                root.innerHTML = renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors);
+                break;
+            case 'fsm':
+                const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
+                currentDiagram = diagram;
+                root.innerHTML = renderStateMachineView(stateMachine, diagram, diagramOrientation);
+                if (stateMachine) renderMermaidDiagram(document, window);
+                break;
+            case 'context':
+                root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor);
+                break;
         }
     }
 }

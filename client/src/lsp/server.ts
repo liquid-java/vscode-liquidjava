@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as child_process from 'child_process';
 import * as path from 'path';
-import { getAvailablePort, killProcess } from '../utils/utils';
+import { getAvailablePort, killProcess, normalizeFilePath } from '../utils/utils';
 import { extension } from '../state';
 import { DEBUG_MODE, DEBUG_PORT, SERVER_JAR } from '../utils/constants';
 
@@ -22,7 +22,7 @@ export async function runLanguageServer(context: vscode.ExtensionContext, javaEx
     const jarPath = path.resolve(context.extensionPath, "dist", "server", SERVER_JAR);
     const args = ["-jar", jarPath, port.toString()];
     const options = {
-        cwd: vscode.workspace.workspaceFolders[0].uri.fsPath, // root path
+        cwd: normalizeFilePath(vscode.workspace.workspaceFolders[0].uri.fsPath), // root path
     };
     extension.logger.client.info("Creating language server process...");
     extension.serverProcess = child_process.spawn(javaExecutablePath, args, options);

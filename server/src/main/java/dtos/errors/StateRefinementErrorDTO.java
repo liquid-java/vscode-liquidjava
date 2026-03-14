@@ -1,18 +1,18 @@
 package dtos.errors;
 
+import dtos.diagnostics.SourcePositionDTO;
 import dtos.diagnostics.TranslationTableDTO;
-import liquidjava.diagnostics.ErrorPosition;
 import liquidjava.diagnostics.errors.StateRefinementError;
 
 /**
  * DTO for serializing StateRefinementError instances to JSON
  */
-public record StateRefinementErrorDTO(String category, String type, String title, String message, String file, ErrorPosition position,
+public record StateRefinementErrorDTO(String category, String type, String title, String message, String file, SourcePositionDTO position,
         TranslationTableDTO translationTable, String expected, String found, String customMessage) {
 
     public static StateRefinementErrorDTO from(StateRefinementError error) {
         return new StateRefinementErrorDTO("error", "state-refinement-error", error.getTitle(), error.getMessage(), error.getFile(),
-                error.getPosition(), TranslationTableDTO.from(error.getTranslationTable()), error.getExpected(),
+                SourcePositionDTO.from(error.getPosition()), TranslationTableDTO.from(error.getTranslationTable()), error.getExpected(),
                 error.getFound(), error.getCustomMessage());
     }
 }

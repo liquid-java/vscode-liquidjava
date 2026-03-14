@@ -264,7 +264,7 @@ export function getStyles(): string {
             margin: 0rem 0;
             background-color: var(--vscode-editor-background);
             border-radius: 4px;
-            overflow: hidden;
+            overflow: visible;
         }
         th {
             text-align: left;
@@ -287,6 +287,96 @@ export function getStyles(): string {
             border-radius: 3px;
             font-family: var(--vscode-editor-font-family);
             font-size: 0.9em;
+        }
+        .context-section {
+            margin-bottom: 1rem;
+        }
+        .context-section table td:first-child {
+            text-align: left;
+            flex: 1;
+            min-width: 0;
+        }
+        .context-section table td:last-child {
+            text-align: right;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .context-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0;
+            margin: 0 0 0.5rem 0;
+            background: none;
+            border: none;
+            color: var(--vscode-foreground);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            text-align: left;
+        }
+        .context-toggle-btn:hover {
+            background: none;
+        }
+        .context-toggle-icon {
+            width: 1rem;
+            text-align: center;
+            flex-shrink: 0;
+            font-size: larger;
+        }
+        .context-section-content.collapsed {
+            display: none;
+        }
+        .highlight-var-btn {
+            background-color: transparent;
+            border: none;
+            transition: background-color 0.1s;
+            text-align: left;
+            padding: 0.2rem 0.8rem;
+        }
+        .highlight-var-btn code {
+            pointer-events: none;
+        }
+        .highlight-var-btn.selected {
+            background-color: var(--vscode-button-background);
+        }
+        .highlight-var-btn.error {
+            background-color: #d6382f;
+        }
+        .highlight-var-btn.error.selected {
+            background-color: #c92e26;
+        }
+        .highlight-var-btn.error:hover {
+            background-color: #c92e26;
+        }
+        .failing-refinement {
+            position: relative;
+        }
+        .failing-refinement::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 0.35rem);
+            padding: 0.4rem 0.5rem;
+            border-radius: 4px;
+            background: var(--vscode-editorHoverWidget-background);
+            border: 1px solid var(--vscode-editorHoverWidget-border);
+            color: var(--vscode-editorHoverWidget-foreground);
+            font-size: 0.8rem;
+            line-height: 1.4;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.08s ease, visibility 0.08s ease;
+            transition-delay: 0.08s;
+            z-index: 10;
+        }
+        .failing-refinement:hover::after {
+            opacity: 1;
+            visibility: visible;
         }
         .diagram-section {
             margin-bottom: 1.5rem;

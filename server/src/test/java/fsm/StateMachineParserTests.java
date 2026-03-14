@@ -2,7 +2,6 @@ package fsm;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.lang.Thread.State;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;

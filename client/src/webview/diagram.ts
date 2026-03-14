@@ -1,4 +1,4 @@
-import type { StateMachine } from "../types/fsm";
+import type { LJStateMachine } from "../types/fsm";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -21,7 +21,7 @@ let startY = 0;
  * @param sm 
  * @returns Mermaid diagram string
  */
-export function createMermaidDiagram(sm: StateMachine, orientation: "LR" | "TB"): string {
+export function createMermaidDiagram(sm: LJStateMachine, orientation: "LR" | "TB"): string {
     if (!sm) return '';
     
     const lines: string[] = [];

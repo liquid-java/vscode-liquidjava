@@ -1,4 +1,4 @@
-import type { LJDiagnostic, TranslationTable } from "../../types/diagnostics";
+import type { LJDiagnostic, PlacementInCode, SourcePosition, TranslationTable } from "../../types/diagnostics";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
     <div class="header">
@@ -13,16 +13,19 @@ export const renderCustomSection = (title: string, body: string): string => /*ht
 export const renderSection = (title: string, body: string): string => /*html*/
     renderCustomSection(title, `<pre>${body}</pre>`);
 
-export const renderHeader = (diagnostic: LJDiagnostic): string => /*html*/
+export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
+    <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
+        <span class="context-toggle-icon">${isExpanded ? '▾' : '▸'}</span>
+        <span>${title}</span>
+    </button>
+    `;
+
+export const renderDiagnosticHeader = (diagnostic: LJDiagnostic): string => /*html*/
     `<h3>${diagnostic.title}</h3><div class="diagnostic-header"><p>${diagnostic.message}</p></div>`;
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {
-    if (!diagnostic.position) return "";
-    const line = diagnostic.position?.lineStart ?? 0;
-    const column = diagnostic.position?.colStart ?? 0;
-    const simpleFile = diagnostic.file.split('/').pop() || diagnostic.file;
-    const link = /*html*/`<a href="#" class="link location-link" data-file="${diagnostic.file}" data-line="${line}" data-column="${column}">${simpleFile}:${line}</a>`;
-    return renderCustomSection("Location", /*html*/`<pre>${link}</pre>`);
+    if (!diagnostic.position || !diagnostic.file) return "";
+    return renderCustomSection("Location", /*html*/`<pre>${renderLocationLink(diagnostic.position)}</pre>`);
 };
 
 export function renderTranslationTable(translationTable: TranslationTable): string {  
@@ -37,27 +40,14 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                     <tr>
                         <th>Variable</th>
                         <th>Source</th>
-                        <th>Location</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${entries.map(([variable, placement]: [string, any]) => {
-                        const simpleFile = placement.position.file.split('/').pop() || placement.position.file;
-                        const link = 
-                            /*html*/`<a
-                                href="#"
-                                class="link location-link"
-                                data-file="${placement.position.file}"
-                                data-line="${placement.position.line}"
-                                data-column="${placement.position.column}"
-                            >
-                                ${simpleFile}:${placement.position.line}
-                            </a>`;
+                    ${entries.map(([variable, placement]: [string, PlacementInCode]) => {
                         return /*html*/`
                             <tr>
                                 <td><code>${variable}</code></td>
-                                <td><code>${placement.text}</code></td>
-                                <td>${link}</td>
+                                <td>${renderHighlightButton(placement.position, placement.text)}</td>
                             </tr>
                         `;
                     }).join('')}
@@ -67,14 +57,45 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
     `;
 }
 
-export type NavTab = 'verification' | 'state-machine';
+export function renderHighlightButton(position: SourcePosition, content: string, error: boolean = false): string {
+    return /*html*/`
+        <button
+            class="highlight-var-btn ${error ? 'error' : ''}"
+            data-start-line="${position.lineStart}"
+            data-start-column="${position.colStart}"
+            data-end-line="${position.lineEnd}"
+            data-end-column="${position.colEnd}"
+            data-file="${position.file}"
+        >
+            <code>${content}</code>
+        </button>
+    `;
+}
+
+export function renderLocationLink(position?: SourcePosition): string {
+    if (!position) return 'No location';
+    return /*html*/`<a
+        href="#"
+        class="link location-link"
+        data-file="${position.file}"
+        data-line="${position.lineStart}"
+        data-column="${position.colStart}"
+    >${getFile(position)}</a>`;
+}
+
+function getFile(position: SourcePosition): string {
+    return `${position.file.split('/').pop().trim() || position.file}:${position.lineStart + 1}`;
+}
+
+export type NavTab = 'diagnostics' | 'fsm' | 'context';
 
 export function renderNav(selectedTab: NavTab): string {
     return /*html*/`
         <nav>
             <ul>
-                <li><button class="nav-tab ${selectedTab === 'verification' ? 'selected' : ''}" data-tab="verification">Verification</button></li>
-                <li><button class="nav-tab ${selectedTab === 'state-machine' ? 'selected' : ''}" data-tab="state-machine">State Machine</button></li>
+                <li><button class="nav-tab ${selectedTab === 'diagnostics' ? 'selected' : ''}" data-tab="diagnostics">Verification</button></li>
+                <li><button class="nav-tab ${selectedTab === 'context' ? 'selected' : ''}" data-tab="context">Context</button></li>
+                <li><button class="nav-tab ${selectedTab === 'fsm' ? 'selected' : ''}" data-tab="fsm">State Machine</button></li>
             </ul>
         </nav>
     `;

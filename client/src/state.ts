@@ -4,9 +4,9 @@ import * as child_process from "child_process";
 import { LanguageClient } from "vscode-languageclient/node";
 import { LiquidJavaLogger } from "./services/logger";
 import { LiquidJavaWebviewProvider } from "./webview/provider";
-import type { LJDiagnostic } from "./types/diagnostics";
-import type { StateMachine } from "./types/fsm";
-import { ContextHistory, Selection } from "./types/context";
+import type { LJDiagnostic, RefinementMismatchError } from "./types/diagnostics";
+import type { LJStateMachine } from "./types/fsm";
+import { LJContext, Range } from "./types/context";
 
 export class ExtensionState {
     // server/client state
@@ -22,9 +22,10 @@ export class ExtensionState {
     // application state
     file?: string;
     diagnostics?: LJDiagnostic[];
-    stateMachine?: StateMachine;
-    contextHistory?: ContextHistory;
-    selection?: Selection;
+    stateMachine?: LJStateMachine;
+    context?: LJContext;
+    currentSelection?: Range;
+    errorAtCursor?: RefinementMismatchError;
 }
 
 export const extension = new ExtensionState();

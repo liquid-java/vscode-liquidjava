@@ -1,43 +1,46 @@
-import { PlacementInCode, SourcePosition } from "./diagnostics";
+import { SourcePosition } from "./diagnostics";
 
 // Type definitions used for LiquidJava context information
 
-export type Variable = {
+export type LJVariable = {
   name: string;
   type: string;
   refinement: string;
   mainRefinement: string;
-  placementInCode: PlacementInCode | null;
-  isParameter: boolean;
-  annPosition: SourcePosition | null;
+  position: SourcePosition| null;
+  annotationPosition: SourcePosition | null;
 }
 
-export type Ghost = {
+export type LJGhost = {
   name: string;
   qualifiedName: string;
   returnType: string;
   parameterTypes: string[];
   refinement: string;
+  isState: boolean;
+  file: string;
 }
 
-export type Alias = {
+export type LJAlias = {
   name: string;
   parameters: string[];
   types: string[];
   predicate: string;
 }
 
-export type ContextHistory = {
-  vars: Record<string, Record<string, Variable[]>>; // file -> (scope -> variables in scope)
-  ghosts: Record<string, Ghost[]>; // file -> ghosts in file
-  instanceVars: Variable[];
-  globalVars: Variable[];
-  aliases: Alias[];
+export type LJContext = {
+  localVars: LJVariable[];
+  globalVars: LJVariable[];
+  ghosts: LJGhost[];
+  aliases: LJAlias[];
+  visibleVars: LJVariable[]; // variables visible in the current selection
+  allVars: LJVariable[]; // instance vars + global vars + vars in scope
+  fileScopes: Record<string, Range[]>; // file -> scopes
 }
 
-export type Selection = {
-  startLine: number;
-  startColumn: number;
-  endLine: number;
-  endColumn: number;
+export type Range = {
+  lineStart: number;
+  colStart: number;
+  lineEnd: number;
+  colEnd: number;
 }

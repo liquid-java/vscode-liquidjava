@@ -1,16 +1,16 @@
 package dtos.errors;
 
-import liquidjava.diagnostics.ErrorPosition;
+import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.diagnostics.errors.SyntaxError;
 
 /**
  * DTO for serializing SyntaxError instances to JSON
  */
-public record SyntaxErrorDTO(String category, String type, String title, String message, String file, ErrorPosition position,
+public record SyntaxErrorDTO(String category, String type, String title, String message, String file, SourcePositionDTO position,
         String refinement) {
 
     public static SyntaxErrorDTO from(SyntaxError error) {
         return new SyntaxErrorDTO("error", "syntax-error", error.getTitle(), error.getMessage(), error.getFile(),
-                error.getPosition(), error.getRefinement());
+                SourcePositionDTO.from(error.getPosition()), error.getRefinement());
     }
 }
