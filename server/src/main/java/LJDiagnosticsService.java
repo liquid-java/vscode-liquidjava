@@ -1,6 +1,9 @@
 import java.io.File;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,6 +27,11 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     private LJLanguageClient client;
     private String workspaceRoot;
+    private final ExecutorService diagnosticsExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "liquidjava-diagnostics");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     public void setClient(LJLanguageClient client) {
         this.client = client;
@@ -64,6 +72,22 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     }
 
     /**
+     * Schedules diagnostics generation without blocking the LSP thread
+     * @param uri the URI of the document
+     * @return a future that completes when diagnostics are published
+     */
+    public CompletableFuture<Void> generateDiagnosticsAsync(String uri) {
+        return CompletableFuture.runAsync(() -> generateDiagnostics(uri), diagnosticsExecutor);
+    }
+
+    /**
+     * Stops background diagnostics work
+     */
+    public void shutdown() {
+        diagnosticsExecutor.shutdownNow();
+    }
+
+    /**
      * Clear a diagnostic for a specific URI
      * @param uri the URI of the document
      */
@@ -82,7 +106,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
         String uri = params.getTextDocument().getUri();
         if (!PathUtils.isFileInDirectory(uri, workspaceRoot)) return;
         System.out.println("Document opened — checking diagnostics");
-        generateDiagnostics(uri);
+        generateDiagnosticsAsync(uri);
     }
 
     /**
@@ -95,7 +119,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
         if (!PathUtils.isFileInDirectory(uri, workspaceRoot)) return;
         System.out.println("Document saved — checking diagnostics");
         clearDiagnostic(uri);
-        generateDiagnostics(uri);
+        generateDiagnosticsAsync(uri);
     }
 
     /**

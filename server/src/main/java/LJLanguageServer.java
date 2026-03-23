@@ -1,4 +1,6 @@
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -19,9 +21,15 @@ import fsm.StateMachineParser;
 public class LJLanguageServer implements LanguageServer {
 
     private final LJDiagnosticsService diagnosticsService;
+    private final ExecutorService stateMachineExecutor;
 
     public LJLanguageServer() {
         this.diagnosticsService = new LJDiagnosticsService();
+        this.stateMachineExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread thread = new Thread(r, "liquidjava-fsm");
+            thread.setDaemon(true);
+            return thread;
+        });
     }
 
     /**
@@ -57,6 +65,8 @@ public class LJLanguageServer implements LanguageServer {
     }
 
     public CompletableFuture<Object> shutdown() {
+        diagnosticsService.shutdown();
+        stateMachineExecutor.shutdownNow();
         return CompletableFuture.completedFuture(null);
     }
 
@@ -84,13 +94,11 @@ public class LJLanguageServer implements LanguageServer {
 
     @JsonRequest("liquidjava/fsm")
     public CompletableFuture<StateMachine> fsm(Uri uri) {
-        return CompletableFuture.supplyAsync(() -> {
-            return StateMachineParser.parse(uri.uri());
-        });
+        return CompletableFuture.supplyAsync(() -> StateMachineParser.parse(uri.uri()), stateMachineExecutor);
     }
 
     @JsonNotification("liquidjava/verify")
     public void verify(Uri uri) {
-        diagnosticsService.generateDiagnostics(uri.uri());
+        diagnosticsService.generateDiagnosticsAsync(uri.uri());
     }
 }
