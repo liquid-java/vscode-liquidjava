@@ -130,7 +130,10 @@ export function getSimpleName(qualifiedName: string): string {
 }
 
 export function getOriginalVariableName(name: string): string {
-    return name.split("_")[0].replace(/^#/, '');
+    if (name.startsWith("this#")) return name.replace(/^this#/, '');
+    if (name.startsWith("#")) return name.split("_")[0].replace(/^#/, '');
+    return name;
+    
 }
 
 export function normalizeFilePath(fsPath: string): string {

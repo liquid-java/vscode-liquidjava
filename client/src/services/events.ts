@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
-import { normalizeRange, updateContextForSelection } from './context';
+import { getSelectionContextVariables, normalizeRange } from './context';
 import { normalizeFilePath } from '../utils/utils';
 import { Range } from '../types/context';
 import { updateErrorAtCursor } from './diagnostics';
@@ -68,8 +68,10 @@ function handleContextUpdate(selection: vscode.Selection) {
         colEnd: selection.end.character
     };
     const normalizedRange = normalizeRange(range);
+    const { allVars, visibleVars } = getSelectionContextVariables(extension.file, normalizedRange);
     extension.currentSelection = normalizedRange;
-    updateContextForSelection(normalizedRange);
+    extension.context.visibleVars = visibleVars;
+    extension.context.allVars = allVars;
     updateErrorAtCursor();
     extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }
