@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { extension } from '../state';
 import type { Range, LJVariable } from '../types/context';
 import { getSelectionContextVariables } from './context';
-import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
+import { getOriginalVariableName, normalizeFilePath, toRange } from '../utils/utils';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -37,12 +37,7 @@ function getHoveredVariable(document: vscode.TextDocument, position: vscode.Posi
 
     const hoveredWord = document.getText(wordRange);
     const file = normalizeFilePath(document.uri.fsPath);
-    const hoveredRange: Range = {
-        lineStart: position.line + 1,
-        colStart: position.character + 1,
-        lineEnd: position.line + 1,
-        colEnd: position.character + 1
-    }
+    const hoveredRange = toRange(wordRange);
     const { allVars } = getSelectionContextVariables(file, hoveredRange);
     return allVars.find(variable => getOriginalVariableName(variable.name) === hoveredWord);
 }
