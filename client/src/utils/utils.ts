@@ -142,12 +142,3 @@ export function normalizeFilePath(fsPath: string): string {
     // uppercase windows drive letter (c:\ -> C:\)
     return path.normalize(fsPath).replace(/^([a-z]):\\/, (_, drive) => drive.toUpperCase() + ':\\');
 }
-
-export function toRange(selection: vscode.Selection | vscode.Range): Range {
-    return {
-        lineStart: selection.start.line,
-        colStart: selection.start.character,
-        lineEnd: selection.end.line,
-        colEnd: selection.end.character
-    };
-}
