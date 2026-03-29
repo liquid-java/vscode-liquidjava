@@ -1,6 +1,11 @@
 // Type definitions used in refinement errors for expanding node simplifications
 
-export type DerivationNode = ValDerivationNode | VarDerivationNode | BinaryDerivationNode | UnaryDerivationNode;
+export type DerivationNode =
+    | ValDerivationNode
+    | VarDerivationNode
+    | BinaryDerivationNode
+    | UnaryDerivationNode
+    | IteDerivationNode;
 
 export type ValDerivationNode = {
     value: any;
@@ -21,4 +26,10 @@ export type BinaryDerivationNode = {
 export type UnaryDerivationNode = {
     op: string;
     operand: ValDerivationNode;
+}
+
+export type IteDerivationNode = {
+    condition: ValDerivationNode;
+    thenBranch: ValDerivationNode;
+    elseBranch: ValDerivationNode;
 }
