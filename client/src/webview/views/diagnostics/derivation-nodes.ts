@@ -77,8 +77,8 @@ function renderJsonTree(
     return `<span class="node-value">${JSON.stringify(node)}</span>`;
 }
 
-function hashError(error: LJError): string {
-    const content = `${error.title}|${error.message}|${error.file}|${error.position?.lineStart ?? 0}`;
+function hashError(error: LJError, scope: string): string {
+    const content = `${error.title}|${error.message}|${error.file}|${error.position?.lineStart ?? 0}|${scope}`;
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
         const char = content.charCodeAt(i);
@@ -114,10 +114,14 @@ export function handleDerivationResetClick(target?: any): boolean {
     return false;
 }
 
-export function renderDerivationNode(error: RefinementError, node: ValDerivationNode): string {
+export function renderDerivationNode(
+    error: RefinementError,
+    node: ValDerivationNode,
+    scope: "expected" | "found"
+): string {
     if (!node.origin) return `<pre>${node.value}</pre>`; // no derivation available
     
-    const errorId = hashError(error);
+    const errorId = hashError(error, scope);
     const expansions = getExpansions(errorId);
     return /*html*/ `
         <div class="container derivation-container" data-error-id="${errorId}">
