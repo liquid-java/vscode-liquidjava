@@ -14,6 +14,13 @@ if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 1
 fi
 
+# check current branch
+CURRENT_BRANCH=$(git branch --show-current)
+if [ "$CURRENT_BRANCH" != "main" ]; then
+    echo "Releases can only be created from the main branch (current: $CURRENT_BRANCH)"
+    exit 1
+fi
+
 # check if version present in package.json
 if ! grep -q "\"version\": \"$VERSION\"" ./client/package.json; then
     echo "Version $VERSION not found in package.json"
@@ -26,7 +33,6 @@ if git rev-parse "v$VERSION" >/dev/null 2>&1; then
     exit 1
 fi
 
-git checkout main
 git pull
 git add .
 git commit -m "Release $VERSION"
