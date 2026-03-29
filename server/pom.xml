@@ -172,7 +172,7 @@
 		<dependency>
 			<groupId>io.github.liquid-java</groupId>
 			<artifactId>liquidjava-verifier</artifactId>
-			<version>0.0.16</version>
+			<version>0.0.18</version>
 		</dependency>
 		<dependency>
 			<groupId>tools.aqua</groupId>
