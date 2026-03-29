@@ -65,6 +65,14 @@ function renderJsonTree(
         return node.op === "-" ? `${node.op}(${operandHtml})` : `${node.op}${operandHtml}`;
     }
 
+    // IteDerivationNode
+    if ("condition" in node && "thenBranch" in node && "elseBranch" in node) {
+        const conditionHtml = renderJsonTree(error, node.condition, errorId, `${path}.condition`, expandedPaths);
+        const thenBranchHtml = renderJsonTree(error, node.thenBranch, errorId, `${path}.thenBranch`, expandedPaths);
+        const elseBranchHtml = renderJsonTree(error, node.elseBranch, errorId, `${path}.elseBranch`, expandedPaths);
+        return `${conditionHtml} ? ${thenBranchHtml} : ${elseBranchHtml}`;
+    }
+
     // fallback
     return `<span class="node-value">${JSON.stringify(node)}</span>`;
 }
@@ -114,7 +122,7 @@ export function renderDerivationNode(error: RefinementError, node: ValDerivation
     return /*html*/ `
         <div class="container derivation-container" data-error-id="${errorId}">
             <div style="flex: 1;">
-                ${renderJsonTree(error, node.origin || node, errorId, "root", expansions)}
+                ${renderJsonTree(error, node, errorId, "root", expansions)}
                 ${expansions.size === 0 ? '<span class="node-expand-indicator">&nbsp;(click to expand)</span>' : ''}
             </div>
             <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${expansions.size === 0 ? "disabled" : ""}>
