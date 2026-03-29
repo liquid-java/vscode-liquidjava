@@ -129,9 +129,7 @@ export function renderDerivationNode(
                 ${renderJsonTree(error, node, errorId, "root", expansions)}
                 ${expansions.size === 0 ? '<span class="node-expand-indicator">&nbsp;(click to expand)</span>' : ''}
             </div>
-            <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${expansions.size === 0 ? "disabled" : ""}>
-                ↻
-            </button>
+            <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${expansions.size === 0 ? "disabled" : ""}>↻</button>
         </div>
     `;
 }
