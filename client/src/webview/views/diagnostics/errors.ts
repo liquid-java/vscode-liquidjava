@@ -31,8 +31,8 @@ export function renderErrors(errors: LJError[], expandedErrors: Set<number>): st
 const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) => string>> = {
     'refinement-error': (e: RefinementError) => /*html*/`
         ${e.customMessage ? renderSection('Message', e.customMessage) : ''}
-        ${renderCustomSection('Expected', renderDerivationNode(e, e.expected))}
-        ${renderCustomSection('Found', renderDerivationNode(e, e.found))}
+        ${renderCustomSection('Expected', renderDerivationNode(e, e.expected, 'expected'))}
+        ${renderCustomSection('Found', renderDerivationNode(e, e.found, 'found'))}
         ${e.counterexample ? renderSection('Counterexample', e.counterexample) : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/`
