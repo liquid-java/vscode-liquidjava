@@ -37,7 +37,14 @@ function getHoveredVariable(document: vscode.TextDocument, position: vscode.Posi
 
     const hoveredWord = document.getText(wordRange);
     const file = normalizeFilePath(document.uri.fsPath);
-    const hoveredRange = toRange(wordRange);
-    const { allVars } = getSelectionContextVariables(file, hoveredRange);
+
+    // we need to use single point cursor position after variable to get all variables until that point
+    const positionAfterVariable = {
+        lineStart: wordRange.end.line,
+        colStart: wordRange.end.character,
+        lineEnd: wordRange.end.line,
+        colEnd: wordRange.end.character
+    };
+    const { allVars } = getSelectionContextVariables(file, positionAfterVariable);
     return allVars.find(variable => getOriginalVariableName(variable.name) === hoveredWord);
 }
