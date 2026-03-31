@@ -15,7 +15,7 @@ export function registerHover() {
 
             const variable = getHoveredVariable(document, position);
             if (variable && variable.mainRefinement && variable.mainRefinement !== 'true')
-                hoverContent.appendCodeblock(`@Refinement(${JSON.stringify(variable.mainRefinement)})`, 'java');
+                hoverContent.appendCodeblock(`@Refinement("${variable.mainRefinement}")`, 'java');
 
             const diagnostics = vscode.languages.getDiagnostics(document.uri);
             const containsDiagnostic = !!diagnostics.find(d => d.range.contains(position) && d.source === 'liquidjava');
