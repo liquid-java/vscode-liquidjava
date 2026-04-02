@@ -86,7 +86,7 @@ function isBeforeOrEqual(line1: number, col1: number, line2: number, col2: numbe
 }
 
 export function filterInstanceVariables(variables: LJVariable[]): LJVariable[] {
-    return variables.filter(v => !v.name.includes("#"));
+    return variables.filter(v => !v.internalName.includes("#"));
 }
 
 export function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] {
@@ -102,20 +102,20 @@ export function filterDuplicateVariables(variables: LJVariable[]): LJVariable[] 
 // Sorts variables by their position or name
 function sortVariables(variables: LJVariable[]): LJVariable[] {
     return variables.sort((left, right) => {
-        if (!left.position && !right.position) return compareVariableNames(left, right);
+        if (!left.position && !right.position) return compareVariableNames(left.internalName, right.internalName);
         if (!left.position) return 1;
         if (!right.position) return -1;
         if (left.position.lineStart !== right.position.lineStart) return left.position.lineStart - right.position.lineStart;
         if (left.position.colStart !== right.position.colStart) return right.position.colStart - left.position.colStart;
-        return compareVariableNames(left, right);
+        return compareVariableNames(left.internalName, right.internalName);
     });
 }
 
-function compareVariableNames(a: LJVariable, b: LJVariable): number {
-    if (a.name.startsWith("#") && b.name.startsWith("#")) return getOriginalVariableName(a.name).localeCompare(getOriginalVariableName(b.name));
-    if (a.name.startsWith("#")) return 1;
-    if (b.name.startsWith("#")) return -1;
-    return a.name.localeCompare(b.name);
+function compareVariableNames(a: string, b: string): number {
+    if (a.startsWith("#") && b.startsWith("#")) return getOriginalVariableName(a).localeCompare(getOriginalVariableName(b));
+    if (a.startsWith("#")) return 1;
+    if (b.startsWith("#")) return -1;
+    return a.localeCompare(b);
 }
 
 function normalizeVariableRefinements(variables: LJVariable[]): LJVariable[] {
