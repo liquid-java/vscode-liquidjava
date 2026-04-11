@@ -440,5 +440,44 @@ export function getStyles(): string {
         .mermaid .statediagramTitleText {
             font-size: 30px!important;
         }
+        .diagram-container .mermaid svg,
+        .diagram-container .mermaid svg * {
+            color: var(--vscode-foreground) !important;
+        }
+        .diagram-container .mermaid svg text,
+        .diagram-container .mermaid svg tspan,
+        .diagram-container .mermaid svg .label,
+        .diagram-container .mermaid svg .label text,
+        .diagram-container .mermaid svg .edgeLabel text {
+            fill: var(--vscode-foreground) !important;
+        }
+        .diagram-container .mermaid svg .edgeLabel rect,
+        .diagram-container .mermaid svg .labelBkg {
+            fill: var(--vscode-editor-background) !important;
+            stroke: var(--vscode-panel-border) !important;
+        }
+        .diagram-container .mermaid .edgeLabel,
+        .diagram-container .mermaid .edgeLabel *,
+        .diagram-container .mermaid .edgeLabel p,
+        .diagram-container .mermaid .edgeLabel span,
+        .diagram-container .mermaid .edgeLabel div {
+            color: var(--vscode-foreground) !important;
+            background: var(--vscode-editor-background) !important;
+        }
+        .diagram-container .mermaid svg rect,
+        .diagram-container .mermaid svg circle,
+        .diagram-container .mermaid svg ellipse,
+        .diagram-container .mermaid svg polygon {
+            fill: var(--vscode-editor-background) !important;
+            stroke: var(--vscode-foreground) !important;
+        }
+        .diagram-container .mermaid svg path,
+        .diagram-container .mermaid svg line {
+            stroke: var(--vscode-foreground) !important;
+        }
+        .diagram-container .mermaid svg marker path {
+            fill: var(--vscode-foreground) !important;
+            stroke: var(--vscode-foreground) !important;
+        }
     `;
 }
