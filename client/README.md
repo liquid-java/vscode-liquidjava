@@ -21,7 +21,7 @@ To try out the extension, install it from the [VS Code Marketplace](https://mark
 <dependency>
     <groupId>io.github.liquid-java</groupId>
     <artifactId>liquidjava-api</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
 </dependency>
 ```
 
@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.liquid-java:liquidjava-api:0.0.4'
+    implementation 'io.github.liquid-java:liquidjava-api:0.0.5'
 }
 ```
 
