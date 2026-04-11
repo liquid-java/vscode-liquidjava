@@ -5,21 +5,23 @@ import { getOriginalVariableName } from "../utils/utils";
 
 export function handleContext(context: LJContext) {
     extension.context = context;
-    updateContextForSelection(extension.currentSelection);
+    if (!extension.file || !extension.currentSelection) return;
+
+    // update variables based on new context in current selection
+    const { allVars, visibleVars } = getSelectionContextVariables(extension.file, extension.currentSelection);
+    extension.context.visibleVars = visibleVars;
+    extension.context.allVars = allVars;
     extension.webview.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }
 
-export function updateContextForSelection(selection: Range) {
-    if (!selection) return;
-
-    const globalVars = extension.context.globalVars || [];
-    const localVars = extension.context.localVars || []; 
-    const variablesInScope = getVariablesInScope(localVars, extension.file, selection);
-    const visibleVarsByPosition = getVisibleVariables(variablesInScope, extension.file, selection, false);
-    const visibleVarsByAnnotationPosition = getVisibleVariables(variablesInScope, extension.file, selection, true);
+export function getSelectionContextVariables(file: string, selection: Range): { visibleVars: LJVariable[]; allVars: LJVariable[] } {
+    const globalVars = extension.context?.globalVars || [];
+    const localVars = extension.context?.localVars || [];
+    const variablesInScope = getVariablesInScope(localVars, file, selection);
+    const visibleVarsByPosition = getVisibleVariables(variablesInScope, file, selection, false);
+    const visibleVarsByAnnotationPosition = getVisibleVariables(variablesInScope, file, selection, true);
     const allVars = sortVariables(normalizeVariableRefinements([...globalVars, ...visibleVarsByPosition]));
-    extension.context.visibleVars = visibleVarsByAnnotationPosition;
-    extension.context.allVars = allVars;
+    return { visibleVars: visibleVarsByAnnotationPosition, allVars };
 }
 
 function getVariablesInScope(variables: LJVariable[], file: string, selection: Range): LJVariable[] {

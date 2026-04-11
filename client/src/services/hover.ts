@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import { extension } from '../state';
+import type { Range, LJVariable } from '../types/context';
+import { getSelectionContextVariables } from './context';
+import { getOriginalVariableName, normalizeFilePath, toRange } from '../utils/utils';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -7,19 +10,41 @@ import { extension } from '../state';
 export function registerHover() {
     vscode.languages.registerHoverProvider('java', {
         provideHover(document, position) {
-            // if webview is visible, do not show hover
-            if (extension.webview?.isVisible()) return null;
-            
-            // get lj diagnostic at the current position
-            const diagnostics = vscode.languages.getDiagnostics(document.uri);
-            const diagnostic = diagnostics.find(d => d.range.contains(position) && d.source === 'liquidjava');
-            if (!diagnostic) return null;
-
-            // create hover content with link to open webview
             const hoverContent = new vscode.MarkdownString();
             hoverContent.isTrusted = true;
-            hoverContent.appendMarkdown(`\n\n[Open LiquidJava view](command:liquidjava.showView) for more details.`);
+
+            const variable = getHoveredVariable(document, position);
+            if (variable && variable.mainRefinement && variable.mainRefinement !== 'true')
+                hoverContent.appendCodeblock(`@Refinement("${variable.mainRefinement}")`, 'java');
+
+            const diagnostics = vscode.languages.getDiagnostics(document.uri);
+            const containsDiagnostic = !!diagnostics.find(d => d.range.contains(position) && d.source === 'liquidjava');
+            if (containsDiagnostic) {
+                if (hoverContent.value.length > 0) hoverContent.appendMarkdown(`\n\n`);
+                hoverContent.appendMarkdown(`[Open LiquidJava view](command:liquidjava.showView) for more details.`);
+            }
+            if (hoverContent.value.length === 0) return null;
             return new vscode.Hover(hoverContent);
         }
     });
+}
+
+function getHoveredVariable(document: vscode.TextDocument, position: vscode.Position): LJVariable | null {
+    if (!extension.context) return null;
+
+    const wordRange = document.getWordRangeAtPosition(position, /[#]?[A-Za-z_][A-Za-z0-9_#]*/);
+    if (!wordRange) return null;
+
+    const hoveredWord = document.getText(wordRange);
+    const file = normalizeFilePath(document.uri.fsPath);
+
+    // we need to use single point cursor position after variable to get all variables until that point
+    const positionAfterVariable = {
+        lineStart: wordRange.end.line,
+        colStart: wordRange.end.character,
+        lineEnd: wordRange.end.line,
+        colEnd: wordRange.end.character
+    };
+    const { allVars } = getSelectionContextVariables(file, positionAfterVariable);
+    return allVars.find(variable => getOriginalVariableName(variable.name) === hoveredWord);
 }

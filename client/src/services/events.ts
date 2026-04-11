@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
-import { normalizeRange, updateContextForSelection } from './context';
-import { normalizeFilePath } from '../utils/utils';
-import { Range } from '../types/context';
+import { getSelectionContextVariables, normalizeRange } from './context';
+import { normalizeFilePath, toRange } from '../utils/utils';
 import { updateErrorAtCursor } from './diagnostics';
+import type { Range } from '../types/context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 
@@ -61,15 +61,12 @@ export async function onSelectionChange(event: vscode.TextEditorSelectionChangeE
  */
 function handleContextUpdate(selection: vscode.Selection) {
     if (!extension.file || !extension.context) return;
-    const range: Range = {
-        lineStart: selection.start.line,
-        colStart: selection.start.character,
-        lineEnd: selection.end.line,
-        colEnd: selection.end.character
-    };
-    const normalizedRange = normalizeRange(range);
+    
+    const normalizedRange = normalizeRange(toRange(selection));
+    const { allVars, visibleVars } = getSelectionContextVariables(extension.file, normalizedRange);
     extension.currentSelection = normalizedRange;
-    updateContextForSelection(normalizedRange);
+    extension.context.visibleVars = visibleVars;
+    extension.context.allVars = allVars;
     updateErrorAtCursor();
     extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }
