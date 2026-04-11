@@ -10,6 +10,7 @@ import liquidjava.utils.VariableFormatter;
  */
 public record VariableDTO(
     String name,
+    String internalName,
     String type,
     String refinement,
     String mainRefinement,
@@ -21,6 +22,7 @@ public record VariableDTO(
         if (placement == null) return null;
         return new VariableDTO(
             VariableFormatter.formatVariable(refinedVariable.getName()),
+            refinedVariable.getName(),
             ContextHistoryDTO.stringifyType(refinedVariable.getType()),
             VariableFormatter.formatText(refinedVariable.getRefinement().toString()),
             VariableFormatter.formatText(refinedVariable.getMainRefinement().toString()),

@@ -4,6 +4,7 @@ import { SourcePosition } from "./diagnostics";
 
 export type LJVariable = {
   name: string;
+  internalName: string;
   type: string;
   refinement: string;
   mainRefinement: string;
