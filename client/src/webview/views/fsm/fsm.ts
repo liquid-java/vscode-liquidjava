@@ -1,7 +1,7 @@
 import type { LJStateMachine } from "../../../types/fsm";
 import { renderMainHeader } from "../sections";
 
-export function renderStateMachineView(sm: LJStateMachine, diagram: string, orientation: "LR" | "TB"): string {
+export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB"): string {
     return /*html*/`
         <div>
             ${renderMainHeader("", 'fsm')}

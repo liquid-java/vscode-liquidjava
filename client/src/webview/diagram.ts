@@ -21,7 +21,7 @@ let startY = 0;
  * @param sm 
  * @returns Mermaid diagram string
  */
-export function createMermaidDiagram(sm: LJStateMachine, orientation: "LR" | "TB"): string {
+export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation: "LR" | "TB"): string {
     if (!sm) return '';
     
     const lines: string[] = [];

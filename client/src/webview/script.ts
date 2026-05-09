@@ -7,7 +7,7 @@ import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
 import { renderDiagnosticsView } from "./views/diagnostics/diagnostics";
-import { LJContext } from "../types/context";
+import type { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
 
 /**

@@ -6,7 +6,7 @@ import { renderWarnings } from "./warnings";
 export function renderDiagnosticsView(
     diagnostics: LJDiagnostic[],
     showAll: boolean,
-    currentFile: string,
+    currentFile: string | undefined,
     expandedErrors: Set<number>,
 ): string {
     const fileDiagnostics = diagnostics.filter(diagnostic => diagnostic.file?.toLowerCase() === currentFile?.toLowerCase() || !diagnostic.file);
