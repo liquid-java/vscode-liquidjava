@@ -16,7 +16,7 @@ type CompletionItemOptions = {
     insertText?: string;
     triggerParameterHints?: boolean;
 }
-type CompletionItemKind = "vars" | "ghosts" | "aliases" | "keywords" | "types" | "decls" | "packages";
+type CompletionItemKind = "vars" | "ghosts" | "aliases" | "keywords" | "types" | "packages";
 
 /**
  * Registers a completion provider for LiquidJava annotations, providing context-aware suggestions based on the current context
@@ -61,19 +61,23 @@ function getContextCompletionItems(context: LJContext, file: string, annotation:
         aliases: () => getAliasCompletionItems(context.aliases, triggerParameterHints),
         keywords: () => getKeywordsCompletionItems(triggerParameterHints, inScope),
         types: () => getTypesCompletionItems(),
-        decls: () => getDeclsCompletionItems(),
         packages: () => [], // TODO
     }
+    const varCompletions: CompletionItemKind[]  = ["vars", "ghosts", "aliases", "keywords"];
+    const typeCompletions: CompletionItemKind[] = ["types"];
     const itemsMap: Record<LJAnnotation, CompletionItemKind[]> = {
-        Refinement: ["vars", "ghosts", "aliases", "keywords"],
-        StateRefinement: ["vars", "ghosts", "aliases", "keywords"],
-        Ghost: ["types"],
-        RefinementAlias: ["types"],
-        RefinementPredicate: ["types", "decls"],
-        StateSet: [],
-        ExternalRefinementsFor: ["packages"]
-    }
-    return itemsMap[annotation].map(key => itemsHandlers[key]()).flat();
+        Refinement:             varCompletions,
+        StateRefinement:        varCompletions,
+        Ghost:                  typeCompletions,
+        RefinementAlias:        typeCompletions,
+        RefinementPredicate:    typeCompletions,
+        StateSet:               [],
+        ExternalRefinementsFor: [], // TODO
+    };
+    return itemsMap[annotation]
+        .map(key => itemsHandlers[key])
+        .filter((handler): handler is () => vscode.CompletionItem[] => Boolean(handler))
+        .flatMap(handler => handler());
 }
 
 function getVariableCompletionItems(variables: LJVariable[]): vscode.CompletionItem[] {
@@ -184,16 +188,6 @@ function getTypesCompletionItems(): vscode.CompletionItem[] {
     const types = ["int", "double", "float", "boolean"];
     return types.map(type => createCompletionItem({
         name: type,
-        kind: vscode.CompletionItemKind.Keyword,
-        description: "",
-        detail: "keyword",
-    }));
-}
-
-function getDeclsCompletionItems(): vscode.CompletionItem[] {
-    const decls = ["ghost", "type"]
-    return decls.map(decl => createCompletionItem({
-        name: decl,
         kind: vscode.CompletionItemKind.Keyword,
         description: "",
         detail: "keyword",
