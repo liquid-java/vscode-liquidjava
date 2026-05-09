@@ -3,7 +3,8 @@ package dtos.context;
 import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.processor.context.PlacementInCode;
 import liquidjava.processor.context.RefinedVariable;
-import liquidjava.utils.VariableFormatter;
+import liquidjava.rj_language.ast.formatter.ExpressionFormatter;
+import liquidjava.rj_language.ast.formatter.VariableFormatter;
 
 /**
  * DTO for serializing RefinedVariable instances to JSON.
@@ -21,11 +22,11 @@ public record VariableDTO(
         PlacementInCode placement = refinedVariable.getPlacementInCode();
         if (placement == null) return null;
         return new VariableDTO(
-            VariableFormatter.formatVariable(refinedVariable.getName()),
+            VariableFormatter.format(refinedVariable.getName()),
             refinedVariable.getName(),
             ContextHistoryDTO.stringifyType(refinedVariable.getType()),
-            VariableFormatter.formatText(refinedVariable.getRefinement().toString()),
-            VariableFormatter.formatText(refinedVariable.getMainRefinement().toString()),
+            ExpressionFormatter.format(refinedVariable.getRefinement()),
+            ExpressionFormatter.format(refinedVariable.getMainRefinement()),
             SourcePositionDTO.from(placement.getPosition()),
             SourcePositionDTO.from(placement.getAnnotationPosition())
         );
