@@ -8,6 +8,9 @@ import { LJStateMachine } from "../types/fsm";
  */
 export async function updateStateMachine(document: vscode.TextDocument) {
     const sm: LJStateMachine = await extension.client?.sendRequest("liquidjava/fsm", { uri: document.uri.toString() });
-    extension.webview?.sendMessage({ type: "fsm", sm });
+
+    // dont update diagram if it hasnt changed to a new one
+    if (!sm || JSON.stringify(sm) === JSON.stringify(extension.stateMachine)) return;
     extension.stateMachine = sm;
+    extension.webview?.sendMessage({ type: "fsm", sm });
 }

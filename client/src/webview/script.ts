@@ -227,10 +227,8 @@ export function getScript(vscode: any, document: any, window: any) {
                 if (!showAllDiagnostics && selectedTab === 'diagnostics') updateView();
                 break;
             case 'fsm':
-                if (msg.sm && msg.sm !== stateMachine) {
-                    stateMachine = msg.sm as LJStateMachine;
-                    if (selectedTab === 'fsm') updateView();
-                }
+                stateMachine = msg.sm as LJStateMachine;
+                if (selectedTab === 'fsm') updateView();
                 break;
             case 'context':
                 context = msg.context as LJContext;
