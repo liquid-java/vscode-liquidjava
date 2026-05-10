@@ -40,7 +40,6 @@ export type LJMethod = {
   returnRefinement: string;
   parameters: LJVariable[];
   stateRefinements: LJMethodStateRefinement[];
-  position: SourcePosition | null;
 }
 
 export type LJContext = {

@@ -3,7 +3,7 @@ import { extension } from '../state';
 import type { LJMethod, LJVariable } from '../types/context';
 import { getSelectionContextVariables } from './context';
 import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
-import { definitionMatchesClass, definitionMatchesPosition, getDefinitions, sourcePositionContains } from './definition';
+import { definitionMatchesClass, getDefinitions } from './definition';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -16,7 +16,7 @@ export function registerHover() {
 
             const variable = getHoveredVariable(document, position);
             if (variable && variable.mainRefinement && variable.mainRefinement !== 'true')
-                hoverContent.appendCodeblock(formatVariableHover(variable), 'java');
+                hoverContent.appendCodeblock(formatRefinement(variable.mainRefinement), 'java');
             else {
                 const method = await getHoveredMethod(document, position);
                 if (method) hoverContent.appendCodeblock(formatMethodHover(method), 'java');
@@ -63,14 +63,9 @@ async function getHoveredMethod(document: vscode.TextDocument, position: vscode.
     const hoveredWord = document.getText(wordRange);
     const file = normalizeFilePath(document.uri.fsPath);
     const methods = extension.context.methods.filter(method => methodNameMatches(method, hoveredWord));
-    const declaredMethod = methods.find(method => method.position?.file === file && sourcePositionContains(method.position, wordRange));
-    if (declaredMethod) return declaredMethod;
 
     const definitions = await getDefinitions(document, position);
-    const resolvedMethod = methods.find(method => definitions.some(definition =>
-        definitionMatchesPosition(definition, method.position) ||
-        definitionMatchesClass(definition, method.targetClass)
-    ));
+    const resolvedMethod = methods.find(method => definitions.some(definition => definitionMatchesClass(definition, method.targetClass)));
     if (resolvedMethod) return resolvedMethod;
 
     const receiver = document.lineAt(wordRange.start.line).text
@@ -99,18 +94,22 @@ function isBefore(range: { lineStart: number; colStart: number }, position: vsco
     return range.lineStart < position.line || range.lineStart === position.line && range.colStart < position.character;
 }
 
-function formatVariableHover(variable: LJVariable): string {
-    return `@Refinement("${variable.mainRefinement}")`;
+function formatRefinement(refinement: string): string {
+    return `@Refinement("${refinement}")`;
+}
+
+function formatStateRefinement(from: string | null, to: string | null): string {
+    return `@StateRefinement("${[from && `from=${from}`, to && `to=${to}`].filter(Boolean).join(', ')}")`;
 }
 
 function formatMethodHover(method: LJMethod): string {
     return [
-        method.returnRefinement && method.returnRefinement !== 'true' && `@Refinement("${method.returnRefinement}")`,
+        method.returnRefinement && method.returnRefinement !== 'true' && formatRefinement(method.returnRefinement),
         ...method.parameters
             .filter(p => p.mainRefinement && p.mainRefinement !== 'true')
-            .map(p => `${p.type} ${p.name} @Refinement("${p.mainRefinement}")`),
+            .map(p => `${p.type} ${p.name} ${formatRefinement(p.mainRefinement)}`),
         ...method.stateRefinements
             .filter(s => s.from || s.to)
-            .map(s => `@StateRefinement("${[s.from && `from=${s.from}`, s.to && `to=${s.to}`].filter(Boolean).join(', ')}")`)
+            .map(s => formatStateRefinement(s.from, s.to))
     ].filter(Boolean).join('\n');
 }
