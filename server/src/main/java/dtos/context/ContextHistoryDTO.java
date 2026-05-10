@@ -14,6 +14,7 @@ public record ContextHistoryDTO(
     List<VariableDTO> globalVars,
     List<GhostDTO> ghosts,
     List<AliasDTO> aliases,
+    List<MethodDTO> methods,
     Map<String, List<SourcePositionDTO>> fileScopes
 ) {
     public static String stringifyType(CtTypeReference<?> typeReference) {

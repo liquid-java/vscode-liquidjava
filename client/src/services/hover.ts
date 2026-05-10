@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { extension } from '../state';
-import type { Range, LJVariable } from '../types/context';
+import type { LJMethod, LJVariable } from '../types/context';
 import { getSelectionContextVariables } from './context';
-import { getOriginalVariableName, normalizeFilePath, toRange } from '../utils/utils';
+import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -15,7 +15,11 @@ export function registerHover() {
 
             const variable = getHoveredVariable(document, position);
             if (variable && variable.mainRefinement && variable.mainRefinement !== 'true')
-                hoverContent.appendCodeblock(`@Refinement("${variable.mainRefinement}")`, 'java');
+                hoverContent.appendCodeblock(formatVariableHover(variable), 'java');
+            else {
+                const method = getHoveredMethod(document, position);
+                if (method) hoverContent.appendCodeblock(formatMethodHover(method), 'java');
+            }
 
             const diagnostics = vscode.languages.getDiagnostics(document.uri);
             const containsDiagnostic = !!diagnostics.find(d => d.range.contains(position) && d.source === 'liquidjava');
@@ -47,4 +51,34 @@ function getHoveredVariable(document: vscode.TextDocument, position: vscode.Posi
     };
     const { allVars } = getSelectionContextVariables(file, positionAfterVariable);
     return allVars.find(variable => getOriginalVariableName(variable.name) === hoveredWord);
+}
+
+function getHoveredMethod(document: vscode.TextDocument, position: vscode.Position): LJMethod | null {
+    if (!extension.context) return null;
+
+    const wordRange = document.getWordRangeAtPosition(position, /[A-Za-z_][A-Za-z0-9_]*/);
+    if (!wordRange) return null;
+
+    const hoveredWord = document.getText(wordRange);
+    const file = normalizeFilePath(document.uri.fsPath);
+    return extension.context.methods.find(method => method.name === hoveredWord && (!method.position?.file || method.position.file === file))
+        || extension.context.methods.find(method => method.name === hoveredWord)
+        || null;
+}
+
+function formatVariableHover(variable: LJVariable): string {
+    return `@Refinement("${variable.mainRefinement}")`;
+}
+
+function formatMethodHover(method: LJMethod): string {
+    return [
+        method.signature,
+        method.returnRefinement && method.returnRefinement !== 'true' && `@Refinement("${method.returnRefinement}")`,
+        ...method.parameters
+            .filter(p => p.mainRefinement && p.mainRefinement !== 'true')
+            .map(p => `${p.type} ${p.name} @Refinement("${p.mainRefinement}")`),
+        ...method.stateRefinements
+            .filter(s => s.from || s.to)
+            .map(s => `@StateRefinement("${s.from ? `from=${s.from}, ` : ""}` +`${s.to ? `to=${s.to}` : ""}`)
+    ].filter(Boolean).join('\n');
 }

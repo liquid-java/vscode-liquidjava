@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import dtos.context.AliasDTO;
 import dtos.context.ContextHistoryDTO;
+import dtos.context.MethodDTO;
 import dtos.context.GhostDTO;
 import dtos.context.VariableDTO;
 import dtos.diagnostics.SourcePositionDTO;
@@ -29,6 +30,7 @@ public class ContextHistoryConverter {
             contextHistory.getGlobalVars().stream().map(VariableDTO::from).filter(v -> v != null).collect(Collectors.toList()),
             contextHistory.getGhosts().stream().map(GhostDTO::from).collect(Collectors.toList()),
             contextHistory.getAliases().stream().map(AliasDTO::from).collect(Collectors.toList()),
+            contextHistory.getMethods().stream().map(MethodDTO::from).filter(f -> f != null).collect(Collectors.toList()),
             parseFileScopes(contextHistory.getFileScopes())
         );
     }

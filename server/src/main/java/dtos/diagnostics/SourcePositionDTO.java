@@ -9,8 +9,12 @@ public record SourcePositionDTO(String file, int lineStart, int colStart, int li
 
     public static SourcePositionDTO from(SourcePosition pos) {
         if (pos == null) return null;
-        String file = pos.getFile() != null ? pos.getFile().getAbsolutePath() : null;
-        return new SourcePositionDTO(file, pos.getLine() - 1, pos.getColumn() - 1, pos.getEndLine() - 1, pos.getEndColumn());
+        try {
+            String file = pos.getFile() != null ? pos.getFile().getAbsolutePath() : null;
+            return new SourcePositionDTO(file, pos.getLine() - 1, pos.getColumn() - 1, pos.getEndLine() - 1, pos.getEndColumn());
+        } catch (UnsupportedOperationException e) {
+            return null;
+        }
     }
 
     public static SourcePositionDTO from(String pos) {
