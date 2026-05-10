@@ -11,16 +11,17 @@ import type {
     SyntaxError,
     TranslationTable,
 } from "../../../types/diagnostics";
+import { renderCopyDiagnosticButton } from "./diagnostics";
 
 export function renderErrors(errors: LJError[], expandedErrors: Set<number>): string {
     return /*html*/`
         <ul>
-            ${errors.map(error => {
-                const errorIndex = errors.indexOf(error);
-                const isExpanded = expandedErrors.has(errorIndex);
+            ${errors.map((error, index) => {
+                const isExpanded = expandedErrors.has(index);
                 return /*html*/`
                 <li class="diagnostic-item error-item">
-                    ${renderError(error, errorIndex, isExpanded)}
+                    ${renderCopyDiagnosticButton('error', index)}
+                    ${renderError(error, index, isExpanded)}
                 </li>
             `;
             }).join("")}

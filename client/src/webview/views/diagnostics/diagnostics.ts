@@ -3,6 +3,8 @@ import { renderErrors } from "./errors";
 import { renderMainHeader } from "../sections";
 import { renderWarnings } from "./warnings";
 
+const COPY_BUTTON_RESET_MS = 2000;
+
 export function renderDiagnosticsView(
     diagnostics: LJDiagnostic[],
     showAll: boolean,
@@ -41,4 +43,93 @@ export function renderDiagnosticsView(
             </div>
         </div>
     `;
+}
+
+export function getDisplayDiagnostics(diagnostics: LJDiagnostic[], showAll: boolean, currentFile: string | undefined): LJDiagnostic[] {
+    if (showAll) return diagnostics;
+    return diagnostics.filter(diagnostic => diagnostic.file?.toLowerCase() === currentFile?.toLowerCase() || !diagnostic.file);
+}
+
+export function renderCopyDiagnosticButton(indexType: 'error' | 'warning', index: number): string {
+    return /*html*/`<button class="copy-diagnostic-btn" data-${indexType}-index="${index}" title="Copy diagnostic" aria-label="Copy diagnostic">⎘</button>`;
+}
+
+export async function copyDiagnosticToClipboard(button: any, displayDiagnostics: LJDiagnostic[]) {
+    const errorIndex = parseInt(button.getAttribute('data-error-index') || '-1', 10);
+    const warningIndex = parseInt(button.getAttribute('data-warning-index') || '-1', 10);
+    const diagnostic = errorIndex >= 0
+        ? displayDiagnostics.filter(d => d.category === 'error')[errorIndex]
+        : displayDiagnostics.filter(d => d.category === 'warning')[warningIndex];
+    if (!diagnostic) return;
+
+    const diagnosticText = formatDiagnosticForClipboard(diagnostic);
+    const originalTitle = button.getAttribute('title');
+    const originalContent = button.innerHTML;
+
+    try {
+        button.disabled = true;
+        await navigator.clipboard.writeText(diagnosticText);
+        button.textContent = '✓';
+        button.setAttribute('title', 'Copied!');
+    } catch (e) {
+        button.textContent = '✗';
+        button.setAttribute('title', 'Copy failed');
+    } finally {
+        setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.setAttribute('title', originalTitle);
+            button.disabled = false;
+        }, COPY_BUTTON_RESET_MS);
+    }
+}
+
+export function formatDiagnosticForClipboard(diagnostic: LJDiagnostic): string {
+    const skippedFields = new Set(['category', 'type', 'translationTable', 'position', 'file']);
+    const lines: string[] = [];
+
+    Object.entries(diagnostic).forEach(([key, value]) => {
+        if (skippedFields.has(key)) return;
+
+        const formattedValue = formatClipboardValue(value);
+        if (!formattedValue) return;
+
+        lines.push(`${formatClipboardLabel(key)}: ${formattedValue}`);
+    });
+
+    const location = formatDiagnosticLocation(diagnostic);
+    if (location) lines.push(`Location: ${location}`);
+
+    return lines.join('\n');
+}
+
+function formatClipboardLabel(key: string): string {
+    return key
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/^./, char => char.toUpperCase());
+}
+
+function formatClipboardValue(value: unknown): string {
+    if (value === null || value === undefined) return '';
+
+    if (typeof value === 'string') return value.trim();
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+
+    if (Array.isArray(value)) {
+        const values = value.map(formatClipboardValue).filter(Boolean);
+        if (values.length === 0) return '';
+        return values.some(v => v.includes('\n')) ? `\n${values.join('\n')}` : values.join(', ');
+    }
+
+    if (typeof value === 'object' && 'value' in value) {
+        return formatClipboardValue((value as { value: unknown }).value);
+    }
+
+    return JSON.stringify(value);
+}
+
+function formatDiagnosticLocation(diagnostic: LJDiagnostic): string {
+    if (!diagnostic.file || !diagnostic.position) return '';
+
+    const filename = diagnostic.file.split('/').pop()?.trim() || diagnostic.file;
+    return `${filename}:${diagnostic.position.lineStart + 1}`;
 }

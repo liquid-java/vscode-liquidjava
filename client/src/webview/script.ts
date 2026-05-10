@@ -6,7 +6,7 @@ import type { LJDiagnostic, RefinementMismatchError } from "../types/diagnostics
 import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { NavTab } from "./views/sections";
-import { renderDiagnosticsView } from "./views/diagnostics/diagnostics";
+import { copyDiagnosticToClipboard, getDisplayDiagnostics, renderDiagnosticsView } from "./views/diagnostics/diagnostics";
 import type { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
 
@@ -210,6 +210,15 @@ export function getScript(vscode: any, document: any, window: any) {
                 selectedTab = tab;
                 updateView();
             }
+            return;
+        }
+
+        // copy diagnostic
+        const diagnosticCopyBtn = target.closest?.('.copy-diagnostic-btn');
+        if (diagnosticCopyBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics, showAllDiagnostics, currentFile));
             return;
         }
     });
