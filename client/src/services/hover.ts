@@ -99,7 +99,7 @@ function formatRefinement(refinement: string): string {
 }
 
 function formatStateRefinement(from: string | null, to: string | null): string {
-    return `@StateRefinement("${[from && `from=${from}`, to && `to=${to}`].filter(Boolean).join(', ')}")`;
+    return `@StateRefinement(${[from && `from="${from}"`, to && `to="${to}"`].filter(Boolean).join(', ')})`;
 }
 
 function formatMethodHover(method: LJMethod): string {
