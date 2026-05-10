@@ -15,37 +15,30 @@ import liquidjava.rj_language.ast.formatter.ExpressionFormatter;
  */
 public record MethodDTO(
     String name,
-    String signature,
     String targetClass,
-    String returnType,
     String returnRefinement,
     List<VariableDTO> parameters,
     List<StateRefinementDTO> stateRefinements,
-    SourcePositionDTO position,
-    SourcePositionDTO annotationPosition
+    SourcePositionDTO position
 ) {
     public static MethodDTO from(RefinedFunction refinedFunction) {
         PlacementInCode placement = refinedFunction.getPlacementInCode();
         if (placement == null) return null;
         return new MethodDTO(
             refinedFunction.getName(),
-            refinedFunction.getSignature(),
             refinedFunction.getTargetClass(),
-            ContextHistoryDTO.stringifyType(refinedFunction.getType()),
             format(refinedFunction.getRefReturn()),
             refinedFunction.getArguments().stream().map(VariableDTO::from).filter(v -> v != null).collect(Collectors.toList()),
             refinedFunction.getAllStates().stream().map(StateRefinementDTO::from).collect(Collectors.toList()),
-            SourcePositionDTO.from(placement.getPosition()),
-            SourcePositionDTO.from(placement.getAnnotationPosition())
+            SourcePositionDTO.from(placement.getPosition())
         );
     }
 
-    public record StateRefinementDTO(String from, String to, String message) {
+    public record StateRefinementDTO(String from, String to) {
         public static StateRefinementDTO from(ObjectState state) {
             return new StateRefinementDTO(
                 state.hasFrom() ? format(state.getFrom()) : null,
-                state.hasTo() ? format(state.getTo()) : null,
-                state.getMessage()
+                state.hasTo() ? format(state.getTo()) : null
             );
         }
     }

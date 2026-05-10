@@ -32,19 +32,15 @@ export type LJAlias = {
 export type LJMethodStateRefinement = {
   from: string | null;
   to: string | null;
-  message: string | null;
 }
 
 export type LJMethod = {
   name: string;
-  signature: string;
   targetClass: string;
-  returnType: string;
   returnRefinement: string;
   parameters: LJVariable[];
   stateRefinements: LJMethodStateRefinement[];
   position: SourcePosition | null;
-  annotationPosition: SourcePosition | null;
 }
 
 export type LJContext = {
