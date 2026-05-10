@@ -107,7 +107,7 @@ function formatMethodHover(method: LJMethod): string {
         method.returnRefinement && method.returnRefinement !== 'true' && formatRefinement(method.returnRefinement),
         ...method.parameters
             .filter(p => p.mainRefinement && p.mainRefinement !== 'true')
-            .map(p => `${p.type} ${p.name} ${formatRefinement(p.mainRefinement)}`),
+            .map(p => `${formatRefinement(p.mainRefinement)} ${p.type} ${p.name}`),
         ...method.stateRefinements
             .filter(s => s.from || s.to)
             .map(s => formatStateRefinement(s.from, s.to))
