@@ -128,6 +128,6 @@ function normalizeVariableRefinements(variables: LJVariable[]): LJVariable[] {
             return left !== right ? [v] : []; // filter tautologies like x == x
         }
         if (v.refinement.includes("!=") || v.refinement.includes(">") || v.refinement.includes("<")) return [v];
-        return [{ ...v, refinement: `${v.name} == ${v.refinement}` }];
+        return [{ ...v, refinement: `${v.name} == ${v.refinement.replace(`(${v.name})`, "()")}` }];
     });
 }
