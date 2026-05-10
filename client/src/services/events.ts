@@ -2,10 +2,8 @@ import * as vscode from 'vscode';
 import { extension } from '../state';
 import { updateStateMachine } from './state-machine';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
-import { getSelectionContextVariables, normalizeRange } from './context';
+import { getSelectionContextVariables, normalizeRange, updateErrorAtCursor } from './context';
 import { normalizeFilePath, toRange } from '../utils/utils';
-import { updateErrorAtCursor } from './diagnostics';
-import type { Range } from '../types/context';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 
@@ -60,11 +58,14 @@ export async function onSelectionChange(event: vscode.TextEditorSelectionChangeE
  * @param selection The new selection
  */
 function handleContextUpdate(selection: vscode.Selection) {
-    if (!extension.file || !extension.context) return;
-    
+    if (!extension.file) return;
+
     const normalizedRange = normalizeRange(toRange(selection));
-    const { allVars, visibleVars } = getSelectionContextVariables(extension.file, normalizedRange);
     extension.currentSelection = normalizedRange;
+
+    if (!extension.context) return;
+
+    const { allVars, visibleVars } = getSelectionContextVariables(extension.file, normalizedRange);
     extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
     updateErrorAtCursor();
