@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { extension } from "../state";
-import { LJDiagnostic, RefinementMismatchError } from "../types/diagnostics";
+import { LJDiagnostic } from "../types/diagnostics";
 import { StatusBarState, updateStatusBar } from "./status-bar";
-import { isPositionBefore, isRangeWithin } from "./context";
+import { updateErrorAtCursor } from "./context";
 
 /**
  * Handles LiquidJava diagnostics received from the language server
@@ -13,7 +13,10 @@ export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     const statusBarState: StatusBarState = containsError ? "failed" : "passed";
     updateStatusBar(statusBarState);
     extension.diagnostics = diagnostics;
+    updateErrorAtCursor();
     extension.webview?.sendMessage({ type: "diagnostics", diagnostics });
+    if (extension.context)
+        extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }
 
 /**
@@ -36,20 +39,4 @@ export async function verify() {
     updateStatusBar("loading");
     
     extension.client.sendNotification("liquidjava/verify", { uri });
-}
-
-export function updateErrorAtCursor() {
-    if (!extension.file || !extension.currentSelection) return;
-    const errors: RefinementMismatchError[] = extension.diagnostics?.filter(d => d.type === 'refinement-error' || d.type === 'state-refinement-error') as RefinementMismatchError[] || [];
-    const scopes = extension.context?.fileScopes[extension.file] || [];
-    const errorAtCursor = errors.find(error => {
-        if (!error.position) return false;
-        const sameFile = error.position.file === extension.file;
-        const beforeCursor = isPositionBefore(error.position, extension.currentSelection);
-        if (!sameFile || !beforeCursor) return false;
-        // check if error is within a scope that contains the cursor
-        const errorScope = scopes.find(scope => isRangeWithin(error.position, scope));
-        return errorScope && isRangeWithin(extension.currentSelection, errorScope);
-    });
-    extension.errorAtCursor = errorAtCursor;
 }
