@@ -29,11 +29,25 @@ export type LJAlias = {
   predicate: string;
 }
 
+export type LJMethodStateRefinement = {
+  from: string | null;
+  to: string | null;
+}
+
+export type LJMethod = {
+  name: string;
+  targetClass: string;
+  returnRefinement: string;
+  parameters: LJVariable[];
+  stateRefinements: LJMethodStateRefinement[];
+}
+
 export type LJContext = {
   localVars: LJVariable[];
   globalVars: LJVariable[];
   ghosts: LJGhost[];
   aliases: LJAlias[];
+  methods: LJMethod[];
   visibleVars: LJVariable[]; // variables visible in the current selection
   allVars: LJVariable[]; // instance vars + global vars + vars in scope
   fileScopes: Record<string, Range[]>; // file -> scopes
