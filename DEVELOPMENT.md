@@ -32,9 +32,14 @@ Replace `<version>` with the version number in [client/package.json](./client/pa
 
 ### Releasing
 
-To create and push a git tag that will trigger the GitHub Actions workflow that automatically publishes the extension in both the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) and the [Open VSX Registry](https://open-vsx.org/extension/AlcidesFonseca/liquid-java):
-1. Increment the version in [client/package.json](./client/package.json)
-2. Run the release script from the repository root:
+To create and push a git tag that will trigger the GitHub Actions workflow that automatically publishes the extension in both the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) and the [Open VSX Registry](https://open-vsx.org/extension/AlcidesFonseca/liquid-java), run the release script from the repository root:
+
+```bash
+./release.sh
+```
+
+By default, the script bumps the patch version in [client/package.json](./client/package.json).
+To release a manually bumped version instead, pass the version explicitly; it must match the version in [client/package.json](./client/package.json):
 
 ```bash
 ./release.sh <new-version>

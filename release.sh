@@ -2,14 +2,8 @@
 
 VERSION=$1
 
-# check if version argument provided
-if [ -z "$VERSION" ]; then
-    echo "Usage: $0 1.2.3"
-    exit 1
-fi
-
 # check valid version format
-if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+if [ -n "$VERSION" ] && [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo "Version must be in format 1.2.3"
     exit 1
 fi
@@ -19,6 +13,12 @@ CURRENT_BRANCH=$(git branch --show-current)
 if [ "$CURRENT_BRANCH" != "main" ]; then
     echo "Releases can only be created from the main branch (current: $CURRENT_BRANCH)"
     exit 1
+fi
+
+# bump patch version if no version provided
+if [ -z "$VERSION" ]; then
+    (cd client && npm version patch --no-git-tag-version)
+    VERSION=$(node -p "require('./client/package.json').version")
 fi
 
 # check if version present in package.json
