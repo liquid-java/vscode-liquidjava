@@ -1,4 +1,4 @@
-# LiquidJava VS Code Extension Development Guide
+# Contributing to LiquidJava VS Code Extension
 
 ### Prerequisites
 
