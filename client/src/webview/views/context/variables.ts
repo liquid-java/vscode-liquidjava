@@ -16,7 +16,7 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                         </colgroup>
                         <thead>
                             <tr>
-                                <th>Variable</th>
+                                <th>Name</th>
                                 <th>Refinement</th>
                             </tr>
                         </thead>
