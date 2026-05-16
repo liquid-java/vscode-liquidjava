@@ -23,6 +23,7 @@ import utils.PathUtils;
 public class LJDiagnosticsHandler {
 
     private static final String SOURCE = "liquidjava";
+    private static final String LSP_FLAG = "-lsp";
 
     /**
      * Generates LJDiagnostics for the given URI
@@ -34,7 +35,7 @@ public class LJDiagnosticsHandler {
         List<LJError> errors = new ArrayList<>();
         List<LJWarning> warnings = new ArrayList<>();
         try {
-            CommandLineLauncher.launch(path);
+            CommandLineLauncher.main(new String[] { LSP_FLAG, path });
             Diagnostics diagnostics = Diagnostics.getInstance();
             if (diagnostics.foundWarning()) {
                 warnings.addAll(diagnostics.getWarnings());
