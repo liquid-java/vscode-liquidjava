@@ -3,6 +3,7 @@ import { extension } from "../state";
 import { LJDiagnostic } from "../types/diagnostics";
 import { StatusBarState, updateStatusBar } from "./status-bar";
 import { updateErrorAtCursor } from "./context";
+import { refreshCodeLenses } from "./codelens";
 
 /**
  * Handles LiquidJava diagnostics received from the language server
@@ -13,6 +14,7 @@ export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     const statusBarState: StatusBarState = containsError ? "failed" : "passed";
     updateStatusBar(statusBarState);
     extension.diagnostics = diagnostics;
+    refreshCodeLenses();
     updateErrorAtCursor();
     extension.webview?.sendMessage({ type: "diagnostics", diagnostics });
     if (extension.context)

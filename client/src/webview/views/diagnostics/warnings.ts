@@ -1,11 +1,11 @@
 import type { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../../types/diagnostics";
-import { renderDiagnosticHeader, renderLocation, renderSection } from "../sections";
+import { renderDiagnosticDataAttributes, renderDiagnosticHeader, renderLocation, renderSection } from "../sections";
 
 export function renderWarnings(warnings: LJWarning[]): string {
     return /*html*/`
         <ul>
             ${warnings.map(warning => /*html*/`
-                <li class="diagnostic-item warning-item">
+                <li class="diagnostic-item warning-item" ${renderDiagnosticDataAttributes(warning)}>
                     ${renderWarning(warning)}
                 </li>
             `).join("")}

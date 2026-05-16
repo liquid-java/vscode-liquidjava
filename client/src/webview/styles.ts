@@ -99,6 +99,30 @@ export function getStyles(): string {
             margin-bottom: 1rem;
             border-radius: 4px;
         }
+        .diagnostic-item.revealed {
+            outline: 2px solid var(--vscode-focusBorder);
+            animation: diagnostic-reveal-flash 1.8s ease-out;
+        }
+        @keyframes diagnostic-reveal-flash {
+            0% {
+                box-shadow: 0 0 0 0 var(--vscode-focusBorder);
+                transform: translateX(0);
+            }
+            12% {
+                box-shadow: 0 0 0 3px var(--vscode-focusBorder);
+                transform: translateX(3px);
+            }
+            24% {
+                transform: translateX(0);
+            }
+            55% {
+                box-shadow: 0 0 0 2px var(--vscode-focusBorder);
+            }
+            100% {
+                box-shadow: 0 0 0 0 transparent;
+                transform: translateX(0);
+            }
+        }
         .error-item {
             border-left: 4px solid var(--vscode-editorError-foreground);
         }
@@ -318,7 +342,8 @@ export function getStyles(): string {
         .context-variables-table td.failing-refinement {
             text-align: right;
         }
-        .failing-refinement .highlight-var-btn {
+        .failing-refinement .highlight-var-btn,
+        .failing-refinement .diagnostic-reveal-btn {
             display: flex;
             justify-content: flex-end;
             width: 100%;
@@ -350,26 +375,30 @@ export function getStyles(): string {
         .context-section-content.collapsed {
             display: none;
         }
-        .highlight-var-btn {
+        .highlight-var-btn,
+        .diagnostic-reveal-btn {
             background-color: transparent;
             border: none;
             transition: background-color 0.1s;
             text-align: left;
             padding: 0.2rem 0.8rem;
         }
-        .highlight-var-btn code {
+        .highlight-var-btn code,
+        .diagnostic-reveal-btn code {
             pointer-events: none;
         }
         .highlight-var-btn.selected {
             background-color: var(--vscode-button-background);
         }
-        .highlight-var-btn.error {
+        .highlight-var-btn.error,
+        .diagnostic-reveal-btn.error {
             background-color: #d6382f;
         }
         .highlight-var-btn.error.selected {
             background-color: #c92e26;
         }
-        .highlight-var-btn.error:hover {
+        .highlight-var-btn.error:hover,
+        .diagnostic-reveal-btn.error:hover {
             background-color: #c92e26;
         }
         .diagram-section {

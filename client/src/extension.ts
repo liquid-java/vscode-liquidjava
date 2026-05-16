@@ -9,6 +9,7 @@ import { registerWebview } from "./services/webview";
 import { registerHover } from "./services/hover";
 import { registerEvents } from "./services/events";
 import { registerAutocomplete } from "./services/autocomplete";
+import { registerCodeLens } from "./services/codelens";
 import { runLanguageServer, stopLanguageServer } from "./lsp/server";
 import { runClient, stopClient } from "./lsp/client";
 
@@ -25,6 +26,7 @@ export async function activate(context: vscode.ExtensionContext) {
     registerEvents(context);
     registerWebview(context);
     registerAutocomplete(context);
+    registerCodeLens(context);
     registerHover();
     await applyItalicOverlay();
     await startExtension(context);
@@ -100,4 +102,3 @@ export async function restartExtension(context: vscode.ExtensionContext) {
     // start again
     await startExtension(context);
 }
-

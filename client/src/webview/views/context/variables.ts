@@ -1,6 +1,6 @@
 import { LJVariable } from "../../../types/context";
 import { RefinementMismatchError } from "../../../types/diagnostics";
-import { renderToggleSection, renderHighlightButton } from "../sections";
+import { renderToggleSection, renderHighlightButton, renderDiagnosticRevealButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
     const expected  = errorAtCursor ? errorAtCursor.type == "refinement-error" ? errorAtCursor.expected.value : errorAtCursor.expected : undefined;
@@ -27,8 +27,8 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                                     <td><code>${variable.refinement}</code></td>
                                 </tr>
                             `).join('')}
-                            ${errorAtCursor ? /*html*/`
-                                <tr><td class="failing-refinement" colspan="2">${renderHighlightButton(errorAtCursor.position, '⊢ ' + expected, true)}</td></tr>`
+                            ${errorAtCursor?.position ? /*html*/`
+                                <tr><td class="failing-refinement" colspan="2">${renderDiagnosticRevealButton(errorAtCursor.position, '⊢ ' + expected)}</td></tr>`
                             : ''}
                         </tbody>
                     </table>
