@@ -25,10 +25,10 @@ npm install
 To build the language server, package the extension, and install it in your local VS Code instance, you can run the provided script from the repository root:
 
 ```bash
-./install.sh <version>
+./install.sh
 ```
 
-Replace `<version>` with the version number in [client/package.json](./client/package.json).
+Use `./install.sh --skip-server` to package and install the extension without rebuilding the language server.
 
 ### Releasing
 
