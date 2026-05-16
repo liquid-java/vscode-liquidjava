@@ -139,13 +139,12 @@ function compareVariableNames(a: string, b: string): number {
 }
 
 function normalizeVariableRefinements(variables: LJVariable[]): LJVariable[] {
-    return Array.from(new Map(variables.map(v => [v.refinement, v])).values()).flatMap(v => {
+    return Array.from(new Map(variables.map(v => [`${v.internalName}:${v.refinement}`, v])).values()).flatMap(v => { // remove duplicates
         if (!v.refinement || v.refinement === "true") return []; // filter out trivial refinements
         if (v.refinement.includes("==")) {
             const [left, right] = v.refinement.split("==").map(s => s.trim());
             return left !== right ? [v] : []; // filter tautologies like x == x
         }
-        if (v.refinement.includes("!=") || v.refinement.includes(">") || v.refinement.includes("<")) return [v];
-        return [{ ...v, refinement: `${v.name} == ${v.refinement}` }];
+        return [v];
     });
 }
