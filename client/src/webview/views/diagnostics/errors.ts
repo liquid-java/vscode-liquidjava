@@ -58,7 +58,8 @@ const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) =>
 };
 
 export function renderError(error: LJError, errorIndex: number, isExpanded: boolean): string {
-    const header = renderDiagnosticHeader(error);
+    const showMessage = error.type !== 'refinement-error' && error.type !== 'state-refinement-error';
+    const header = renderDiagnosticHeader(error, showMessage);
     const content = errorContentRenderers[error.type]?.(error) ?? '';
     const location = renderLocation(error);
     const extra = renderExtra(error, errorIndex, isExpanded);
