@@ -467,6 +467,16 @@ export function getStyles(): string {
             width: 66.67%;
         }
 
+        .context-aliases-table td:first-child,
+        .context-ghosts-table td:first-child {
+            width: 80%;
+        }
+
+        .context-aliases-table td:last-child,
+        .context-ghosts-table td:last-child {
+            width: 20%;
+        }
+
         .context-variables-table th:first-child,
         .context-section table td:first-child {
             text-align: left;
