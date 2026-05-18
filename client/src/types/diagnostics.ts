@@ -74,8 +74,8 @@ export type StateRefinementError = BaseDiagnostic & {
     category: 'error';
     type: 'state-refinement-error';
     translationTable: TranslationTable;
-    expected: string;
-    found: string;
+    expected: ValDerivationNode;
+    found: ValDerivationNode;
     customMessage: string;
 }
 

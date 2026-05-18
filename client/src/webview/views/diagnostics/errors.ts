@@ -36,8 +36,8 @@ const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) =>
         ${e.counterexample ? renderExpressionSection('Counterexample', e.counterexample) : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/`
-        ${renderExpressionSection('Expected', e.expected)}
-        ${renderExpressionSection('Found', e.found)}
+        ${renderCustomSection('Expected', renderDerivationNode(e, e.expected, 'expected'))}
+        ${renderCustomSection('Found', renderDerivationNode(e, e.found, 'found'))}
     `,
     'invalid-refinement-error': (e: InvalidRefinementError) => /*html*/`
         ${renderExpressionSection('Refinement', e.refinement)}

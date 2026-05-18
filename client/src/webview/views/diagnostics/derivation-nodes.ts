@@ -1,4 +1,4 @@
-import type { LJError, RefinementError } from "../../../types/diagnostics";
+import type { LJError, RefinementMismatchError } from "../../../types/diagnostics";
 import type { DerivationNode, ValDerivationNode } from "../../../types/derivation-nodes";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../../highlighting";
 import { escapeHtml } from "../../utils";
@@ -19,7 +19,7 @@ function renderToken(token: string): string {
 }
 
 function renderJsonTree(
-    error: RefinementError,
+    error: RefinementMismatchError,
     node: DerivationNode | undefined,
     errorId: string,
     path: string,
@@ -123,10 +123,11 @@ export function handleDerivationResetClick(target?: any): boolean {
 }
 
 export function renderDerivationNode(
-    error: RefinementError,
+    error: RefinementMismatchError,
     node: ValDerivationNode,
     scope: "expected" | "found"
 ): string {
+    if (!node || typeof node !== "object" || !("value" in node)) return renderHighlightedExpression(String(node)); // primitive value without derivation
     if (!node.origin) return renderHighlightedExpression(String(node.value)); // no derivation available
     
     const errorId = hashError(error, scope);
