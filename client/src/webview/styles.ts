@@ -95,9 +95,34 @@ export function getStyles(): string {
         }
         .diagnostic-item {
             background-color: var(--vscode-textCodeBlock-background);
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 3rem 0.5rem 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
+            position: relative;
+        }
+        .copy-diagnostic-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            padding: 0;
+            color: var(--vscode-foreground);
+            background: transparent;
+            border: none;
+            opacity: 0.65;
+            font-size: 1.25rem;
+        }
+        .copy-diagnostic-btn:hover {
+            background: var(--vscode-editor-background);
+            opacity: 1;
+        }
+        .copy-diagnostic-btn:disabled {
+            opacity: 0.8;
+            cursor: default;
         }
         .diagnostic-item.revealed {
             outline: 2px solid var(--vscode-focusBorder);
@@ -334,18 +359,12 @@ export function getStyles(): string {
         .context-variables-table th:first-child {
             padding-left: calc(0.75rem + 0.8rem);
         }
-
-        .context-variables-table th:last-child,
-        .context-section table td:last-child {
-            text-align: right;
-        }
         .context-variables-table td.failing-refinement {
-            text-align: right;
+            text-align: center;
         }
-        .failing-refinement .highlight-var-btn,
-        .failing-refinement .diagnostic-reveal-btn {
+        .failing-refinement .highlight-var-btn {
             display: flex;
-            justify-content: flex-end;
+            justify-content: center;
             width: 100%;
         }
         .context-toggle-btn {

@@ -23,7 +23,6 @@ import utils.PathUtils;
 public class LJDiagnosticsHandler {
 
     private static final String SOURCE = "liquidjava";
-
     /**
      * Generates LJDiagnostics for the given URI
      * @param uri the document URI
@@ -34,6 +33,7 @@ public class LJDiagnosticsHandler {
         List<LJError> errors = new ArrayList<>();
         List<LJWarning> warnings = new ArrayList<>();
         try {
+            CommandLineLauncher.cmdArgs.lspMode = true;
             CommandLineLauncher.launch(path);
             Diagnostics diagnostics = Diagnostics.getInstance();
             if (diagnostics.foundWarning()) {

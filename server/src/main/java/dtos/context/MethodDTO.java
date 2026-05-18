@@ -3,6 +3,7 @@ package dtos.context;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.processor.context.ObjectState;
 import liquidjava.processor.context.RefinedFunction;
 import liquidjava.rj_language.Predicate;
@@ -16,7 +17,8 @@ public record MethodDTO(
     String targetClass,
     String returnRefinement,
     List<VariableDTO> parameters,
-    List<StateRefinementDTO> stateRefinements
+    List<StateRefinementDTO> stateRefinements,
+    SourcePositionDTO position
 ) {
     public static MethodDTO from(RefinedFunction refinedFunction) {
         return new MethodDTO(
@@ -24,7 +26,8 @@ public record MethodDTO(
             refinedFunction.getTargetClass(),
             format(refinedFunction.getRefReturn()),
             refinedFunction.getArguments().stream().map(VariableDTO::from).filter(v -> v != null).collect(Collectors.toList()),
-            refinedFunction.getAllStates().stream().map(StateRefinementDTO::from).collect(Collectors.toList())
+            refinedFunction.getAllStates().stream().map(StateRefinementDTO::from).collect(Collectors.toList()),
+            SourcePositionDTO.from(refinedFunction.getPlacementInCode().getPosition())
         );
     }
 
