@@ -13,6 +13,11 @@ type HighlightRule = {
     scope: string;
 };
 
+type ScopeColorRule = {
+    scopes: string[];
+    color: string;
+};
+
 const repository = liquidJavaGrammar.repository as GrammarRepository;
 
 const expressionPatterns: GrammarPattern[] = [
@@ -38,18 +43,21 @@ const highlightRules: HighlightRule[] = expressionPatterns
         scope: pattern.name
     }));
 
-function colorForScope(scope: string): string {
-    if (scope.includes("keyword.other") || scope.includes("variable.language.this")) return "var(--lj-token-keyword)";
-    if (scope.includes("keyword.control")) return "var(--lj-token-control)";
-    if (scope.includes("entity.name.function")) return "var(--lj-token-function)";
-    if (scope.includes("keyword.operator")) return "var(--lj-token-operator)";
-    if (scope.includes("punctuation.separator")) return "var(--lj-token-punctuation)";
-    if (scope.includes("storage.type.primitive") || scope.includes("entity.name.type")) return "var(--lj-token-type)";
-    if (scope.includes("constant.numeric")) return "var(--lj-token-number)";
-    if (scope.includes("constant.language.boolean") || scope.includes("constant.language.null")) return "var(--lj-token-boolean)";
-    if (scope.includes("variable.other")) return "var(--lj-token-identifier)";
+const scopeColorRules: ScopeColorRule[] = [
+    { scopes: ["keyword.other", "variable.language.this"], color: "var(--lj-token-keyword)" },
+    { scopes: ["keyword.control"], color: "var(--lj-token-control)" },
+    { scopes: ["entity.name.function"], color: "var(--lj-token-function)" },
+    { scopes: ["keyword.operator"], color: "var(--lj-token-operator)" },
+    { scopes: ["punctuation.separator"], color: "var(--lj-token-punctuation)" },
+    { scopes: ["storage.type.primitive", "entity.name.type"], color: "var(--lj-token-type)" },
+    { scopes: ["constant.numeric"], color: "var(--lj-token-number)" },
+    { scopes: ["constant.language.boolean", "constant.language.null"], color: "var(--lj-token-boolean)" },
+    { scopes: ["variable.other"], color: "var(--lj-token-identifier)" }
+];
 
-    return "var(--vscode-editor-foreground)";
+function colorForScope(scope: string): string {
+    return scopeColorRules.find(rule => rule.scopes.some(token => scope.includes(token)))?.color
+        ?? "var(--vscode-editor-foreground)";
 }
 
 function renderHighlightedContent(expression: string): string {
@@ -61,13 +69,11 @@ function renderHighlightedContent(expression: string): string {
             rule.regex.lastIndex = index;
             return rule.regex.test(expression);
         });
-
         if (!matchingRule) {
             html += escapeHtml(expression[index]);
             index += 1;
             continue;
         }
-
         matchingRule.regex.lastIndex = index;
         const match = matchingRule.regex.exec(expression);
         const content = match?.[0] || expression[index];
@@ -75,18 +81,22 @@ function renderHighlightedContent(expression: string): string {
         html += `<span style="color:${colorForScope(matchingRule.scope)}">${escapeHtml(content)}</span>`;
         index += content.length;
     }
-
     return html;
 }
 
-export function renderHighlightedExpression(expression: string): string {
+function renderExpression(expression: string, wrap: boolean): string {
     if (!expression) return "";
 
-    return `<pre class="lj-expression-block"><code class="lj-expression-code">${renderHighlightedContent(expression)}</code></pre>`;
+    const content = renderHighlightedContent(expression);
+    return wrap
+        ? `<pre class="lj-expression-block"><code class="lj-expression-code">${content}</code></pre>`
+        : content;
+}
+
+export function renderHighlightedExpression(expression: string): string {
+    return renderExpression(expression, true);
 }
 
 export function renderHighlightedInlineExpression(expression: string): string {
-    if (!expression) return "";
-
-    return renderHighlightedContent(expression);
+    return renderExpression(expression, false);
 }
