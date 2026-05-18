@@ -105,7 +105,7 @@ export type ExternalClassNotFoundWarning = BaseDiagnostic & {
 export type ExternalMethodNotFoundWarning = BaseDiagnostic & {
     category: 'warning';
     type: 'external-method-not-found-warning';
-    methodName: string;
+    signature: string;
     className: string;
     overloads: string[];
 }

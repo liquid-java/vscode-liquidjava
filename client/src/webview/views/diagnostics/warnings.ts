@@ -20,7 +20,7 @@ const warningContentRenderers: Partial<Record<LJWarning['type'], (warning: LJWar
         ${renderExpressionSection('Class Name', w.className)}
     `,
     'external-method-not-found-warning': (w: ExternalMethodNotFoundWarning) => /*html*/`
-        ${renderExpressionSection('Method', w.methodName)}
+        ${renderExpressionSection('Method', w.signature)}
         ${w.overloads.length > 0 ? renderExpressionSection('Overloads', w.overloads.join('\n')) : ''}
     `
 };
