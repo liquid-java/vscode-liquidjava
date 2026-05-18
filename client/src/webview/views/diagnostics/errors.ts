@@ -1,4 +1,4 @@
-import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderSection, renderCustomSection, renderTranslationTable,  } from "../sections";
+import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderSection, renderCustomSection, renderTranslationTable, renderLocation,  } from "../sections";
 import { renderDerivationNode } from "./derivation-nodes";
 import type {
     ArgumentMismatchError,
