@@ -362,7 +362,7 @@ export function getStyles(): string {
         .context-variables-table td.failing-refinement {
             text-align: center;
         }
-        .failing-refinement .highlight-var-btn {
+        .failing-refinement .diagnostic-reveal-btn {
             display: flex;
             justify-content: center;
             width: 100%;
