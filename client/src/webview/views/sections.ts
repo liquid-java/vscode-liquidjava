@@ -52,7 +52,7 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                         return /*html*/`
                             <tr>
                                 <td><code>${renderHighlightedInlineExpression(variable)}</code></td>
-                                <td>${renderHighlightButton(placement.position, placement.text)}</td>
+                                <td>${renderHighlightButton(placement.position!, placement.text)}</td>
                             </tr>
                         `;
                     }).join('')}

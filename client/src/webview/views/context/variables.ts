@@ -14,7 +14,7 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                         <tbody>
                             ${variables.map(variable => /*html*/`
                                 <tr>
-                                    <td>${renderHighlightButton(variable.position, variable.refinement)}</td>
+                                    <td>${renderHighlightButton(variable.position!, variable.refinement)}</td>
                                     <td><code>${escapeHtml(getSimpleName(variable.type))}</code></td>
                                 </tr>
                             `).join('')}
