@@ -123,5 +123,5 @@ function formatMethodLocationLink(method: LJMethod): string | null {
     const uri = vscode.Uri.file(method.position.file).with({
         fragment: `L${method.position.lineStart + 1},${method.position.colStart + 1}`
     });
-    return `[Show Refinements](${uri.toString()})`;
+    return `[Go to Refinements Definition](${uri.toString()})`;
 }
