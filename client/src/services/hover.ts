@@ -19,7 +19,11 @@ export function registerHover() {
                 hoverContent.appendCodeblock(formatRefinement(variable.mainRefinement), 'java');
             else {
                 const method = await getHoveredMethod(document, position);
-                if (method) hoverContent.appendCodeblock(formatMethodHover(method), 'java');
+                if (method) {
+                    hoverContent.appendCodeblock(formatMethodHover(method), 'java');
+                    const link = formatMethodLocationLink(method);
+                    if (link) hoverContent.appendMarkdown(`\n\n${link}`);
+                }
             }
 
             const diagnostics = vscode.languages.getDiagnostics(document.uri);
@@ -112,4 +116,12 @@ function formatMethodHover(method: LJMethod): string {
             .filter(s => s.from || s.to)
             .map(s => formatStateRefinement(s.from, s.to))
     ].filter(Boolean).join('\n');
+}
+
+function formatMethodLocationLink(method: LJMethod): string | null {
+    if (!method.position?.file) return null;
+    const uri = vscode.Uri.file(method.position.file).with({
+        fragment: `L${method.position.lineStart + 1},${method.position.colStart + 1}`
+    });
+    return `[Go to Refinements Definition](${uri.toString()})`;
 }
