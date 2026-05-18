@@ -9,6 +9,12 @@ import type { NavTab } from "./views/sections";
 import { copyDiagnosticToClipboard, getDisplayDiagnostics, renderDiagnosticsView } from "./views/diagnostics/diagnostics";
 import type { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
+import type { DiagnosticRevealTarget } from "../types/diagnostics";
+import { getDiagnosticRevealTargetFromKey, getDiagnosticRevealTargetKey } from "./diagnostic-reveal";
+
+type VSCodeApi = {
+    postMessage(message: unknown): void;
+};
 
 /**
  * Initializes the webview script
@@ -16,8 +22,9 @@ import { ContextSectionState, renderContextView } from "./views/context/context"
  * @param document
  * @param window
  */
-export function getScript(vscode: any, document: any, window: any) {
+export function getScript(vscode: VSCodeApi, document: Document, window: Window) {
     const root = document.getElementById('root');
+    if (!root) return;
     let diagnostics: LJDiagnostic[] = [];
     let showAllDiagnostics = false;
     let currentFile: string;
@@ -28,6 +35,7 @@ export function getScript(vscode: any, document: any, window: any) {
     let selectedTab: NavTab = 'diagnostics';
     let diagramOrientation: "LR" | "TB" = "TB";
     let currentDiagram: string = '';
+    let revealTimeout: ReturnType<typeof setTimeout> | undefined;
     const contextSectionState: ContextSectionState = {
         aliases: false,
         ghosts: false,
@@ -39,8 +47,8 @@ export function getScript(vscode: any, document: any, window: any) {
     vscode.postMessage({ type: 'ready' });    
     
     // on click
-    root.addEventListener('click', (e: any) => {
-        const target = e.target as any;
+    root.addEventListener('click', (e: MouseEvent) => {
+        const target = e.target instanceof Element ? e.target : null;
         if (!target) return;
 
         // context section toggle
@@ -87,6 +95,17 @@ export function getScript(vscode: any, document: any, window: any) {
                     character: parseInt(columnAttr, 10)
                 });
             }
+            return;
+        }
+
+        // reveal failing refinement diagnostic
+        if (target.classList.contains('diagnostic-reveal-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const revealTarget = getDiagnosticRevealTargetFromKey(target.getAttribute('data-diagnostic-target'));
+            if (!revealTarget) return;
+            revealDiagnostic(revealTarget);
             return;
         }
 
@@ -244,6 +263,9 @@ export function getScript(vscode: any, document: any, window: any) {
                 errorAtCursor = msg.errorAtCursor as RefinementMismatchError;
                 if (selectedTab === 'context') updateView();
                 break;
+            case 'revealDiagnostic':
+                revealDiagnostic(msg.diagnostic as DiagnosticRevealTarget);
+                break;
         }
     });
 
@@ -266,4 +288,31 @@ export function getScript(vscode: any, document: any, window: any) {
                 break;
         }
     }
+
+    function revealDiagnostic(target: DiagnosticRevealTarget) {
+        selectedTab = 'diagnostics';
+
+        const isVisibleInCurrentFile = showAllDiagnostics || !target.file || target.file.toLowerCase() === currentFile?.toLowerCase();
+        if (!isVisibleInCurrentFile) {
+            showAllDiagnostics = true;
+        }
+
+        updateView();
+        const element = Array.from(root.querySelectorAll<HTMLElement>('.diagnostic-item')).find(item =>
+            item.getAttribute('data-diagnostic-target') === getDiagnosticRevealTargetKey(target)
+        );
+        if (!element) return;
+
+        const previousRevealed = root.querySelector('.diagnostic-item.revealed');
+        if (previousRevealed) previousRevealed.classList.remove('revealed');
+        if (revealTimeout) clearTimeout(revealTimeout);
+
+        element.classList.add('revealed');
+        element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        revealTimeout = setTimeout(() => {
+            element.classList.remove('revealed');
+            revealTimeout = undefined;
+        }, 1800);
+    }
+
 }

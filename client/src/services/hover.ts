@@ -26,12 +26,6 @@ export function registerHover() {
                 }
             }
 
-            const diagnostics = vscode.languages.getDiagnostics(document.uri);
-            const containsDiagnostic = !!diagnostics.find(d => d.range.contains(position) && d.source === 'liquidjava');
-            if (containsDiagnostic) {
-                if (hoverContent.value.length > 0) hoverContent.appendMarkdown(`\n\n`);
-                hoverContent.appendMarkdown(`[Open LiquidJava view](command:liquidjava.showView) for more details.`);
-            }
             if (hoverContent.value.length === 0) return null;
             return new vscode.Hover(hoverContent);
         }

@@ -111,3 +111,8 @@ export type ExternalMethodNotFoundWarning = BaseDiagnostic & {
 }
 
 export type RefinementMismatchError = RefinementError | StateRefinementError;
+
+export type DiagnosticRevealTarget = {
+    file: string;
+    position: SourcePosition;
+}

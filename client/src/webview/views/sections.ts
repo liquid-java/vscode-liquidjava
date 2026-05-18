@@ -1,4 +1,5 @@
 import type { LJDiagnostic, PlacementInCode, SourcePosition, TranslationTable } from "../../types/diagnostics";
+import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
     <div class="header">
@@ -22,6 +23,11 @@ export const renderToggleSection = (title: string, targetId: string, isExpanded:
 
 export const renderDiagnosticHeader = (title: string, message: string): string => /*html*/
     `<h3>${title}</h3><div class="diagnostic-header"><p>${message}</p></div>`;
+
+export function renderDiagnosticDataAttributes(diagnostic: LJDiagnostic): string {
+    const target = getDiagnosticRevealTarget(diagnostic);
+    return target ? `data-diagnostic-target="${getDiagnosticRevealTargetKey(target)}"` : "";
+}
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {
     if (!diagnostic.position || !diagnostic.file) return "";
@@ -66,6 +72,17 @@ export function renderHighlightButton(position: SourcePosition, content: string,
             data-end-line="${position.lineEnd}"
             data-end-column="${position.colEnd}"
             data-file="${position.file}"
+        >
+            <code>${content}</code>
+        </button>
+    `;
+}
+
+export function renderDiagnosticRevealButton(position: SourcePosition, content: string): string {
+    return /*html*/`
+        <button
+            class="diagnostic-reveal-btn error"
+            data-diagnostic-target="${getDiagnosticRevealTargetKey({ file: position.file, position })}"
         >
             <code>${content}</code>
         </button>

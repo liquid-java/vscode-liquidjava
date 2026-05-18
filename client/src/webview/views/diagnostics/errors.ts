@@ -1,4 +1,4 @@
-import { renderDiagnosticHeader, renderLocation, renderSection, renderCustomSection, renderTranslationTable,  } from "../sections";
+import { renderDiagnosticDataAttributes, renderDiagnosticHeader, renderLocation, renderSection, renderCustomSection, renderTranslationTable,  } from "../sections";
 import { renderDerivationNode } from "./derivation-nodes";
 import type {
     ArgumentMismatchError,
@@ -19,7 +19,7 @@ export function renderErrors(errors: LJError[], expandedErrors: Set<number>): st
             ${errors.map((error, index) => {
                 const isExpanded = expandedErrors.has(index);
                 return /*html*/`
-                <li class="diagnostic-item error-item">
+                <li class="diagnostic-item error-item" ${renderDiagnosticDataAttributes(error)}>
                     ${renderCopyDiagnosticButton('error', index)}
                     ${renderError(error, index, isExpanded)}
                 </li>

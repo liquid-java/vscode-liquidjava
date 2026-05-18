@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { LiquidJavaWebviewProvider } from "../webview/provider";
 import { extension } from "../state";
+import type { DiagnosticRevealTarget } from "../types/diagnostics";
 
 /**
  * Initializes the webview panel for the extension
@@ -15,8 +16,9 @@ export function registerWebview(context: vscode.ExtensionContext) {
     );
     // show view command
     context.subscriptions.push(
-        vscode.commands.registerCommand("liquidjava.showView", async () => {
+        vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget) => {
             await vscode.commands.executeCommand("liquidJavaView.focus");
+            if (diagnostic) extension.webview.sendMessage({ type: "revealDiagnostic", diagnostic });
         })
     );
     // listen for messages from the webview
