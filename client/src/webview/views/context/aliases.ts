@@ -3,14 +3,6 @@ import { getSimpleName } from "../../utils";
 import { renderHighlightedInlineExpression } from "../../highlighting";
 import { renderToggleSection } from "../sections";
 
-function formatAlias(alias: LJAlias): string {
-    const parameters = alias.parameters
-        .map((parameter, index) => `${getSimpleName(alias.types[index])} ${parameter}`)
-        .join(", ");
-
-    return `${alias.name}(${parameters}) { ${alias.predicate} }`;
-}
-
 export function renderContextAliases(aliases: LJAlias[], isExpanded: boolean): string {
     return /*html*/`
         <div class="context-section">
@@ -23,7 +15,7 @@ export function renderContextAliases(aliases: LJAlias[], isExpanded: boolean): s
                             <tr>
                                 <td>
                                     <code>
-                                        ${renderHighlightedInlineExpression(formatAlias(alias))}
+                                        ${renderHighlightedInlineExpression(renderAlias(alias))}
                                     </code>
                                 </td>
                                 <td><code>alias</code></td>
@@ -35,4 +27,12 @@ export function renderContextAliases(aliases: LJAlias[], isExpanded: boolean): s
             </div>
         </div>
     `;
+}
+
+function renderAlias(alias: LJAlias): string {
+    const parameters = alias.parameters
+        .map((parameter, index) => `${getSimpleName(alias.types[index])} ${parameter}`)
+        .join(", ");
+
+    return `${alias.name}(${parameters}) { ${alias.predicate} }`;
 }

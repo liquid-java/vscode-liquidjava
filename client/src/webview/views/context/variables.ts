@@ -1,7 +1,7 @@
 import { LJVariable } from "../../../types/context";
 import { RefinementMismatchError } from "../../../types/diagnostics";
 import { escapeHtml, getSimpleName } from "../../utils";
-import { renderLocationLink, renderToggleSection, renderHighlightButton } from "../sections";
+import { renderToggleSection, renderHighlightButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
     const expected  = errorAtCursor ? errorAtCursor.type == "refinement-error" ? errorAtCursor.expected.value : errorAtCursor.expected : undefined;
@@ -18,11 +18,15 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                                     <td><code>${escapeHtml(getSimpleName(variable.type))}</code></td>
                                 </tr>
                             `).join('')}
-                            ${errorAtCursor ? /*html*/`<tr><td><code class="failing-refinement" data-tooltip="${escapeHtml(errorAtCursor.title)}">${renderHighlightButton(errorAtCursor.position, '⊢ ' + expected, true)}</code></td><td></td></tr>` : ''}
+                            ${errorAtCursor ? renderFailingRefinement(errorAtCursor, expected!) : ''}
                         </tbody>
                     </table>
                 `: '<p>No variables declared at the cursor position</p>'}
             </div>
         </div>
     `;
+}
+
+function renderFailingRefinement(errorAtCursor: RefinementMismatchError, expected: string): string {
+    return /*html*/`<tr><td><code class="failing-refinement" data-tooltip="${escapeHtml(errorAtCursor.title)}">${renderHighlightButton(errorAtCursor.position!, '⊢ ' + expected, true)}</code></td><td></td></tr>`;
 }
