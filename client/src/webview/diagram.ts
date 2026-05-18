@@ -212,21 +212,19 @@ export function registerPanListeners(document: any) {
 }
 
 export async function copyDiagramToClipboard(target: any, diagram: string) {
-    const textContent = target.textContent;
     const title = target.getAttribute('title');
     try {
         target.disabled = true;
         await navigator.clipboard.writeText(diagram);
-        target.textContent = '✓';
+        target.classList.add('copied');
         target.setAttribute('title', 'Copied!');
     } catch (e) {
-        target.textContent = '✗';
         target.setAttribute('title', 'Copy failed');
     } finally {
         // reset button after timeout
         setTimeout(() => {
-            target.textContent = textContent;
             target.setAttribute('title', title);
+            target.classList.remove('copied');
             target.disabled = false;
         }, COPY_TIMEOUT_MS);
     }

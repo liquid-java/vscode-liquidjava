@@ -183,7 +183,7 @@ export function getStyles(): string {
             opacity: 0.8;
             cursor: default;
         }
-        .copy-diagnostic-btn.copied {
+        .copied {
             animation: copy-diagnostic-pop 0.42s ease-out;
         }
         @keyframes copy-diagnostic-pop {
@@ -602,6 +602,10 @@ export function getStyles(): string {
         .diagram-control-btn:hover {
             background: none;
             opacity: 1;
+        }
+        .diagram-control-btn:disabled {
+            cursor: default;
+            opacity: 0.8;
         }
         .mermaid .statediagramTitleText {
             font-size: 30px!important;
