@@ -31,13 +31,11 @@ export function renderErrors(errors: LJError[], expandedErrors: Set<number>): st
 
 const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) => string>> = {
     'refinement-error': (e: RefinementError) => /*html*/`
-        ${e.customMessage ? renderSection('Message', e.customMessage) : ''}
         ${renderCustomSection('Expected', renderDerivationNode(e, e.expected, 'expected'))}
         ${renderCustomSection('Found', renderDerivationNode(e, e.found, 'found'))}
         ${e.counterexample ? renderSection('Counterexample', e.counterexample) : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/`
-        ${e.customMessage ? renderSection('Message', e.customMessage) : ''}
         ${renderSection('Expected', e.expected)}
         ${renderSection('Found', e.found)}
     `,
@@ -59,8 +57,9 @@ const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) =>
 };
 
 export function renderError(error: LJError, errorIndex: number, isExpanded: boolean): string {
-    const header = renderDiagnosticHeader(error);
-    const content = errorContentRenderers[error.type]?.(error) ?? '';
+    const message = error.type === 'refinement-error' || error.type === 'state-refinement-error' ? error.customMessage : error.message;
+    const header = renderDiagnosticHeader(error.title, message || '');
+    const content = errorContentRenderers[error.type]?.(error) || '';
     const location = renderLocation(error);
     const extra = renderExtra(error, errorIndex, isExpanded);
     return /*html*/`${header}${content}${location}${extra}`;

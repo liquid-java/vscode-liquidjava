@@ -26,7 +26,7 @@ const warningContentRenderers: Partial<Record<LJWarning['type'], (warning: LJWar
 };
 
 export function renderWarning(warning: LJWarning): string {
-    const header = renderDiagnosticHeader(warning);
+    const header = renderDiagnosticHeader(warning.title, warning.message);
     const content = warningContentRenderers[warning.type]?.(warning) ?? '';
     const location = renderLocation(warning);
     return /*html*/`${header}${content}${location}`;
