@@ -14,6 +14,10 @@ function getExpansions(errorId: string): Set<string> {
     return expansionsMap.get(errorId)!;
 }
 
+function renderToken(token: string): string {
+    return renderHighlightedInlineExpression(token);
+}
+
 function renderJsonTree(
     error: RefinementError,
     node: DerivationNode | undefined,
@@ -58,15 +62,15 @@ function renderJsonTree(
     if ("left" in node && "right" in node) {
         const leftHtml = renderJsonTree(error, node.left, errorId, `${path}.left`, expandedPaths);
         const rightHtml = renderJsonTree(error, node.right, errorId, `${path}.right`, expandedPaths);
-        return `${leftHtml} <span class="lj-token-operator">${escapeHtml(node.op)}</span> ${rightHtml}`;
+        return `${leftHtml} ${renderToken(node.op)} ${rightHtml}`;
     }
 
     // UnaryDerivationNode
     if ("operand" in node) {
         const operandHtml = renderJsonTree(error, node.operand, errorId, `${path}.operand`, expandedPaths);
         return node.op === "-"
-            ? `<span class="lj-token-operator">${escapeHtml(node.op)}</span><span class="lj-token-punctuation">(</span>${operandHtml}<span class="lj-token-punctuation">)</span>`
-            : `<span class="lj-token-operator">${escapeHtml(node.op)}</span>${operandHtml}`;
+            ? `${renderToken(node.op)}${renderToken("(")}${operandHtml}${renderToken(")")}`
+            : `${renderToken(node.op)}${operandHtml}`;
     }
 
     // IteDerivationNode
@@ -74,7 +78,7 @@ function renderJsonTree(
         const conditionHtml = renderJsonTree(error, node.condition, errorId, `${path}.condition`, expandedPaths);
         const thenBranchHtml = renderJsonTree(error, node.thenBranch, errorId, `${path}.thenBranch`, expandedPaths);
         const elseBranchHtml = renderJsonTree(error, node.elseBranch, errorId, `${path}.elseBranch`, expandedPaths);
-        return `${conditionHtml} <span class="lj-token-operator">?</span> ${thenBranchHtml} <span class="lj-token-operator">:</span> ${elseBranchHtml}`;
+        return `${conditionHtml} ${renderToken("?")} ${thenBranchHtml} ${renderToken(":")} ${elseBranchHtml}`;
     }
 
     // fallback

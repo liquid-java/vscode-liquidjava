@@ -60,6 +60,10 @@ const highlighter = createHighlighterCoreSync({
                     settings: { foreground: "var(--lj-token-operator)" }
                 },
                 {
+                    scope: "punctuation.separator.liquidjava",
+                    settings: { foreground: "var(--lj-token-punctuation)" }
+                },
+                {
                     scope: "storage.type.primitive.liquidjava, storage.type.primitive.liquidjava.webview, entity.name.type.liquidjava",
                     settings: { foreground: "var(--lj-token-type)" }
                 },
