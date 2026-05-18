@@ -20,8 +20,8 @@ export const renderToggleSection = (title: string, targetId: string, isExpanded:
     </button>
     `;
 
-export const renderDiagnosticHeader = (diagnostic: LJDiagnostic, showMessage = true): string => /*html*/
-    `<h3>${diagnostic.title}</h3>${showMessage ? /*html*/`<div class="diagnostic-header"><p>${diagnostic.message}</p></div>` : ''}`;
+export const renderDiagnosticHeader = (title: string, message: string): string => /*html*/
+    `<h3>${title}</h3><div class="diagnostic-header"><p>${message}</p></div>`;
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {
     if (!diagnostic.position || !diagnostic.file) return "";
