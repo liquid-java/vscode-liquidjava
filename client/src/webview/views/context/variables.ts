@@ -15,7 +15,7 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                             ${variables.map(variable => /*html*/`
                                 <tr>
                                     <td>${renderHighlightButton(variable.position, variable.refinement)}</td>
-                                    <td><code>${getSimpleName(variable.type)}</code></td>
+                                    <td><code>${escapeHtml(getSimpleName(variable.type))}</code></td>
                                 </tr>
                             `).join('')}
                             ${errorAtCursor ? /*html*/`<tr><td><code class="failing-refinement" data-tooltip="${escapeHtml(errorAtCursor.title)}">${renderHighlightButton(errorAtCursor.position, '⊢ ' + expected, true)}</code></td><td></td></tr>` : ''}

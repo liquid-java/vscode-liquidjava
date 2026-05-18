@@ -1,4 +1,6 @@
 import type { LJDiagnostic, PlacementInCode, SourcePosition, TranslationTable } from "../../types/diagnostics";
+import { escapeHtml } from "../utils";
+import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
     <div class="header">
@@ -12,6 +14,9 @@ export const renderCustomSection = (title: string, body: string): string => /*ht
 
 export const renderSection = (title: string, body: string): string => /*html*/
     renderCustomSection(title, `<pre>${body}</pre>`);
+
+export const renderExpressionSection = (title: string, expression: string): string => /*html*/
+    renderCustomSection(title, renderHighlightedExpression(expression));
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
     <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
@@ -46,7 +51,7 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                     ${entries.map(([variable, placement]: [string, PlacementInCode]) => {
                         return /*html*/`
                             <tr>
-                                <td><code>${variable}</code></td>
+                                <td><code>${renderHighlightedInlineExpression(variable)}</code></td>
                                 <td>${renderHighlightButton(placement.position, placement.text)}</td>
                             </tr>
                         `;
@@ -67,7 +72,7 @@ export function renderHighlightButton(position: SourcePosition, content: string,
             data-end-column="${position.colEnd}"
             data-file="${position.file}"
         >
-            <code>${content}</code>
+            <code>${renderHighlightedInlineExpression(content)}</code>
         </button>
     `;
 }
@@ -80,7 +85,7 @@ export function renderLocationLink(position?: SourcePosition): string {
         data-file="${position.file}"
         data-line="${position.lineStart}"
         data-column="${position.colStart}"
-    >${getFile(position)}</a>`;
+    >${escapeHtml(getFile(position))}</a>`;
 }
 
 function getFile(position: SourcePosition): string {

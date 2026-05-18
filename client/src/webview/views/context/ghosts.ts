@@ -1,6 +1,11 @@
 import { LJGhost } from "../../../types/context";
 import { getSimpleName } from "../../utils";
+import { renderHighlightedInlineExpression } from "../../highlighting";
 import { renderToggleSection } from "../sections";
+
+function formatGhost(ghost: LJGhost): string {
+    return `${ghost.returnType} ${ghost.name}(${ghost.parameterTypes.map(getSimpleName).join(', ')})`;
+}
 
 export function renderContextGhosts(ghosts: LJGhost[], isExpanded: boolean): string {
     return /*html*/`
@@ -12,7 +17,7 @@ export function renderContextGhosts(ghosts: LJGhost[], isExpanded: boolean): str
                     <tbody>
                         ${ghosts.map(ghost => /*html*/`
                             <tr>
-                                <td><code>${ghost.returnType} ${ghost.name}(${ghost.parameterTypes.map(getSimpleName).join(', ')})</code></td>
+                                <td><code>${renderHighlightedInlineExpression(formatGhost(ghost))}</code></td>
                                 <td><code>${ghost.isState ? 'state' : 'ghost'}</code></td>
                             </tr>
                         `).join('')}

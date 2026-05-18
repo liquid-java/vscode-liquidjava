@@ -178,6 +178,8 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"dependencies": {
+		"@shikijs/core": "^4.0.2",
+		"@shikijs/engine-javascript": "^4.0.2",
 		"ftp": "^0.3.10",
 		"get-port": "^5.1.1",
 		"jsonc-parser": "^0.4.2",

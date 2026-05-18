@@ -72,13 +72,14 @@ export function getScript(vscode: any, document: any, window: any) {
         }
 
         // location link or variable click
-        if (target.classList.contains('location-link') || target.classList.contains('node-var')) {
+        const locationTarget = target.closest?.('.location-link, .node-var');
+        if (locationTarget) {
             e.preventDefault();
             e.stopPropagation();
 
-            const filePath = target.getAttribute('data-file');
-            const lineAttr = target.getAttribute('data-line');
-            const columnAttr = target.getAttribute('data-column');
+            const filePath = locationTarget.getAttribute('data-file');
+            const lineAttr = locationTarget.getAttribute('data-line');
+            const columnAttr = locationTarget.getAttribute('data-column');
             if (filePath && lineAttr !== null && columnAttr !== null) {
                 vscode.postMessage({
                     type: 'openFile',
@@ -91,18 +92,20 @@ export function getScript(vscode: any, document: any, window: any) {
         }
 
         // derivation expansion click
-        if (target.classList.contains('derivable-node')) {
+        const derivableNode = target.closest?.('.derivable-node');
+        if (derivableNode) {
             e.stopPropagation();
-            if (handleDerivableNodeClick(target)) {
+            if (handleDerivableNodeClick(derivableNode)) {
                 updateView();
             }
             return;
         }
 
         // derivation reset button
-        if (target.classList.contains('derivation-reset-btn')) {
+        const derivationResetButton = target.closest?.('.derivation-reset-btn');
+        if (derivationResetButton) {
             e.stopPropagation();
-            if (handleDerivationResetClick(target)) {
+            if (handleDerivationResetClick(derivationResetButton)) {
                 updateView();
             }
             return;
@@ -170,26 +173,27 @@ export function getScript(vscode: any, document: any, window: any) {
         }
 
         // highlight variable 
-        if (target.classList.contains('highlight-var-btn')) {
+        const highlightButton = target.closest?.('.highlight-var-btn');
+        if (highlightButton) {
             e.stopPropagation();
 
             const previousSelected = root.querySelector('.highlight-var-btn.selected');        
             if (previousSelected) {
                 // unselect previous
                 previousSelected.classList.remove('selected');
-                if (previousSelected === target) {
+                if (previousSelected === highlightButton) {
                     // remove highlight
                     vscode.postMessage({ type: 'highlight', range: null });
                     return;
                 }
             }
-            target.classList.add('selected');
+            highlightButton.classList.add('selected');
 
-            const file = target.getAttribute('data-file');
-            const lineStart = parseInt(target.getAttribute('data-start-line') || '', 10);
-            const colStart = parseInt(target.getAttribute('data-start-column') || '', 10);
-            const lineEnd = parseInt(target.getAttribute('data-end-line') || '', 10);
-            const colEnd = parseInt(target.getAttribute('data-end-column') || '', 10);
+            const file = highlightButton.getAttribute('data-file');
+            const lineStart = parseInt(highlightButton.getAttribute('data-start-line') || '', 10);
+            const colStart = parseInt(highlightButton.getAttribute('data-start-column') || '', 10);
+            const lineEnd = parseInt(highlightButton.getAttribute('data-end-line') || '', 10);
+            const colEnd = parseInt(highlightButton.getAttribute('data-end-column') || '', 10);
             if ([lineStart, colStart, lineEnd, colEnd].some(Number.isNaN)) return;
 
             const range: Range = { lineStart, colStart, lineEnd, colEnd };
