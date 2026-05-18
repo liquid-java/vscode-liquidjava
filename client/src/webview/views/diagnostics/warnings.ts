@@ -1,4 +1,4 @@
-import type { CustomWarning, ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJError, LJWarning, SourcePosition } from "../../../types/diagnostics";
+import type { CustomWarning, ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning, UnsatisfiableRefinementWarning } from "../../../types/diagnostics";
 import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderLocation } from "../sections";
 import { renderCopyDiagnosticButton } from "./diagnostics";
 
@@ -24,6 +24,9 @@ const warningContentRenderers: WarningContentRenderers = {
     'external-method-not-found-warning': (w: ExternalMethodNotFoundWarning) => /*html*/ `
         ${renderExpressionSection('Method', w.signature)}
         ${w.overloads.length > 0 ? renderExpressionSection('Overloads', w.overloads.join('\n')) : ''}
+    `,
+    'unsatisfiable-refinement-warning': (w: UnsatisfiableRefinementWarning) => /*html*/ `
+        ${renderExpressionSection('Refinement', w.refinement)}
     `,
     "custom-warning": (_: CustomWarning) => ""
 }
