@@ -5,10 +5,23 @@
  */
 export function getStyles(): string {
     return /*css*/`
+        html,
+        body,
+        #root {
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        *,
+        *::before,
+        *::after {
+            box-sizing: inherit;
+        }
         body {
             padding: 1rem;
             font-family: var(--vscode-font-family);
-            overflow-y: scroll;
+            overflow: auto;
             --lj-token-keyword: var(--vscode-symbolIcon-keywordForeground, var(--vscode-editor-foreground));
             --lj-token-control: var(--vscode-debugTokenExpression-name, var(--vscode-symbolIcon-keywordForeground, var(--vscode-editor-foreground)));
             --lj-token-function: var(--vscode-symbolIcon-functionForeground, var(--vscode-editor-foreground));
@@ -126,7 +139,6 @@ export function getStyles(): string {
             font-size: var(--vscode-editor-font-size);
             max-width: 100%;
             line-height: 1.6;
-            overflow: visible;
             position: relative;
         }
         ul {
@@ -171,7 +183,7 @@ export function getStyles(): string {
             opacity: 0.8;
             cursor: default;
         }
-        .copy-diagnostic-btn.copied {
+        .copied {
             animation: copy-diagnostic-pop 0.42s ease-out;
         }
         @keyframes copy-diagnostic-pop {
@@ -455,6 +467,16 @@ export function getStyles(): string {
             width: 66.67%;
         }
 
+        .context-aliases-table td:first-child,
+        .context-ghosts-table td:first-child {
+            width: 80%;
+        }
+
+        .context-aliases-table td:last-child,
+        .context-ghosts-table td:last-child {
+            width: 20%;
+        }
+
         .context-variables-table th:first-child,
         .context-section table td:first-child {
             text-align: left;
@@ -522,6 +544,7 @@ export function getStyles(): string {
         .highlight-var-btn.error,
         .diagnostic-reveal-btn.error {
             background-color: color-mix(in srgb, var(--vscode-errorForeground) 80%, transparent);
+            color: var(--vscode-editor-foreground);
         }
         .highlight-var-btn.error.selected,
         .diagnostic-reveal-btn.error.selected {
@@ -589,6 +612,10 @@ export function getStyles(): string {
         .diagram-control-btn:hover {
             background: none;
             opacity: 1;
+        }
+        .diagram-control-btn:disabled {
+            cursor: default;
+            opacity: 0.8;
         }
         .mermaid .statediagramTitleText {
             font-size: 30px!important;

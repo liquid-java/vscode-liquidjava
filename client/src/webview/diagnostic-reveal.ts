@@ -13,7 +13,7 @@ export function getDiagnosticRevealTarget(diagnostic: LJDiagnostic): DiagnosticR
     };
 }
 
-export function getDiagnosticRevealTargetFromKey(value?: string): DiagnosticRevealTarget | undefined {
+export function getDiagnosticRevealTargetFromKey(value?: string | null): DiagnosticRevealTarget | undefined {
     const match = value?.match(/^(.*):(\d+):(\d+)-(\d+):(\d+)$/);
     if (!match) return undefined;
 

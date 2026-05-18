@@ -49,7 +49,7 @@ function getHoveredVariable(document: vscode.TextDocument, position: vscode.Posi
         colEnd: wordRange.end.character
     };
     const { allVars } = getSelectionContextVariables(file, positionAfterVariable);
-    return allVars.find(variable => getOriginalVariableName(variable.name) === hoveredWord);
+    return allVars.find(variable => getOriginalVariableName(variable.name) === hoveredWord) || null;
 }
 
 async function getHoveredMethod(document: vscode.TextDocument, position: vscode.Position): Promise<LJMethod | null> {

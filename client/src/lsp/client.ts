@@ -15,19 +15,17 @@ import { handleContext } from '../services/context';
  * @param port The port number the server is running on
  */
 export async function runClient(context: vscode.ExtensionContext, port: number) {
-    const serverOptions: ServerOptions = () => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                extension.socket = await connectToPort(port);
-                resolve({
-                    writer: extension.socket,
-                    reader: extension.socket,
-                });
-            } catch (error) {
-                await stopClient("Failed to connect to server");
-                reject(error);
+    const serverOptions: ServerOptions = async () => {
+        try {
+            extension.socket = await connectToPort(port)
+            return {
+                writer: extension.socket,
+                reader: extension.socket,
             }
-        });
+        } catch (error) {
+            await stopClient("Failed to connect to server")
+            throw error
+        }
     };
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
@@ -38,7 +36,7 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
 
     try {
         await extension.client.start();
-        extension.logger.client.info("Extension is ready");
+        extension.logger!.client.info("Extension is ready");
         
         extension.client.onNotification("liquidjava/diagnostics", (diagnostics: LJDiagnostic[]) => {
             handleLJDiagnostics(diagnostics);
@@ -53,8 +51,8 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
             await onActiveFileChange(editor);
         }
     } catch (e) {
-        vscode.window.showErrorMessage("LiquidJava failed to initialize: " + e.toString());
-        extension.logger.client.error("Failed to initialize: " + e.toString());
+        vscode.window.showErrorMessage("LiquidJava failed to initialize: " + String(e));
+        extension.logger!.client.error("Failed to initialize: " + String(e));
         await stopClient("Failed to initialize");
     }
 
@@ -74,17 +72,17 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
  */
 export async function stopClient(reason: string) {
     if (!extension.client && !extension.serverProcess && !extension.socket) {
-        extension.logger.client.info("Extension already stopped");
+        extension.logger!.client.info("Extension already stopped");
         return;
     }
-    extension.logger.client.info("Stopping LiquidJava extension: " + reason);
+    extension.logger!.client.info("Stopping LiquidJava extension: " + reason);
     updateStatusBar("stopped");
 
     // stop client
     try {
         await extension.client?.stop();
     } catch (e) {
-        extension.logger.client.error("Error stopping client: " + e);
+        extension.logger!.client.error("Error stopping client: " + e);
     } finally {
         extension.client = undefined;
     }
@@ -93,7 +91,7 @@ export async function stopClient(reason: string) {
     try {
         extension.socket?.destroy();
     } catch (e) {
-        extension.logger.client.error("Error closing socket: " + e);
+        extension.logger!.client.error("Error closing socket: " + e);
     } finally {
         extension.socket = undefined;
     }

@@ -17,6 +17,7 @@ import dtos.warnings.CustomWarningDTO;
 import dtos.warnings.ExternalClassNotFoundWarningDTO;
 import dtos.warnings.ExternalMethodNotFoundWarningDTO;
 import dtos.warnings.LJWarningDTO;
+import dtos.warnings.UnsatisfiableRefinementWarningDTO;
 import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.errors.ArgumentMismatchError;
 import liquidjava.diagnostics.errors.CustomError;
@@ -32,6 +33,7 @@ import liquidjava.diagnostics.warnings.CustomWarning;
 import liquidjava.diagnostics.warnings.ExternalClassNotFoundWarning;
 import liquidjava.diagnostics.warnings.ExternalMethodNotFoundWarning;
 import liquidjava.diagnostics.warnings.LJWarning;
+import liquidjava.diagnostics.warnings.UnsatisfiableRefinementWarning;
 
 /**
  * Utility class for converting LiquidJava diagnostic objects to their corresponding DTOs
@@ -66,6 +68,8 @@ public class DiagnosticConverter {
             return ExternalClassNotFoundWarningDTO.from(d);
         } else if (diagnostic instanceof ExternalMethodNotFoundWarning d) {
             return ExternalMethodNotFoundWarningDTO.from(d);
+        } else if (diagnostic instanceof UnsatisfiableRefinementWarning d) {
+            return UnsatisfiableRefinementWarningDTO.from(d);
         } else if (diagnostic instanceof CustomWarning d) {
             return CustomWarningDTO.from(d);
         } else if (diagnostic instanceof LJError d) {

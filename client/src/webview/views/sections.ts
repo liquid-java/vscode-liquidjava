@@ -55,9 +55,10 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                 </thead>
                 <tbody>
                     ${entries.map(([variable, placement]: [string, PlacementInCode]) => {
+                        if (!placement.position) return ''
                         return /*html*/`
                             <tr>
-                                <td>${renderHighlightButton(placement.position!, variable)}</td>
+                                <td>${renderHighlightButton(placement.position, variable)}</td>
                                 <td><code>${renderHighlightedInlineExpression(placement.text)}</code></td>
                             </tr>
                         `;
@@ -84,10 +85,11 @@ export function renderHighlightButton(position: SourcePosition, content: string,
 }
 
 export function renderDiagnosticRevealButton(position: SourcePosition, content: string): string {
+    if (!position.file) return `<code>${content}</code>`
     return /*html*/`
         <button
             class="diagnostic-reveal-btn error"
-            data-diagnostic-target="${getDiagnosticRevealTargetKey({ file: position.file!, position })}"
+            data-diagnostic-target="${getDiagnosticRevealTargetKey({ file: position.file, position })}"
         >
             <code>${content}</code>
         </button>
@@ -106,7 +108,7 @@ export function renderLocationLink(position?: SourcePosition): string {
 }
 
 function getFile(position: SourcePosition): string {
-    return `${position.file.split('/').pop().trim() || position.file}:${position.lineStart + 1}`;
+    return `${position.file?.split('/').pop()?.trim() || position.file}:${position.lineStart + 1}`;
 }
 
 export type NavTab = 'diagnostics' | 'fsm' | 'context';

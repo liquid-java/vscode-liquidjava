@@ -14,32 +14,33 @@ import { DEBUG_MODE, DEBUG_PORT, SERVER_JAR } from '../utils/constants';
 export async function runLanguageServer(context: vscode.ExtensionContext, javaExecutablePath: string): Promise<number> {
     const port = DEBUG_MODE ? DEBUG_PORT : await getAvailablePort();
     if (DEBUG_MODE) {
-        extension.logger.client.info("DEBUG MODE: Using fixed port " + port);
+        extension.logger!.client.info("DEBUG MODE: Using fixed port " + port);
         return port;
     }
-    extension.logger.client.info("Running language server on port " + port);
+    extension.logger!.client.info("Running language server on port " + port);
 
     const jarPath = path.resolve(context.extensionPath, "dist", "server", SERVER_JAR);
     const args = ["-jar", jarPath, port.toString()];
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     const options = {
-        cwd: normalizeFilePath(vscode.workspace.workspaceFolders[0].uri.fsPath), // root path
+        cwd: workspaceFolder ? normalizeFilePath(workspaceFolder.uri.fsPath) : context.extensionPath, // root path
     };
-    extension.logger.client.info("Creating language server process...");
+    extension.logger!.client.info("Creating language server process...");
     extension.serverProcess = child_process.spawn(javaExecutablePath, args, options);
 
     // listen to process events
-    extension.serverProcess.stdout.on("data", (data) => {
+    extension.serverProcess.stdout?.on("data", (data) => {
         const message = data.toString().trim();
-        extension.logger.server.info(message);
+        extension.logger!.server.info(message);
     });
-    extension.serverProcess.stderr.on("data", (data) => {
-        extension.logger.server.error(data.toString().trim())
+    extension.serverProcess.stderr?.on("data", (data) => {
+        extension.logger!.server.error(data.toString().trim())
     });
     extension.serverProcess.on("error", (err) => {
-        extension.logger.server.error(`Failed to start: ${err}`)
+        extension.logger!.server.error(`Failed to start: ${err}`)
     });
     extension.serverProcess.on("close", (code) => {
-        extension.logger.server.info(`Process exited with code ${code}`);
+        extension.logger!.server.info(`Process exited with code ${code}`);
         extension.serverProcess = undefined;
     });
     return port;

@@ -35,6 +35,7 @@ export function registerStatusBar(context: vscode.ExtensionContext) {
  */
 export function updateStatusBar(state: StatusBarState) {
     const color = state === "stopped" ? "errorForeground" : "statusBar.foreground";
+    if (!extension.statusBar) return;
     extension.statusBar.color = new vscode.ThemeColor(color);
     extension.statusBar.text = icons[state] + " LiquidJava";
     extension.statusBar.tooltip = statusText[state];

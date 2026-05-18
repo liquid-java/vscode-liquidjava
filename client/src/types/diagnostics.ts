@@ -20,7 +20,7 @@ export type LJError = CustomError | IllegalConstructorTransitionError |
     InvalidRefinementError | NotFoundError | RefinementError | StateConflictError | 
     StateRefinementError | SyntaxError | ArgumentMismatchError;
 
-export type LJWarning = CustomWarning | ExternalClassNotFoundWarning | ExternalMethodNotFoundWarning;
+export type LJWarning = CustomWarning | ExternalClassNotFoundWarning | ExternalMethodNotFoundWarning | UnsatisfiableRefinementWarning;
 
 type BaseDiagnostic = {
     title: string;
@@ -108,6 +108,12 @@ export type ExternalMethodNotFoundWarning = BaseDiagnostic & {
     signature: string;
     className: string;
     overloads: string[];
+}
+
+export type UnsatisfiableRefinementWarning = BaseDiagnostic & {
+    category: 'warning';
+    type: 'unsatisfiable-refinement-warning';
+    refinement: string;
 }
 
 export type RefinementMismatchError = RefinementError | StateRefinementError;
