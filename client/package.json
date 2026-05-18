@@ -2,7 +2,7 @@
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
 	"description": "Extending Java with Liquid Types",
-	"version": "0.0.74",
+	"version": "0.0.75",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
@@ -81,7 +81,8 @@
 					"id": "liquidJavaView",
 					"name": "LiquidJava",
 					"type": "webview",
-					"icon": "media/java-icon.svg"
+					"icon": "media/java-icon.svg",
+					"when": "!isWeb"
 				}
 			]
 		},

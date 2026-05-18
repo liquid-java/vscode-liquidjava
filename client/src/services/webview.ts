@@ -17,7 +17,11 @@ export function registerWebview(context: vscode.ExtensionContext) {
     // show view command
     context.subscriptions.push(
         vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget) => {
-            await vscode.commands.executeCommand("liquidJavaView.focus");
+            if (vscode.env.uiKind === vscode.UIKind.Web) {
+                extension.webview?.showPanel();
+            } else {
+                await vscode.commands.executeCommand("liquidJavaView.focus");
+            }
             if (diagnostic) extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic });
         })
     );
