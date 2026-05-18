@@ -188,9 +188,6 @@ export function getStyles(): string {
         .lj-expression-block {
             font-family: var(--vscode-editor-font-family);
             font-size: var(--vscode-editor-font-size);
-            background: transparent !important;
-            background-color: transparent !important;
-            padding: 0;
         }
         .lj-expression-block code,
         code.lj-expression-code {
