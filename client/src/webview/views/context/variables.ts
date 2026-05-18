@@ -1,7 +1,6 @@
 import { LJVariable } from "../../../types/context";
 import { RefinementMismatchError } from "../../../types/diagnostics";
-import { escapeHtml, getSimpleName } from "../../utils";
-import { renderLocationLink, renderToggleSection, renderHighlightButton } from "../sections";
+import { renderToggleSection, renderHighlightButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
     const expected  = errorAtCursor ? errorAtCursor.type == "refinement-error" ? errorAtCursor.expected.value : errorAtCursor.expected : undefined;
@@ -10,15 +9,27 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
             ${renderToggleSection('Variables', 'context-vars', isExpanded)}
             <div id="context-vars" class="context-section-content ${isExpanded ? '' : 'collapsed'}">
                 ${variables.length > 0 ? /*html*/`
-                    <table>
+                    <table class="context-variables-table">
+                        <colgroup>
+                            <col class="context-variables-column">
+                            <col class="context-refinement-column">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Refinement</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             ${variables.map(variable => /*html*/`
                                 <tr>
-                                    <td>${renderHighlightButton(variable.position, variable.refinement)}</td>
-                                    <td><code>${getSimpleName(variable.type)}</code></td>
+                                    <td>${renderHighlightButton(variable.position, variable.name)}</td>
+                                    <td><code>${variable.refinement}</code></td>
                                 </tr>
                             `).join('')}
-                            ${errorAtCursor ? /*html*/`<tr><td><code class="failing-refinement" data-tooltip="${escapeHtml(errorAtCursor.title)}">${renderHighlightButton(errorAtCursor.position, '⊢ ' + expected, true)}</code></td><td></td></tr>` : ''}
+                            ${errorAtCursor ? /*html*/`
+                                <tr><td class="failing-refinement" colspan="2">${renderHighlightButton(errorAtCursor.position, '⊢ ' + expected, true)}</td></tr>`
+                            : ''}
                         </tbody>
                     </table>
                 `: '<p>No variables declared at the cursor position</p>'}

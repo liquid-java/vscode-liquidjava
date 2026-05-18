@@ -313,18 +313,40 @@ export function getStyles(): string {
             font-family: var(--vscode-editor-font-family);
             font-size: 0.9em;
         }
-        .context-section {
+        .context-section table {
+            width: 100%;
+            table-layout: fixed;
             margin-bottom: 1rem;
         }
+
+        .context-variables-table .context-variables-column {
+            width: 33.33%;
+        }
+
+        .context-variables-table .context-refinement-column {
+            width: 66.67%;
+        }
+
+        .context-variables-table th:first-child,
         .context-section table td:first-child {
             text-align: left;
-            flex: 1;
-            min-width: 0;
         }
+
+        .context-variables-table th:first-child {
+            padding-left: calc(0.75rem + 0.8rem);
+        }
+
+        .context-variables-table th:last-child,
         .context-section table td:last-child {
-            text-align: right;
-            flex-shrink: 0;
-            white-space: nowrap;
+            text-align: left;
+        }
+        .context-variables-table td.failing-refinement {
+            text-align: center;
+        }
+        .failing-refinement .highlight-var-btn {
+            display: flex;
+            justify-content: center;
+            width: 100%;
         }
         .context-toggle-btn {
             display: flex;
@@ -374,34 +396,6 @@ export function getStyles(): string {
         }
         .highlight-var-btn.error:hover {
             background-color: #c92e26;
-        }
-        .failing-refinement {
-            position: relative;
-        }
-        .failing-refinement::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            left: 0;
-            bottom: calc(100% + 0.35rem);
-            padding: 0.4rem 0.5rem;
-            border-radius: 4px;
-            background: var(--vscode-editorHoverWidget-background);
-            border: 1px solid var(--vscode-editorHoverWidget-border);
-            color: var(--vscode-editorHoverWidget-foreground);
-            font-size: 0.8rem;
-            line-height: 1.4;
-            white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transition: opacity 0.08s ease, visibility 0.08s ease;
-            transition-delay: 0.08s;
-            z-index: 10;
-        }
-        .failing-refinement:hover::after {
-            opacity: 1;
-            visibility: visible;
         }
         .diagram-section {
             margin-bottom: 1.5rem;
