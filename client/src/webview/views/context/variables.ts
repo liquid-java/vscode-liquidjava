@@ -1,5 +1,7 @@
 import { LJVariable } from "../../../types/context";
 import { RefinementMismatchError } from "../../../types/diagnostics";
+import { renderHighlightedInlineExpression } from "../../highlighting";
+import { escapeHtml } from "../../utils";
 import { renderToggleSection, renderHighlightButton, renderDiagnosticRevealButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
@@ -23,17 +25,25 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                         <tbody>
                             ${variables.map(variable => /*html*/`
                                 <tr>
-                                    <td>${renderHighlightButton(variable.position, variable.name)}</td>
-                                    <td><code>${variable.refinement}</code></td>
+                                    <td>${renderHighlightButton(variable.position!, variable.name)}</td>
+                                    <td><code>${renderHighlightedInlineExpression(variable.refinement)}</code></td>
                                 </tr>
                             `).join('')}
-                            ${errorAtCursor?.position ? /*html*/`
-                                <tr><td class="failing-refinement" colspan="2">${renderDiagnosticRevealButton(errorAtCursor.position, '⊢ ' + expected)}</td></tr>`
-                            : ''}
+                            ${errorAtCursor ? renderFailingRefinement(errorAtCursor, expected!) : ''}
                         </tbody>
                     </table>
                 `: '<p>No variables declared at the cursor position</p>'}
             </div>
         </div>
+    `;
+}
+
+function renderFailingRefinement(errorAtCursor: RefinementMismatchError, expected: string): string {
+    return /*html*/`
+        <tr>
+            <td class="failing-refinement tooltip" colspan="2" data-tooltip="${escapeHtml(errorAtCursor.title)}">
+                ${renderDiagnosticRevealButton(errorAtCursor.position!, '⊢ ' + expected)}
+            </td>
+        </tr>
     `;
 }

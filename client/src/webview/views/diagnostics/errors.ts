@@ -1,4 +1,4 @@
-import { renderDiagnosticDataAttributes, renderDiagnosticHeader, renderLocation, renderSection, renderCustomSection, renderTranslationTable,  } from "../sections";
+import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderSection, renderCustomSection, renderTranslationTable, renderLocation,  } from "../sections";
 import { renderDerivationNode } from "./derivation-nodes";
 import type {
     ArgumentMismatchError,
@@ -33,26 +33,26 @@ const errorContentRenderers: Partial<Record<LJError['type'], (error: LJError) =>
     'refinement-error': (e: RefinementError) => /*html*/`
         ${renderCustomSection('Expected', renderDerivationNode(e, e.expected, 'expected'))}
         ${renderCustomSection('Found', renderDerivationNode(e, e.found, 'found'))}
-        ${e.counterexample ? renderSection('Counterexample', e.counterexample) : ''}
+        ${e.counterexample ? renderExpressionSection('Counterexample', e.counterexample) : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/`
-        ${renderSection('Expected', e.expected)}
-        ${renderSection('Found', e.found)}
+        ${renderExpressionSection('Expected', e.expected)}
+        ${renderExpressionSection('Found', e.found)}
     `,
     'invalid-refinement-error': (e: InvalidRefinementError) => /*html*/`
-        ${renderSection('Refinement', e.refinement)}
+        ${renderExpressionSection('Refinement', e.refinement)}
     `,
     'not-found-error': (e: NotFoundError) => /*html*/`
-        ${renderSection(e.kind, e.name)}
+        ${renderExpressionSection(e.kind, e.name)}
     `,
     'state-conflict-error': (e: StateConflictError) => /*html*/`
-        ${renderSection('State', e.state)}
+        ${renderExpressionSection('State', e.state)}
     `,
     'syntax-error': (e: SyntaxError) => /*html*/`
-        ${renderSection('Refinement', e.refinement)}
+        ${renderExpressionSection('Refinement', e.refinement)}
     `,
     'argument-mismatch-error': (e: ArgumentMismatchError) => /*html*/`
-        ${renderSection('Refinement', e.refinement)}
+        ${renderExpressionSection('Refinement', e.refinement)}
     `
 };
 

@@ -51,7 +51,7 @@ export function getDisplayDiagnostics(diagnostics: LJDiagnostic[], showAll: bool
 }
 
 export function renderCopyDiagnosticButton(indexType: 'error' | 'warning', index: number): string {
-    return /*html*/`<button class="copy-diagnostic-btn" data-${indexType}-index="${index}" title="Copy diagnostic" aria-label="Copy diagnostic">⎘</button>`;
+    return /*html*/`<button class="copy-diagnostic-btn" data-${indexType}-index="${index}" title="Copy diagnostic" aria-label="Copy diagnostic"><span>⎘</span></button>`;
 }
 
 export async function copyDiagnosticToClipboard(button: any, displayDiagnostics: LJDiagnostic[]) {
@@ -69,15 +69,15 @@ export async function copyDiagnosticToClipboard(button: any, displayDiagnostics:
     try {
         button.disabled = true;
         await navigator.clipboard.writeText(diagnosticText);
-        button.textContent = '✓';
+        button.classList.add('copied');
         button.setAttribute('title', 'Copied!');
     } catch (e) {
-        button.textContent = '✗';
         button.setAttribute('title', 'Copy failed');
     } finally {
         setTimeout(() => {
             button.innerHTML = originalContent;
             button.setAttribute('title', originalTitle);
+            button.classList.remove('copied');
             button.disabled = false;
         }, COPY_BUTTON_RESET_MS);
     }

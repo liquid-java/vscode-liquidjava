@@ -1,5 +1,7 @@
 import type { LJError, RefinementError } from "../../../types/diagnostics";
 import type { DerivationNode, ValDerivationNode } from "../../../types/derivation-nodes";
+import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../../highlighting";
+import { escapeHtml } from "../../utils";
 
 // Handles rendering and interaction of derivation nodes in refinement errors
 
@@ -10,6 +12,10 @@ function getExpansions(errorId: string): Set<string> {
         expansionsMap.set(errorId, new Set());
     }
     return expansionsMap.get(errorId)!;
+}
+
+function renderToken(token: string): string {
+    return renderHighlightedInlineExpression(token);
 }
 
 function renderJsonTree(
@@ -31,7 +37,7 @@ function renderJsonTree(
     // VarDerivationNode
     if ("var" in node) {
         const placement = error.translationTable?.[node.var];
-        if (!placement) return `<span class="node-var">${node.var}</span>`;
+        if (!placement) return `<span class="node-var">${renderHighlightedInlineExpression(node.var)}</span>`;
         
         const filePath = (placement as any)?.file ?? error.file;
         const filename = filePath.split("/").pop() ?? "";
@@ -39,7 +45,7 @@ function renderJsonTree(
         const classes = `node-var tooltip clickable ${hasOrigin ? "derivable-node" : ""}`.trim();
         const attrs = hasOrigin ? ` data-node-path="${path}" data-error-id="${errorId}"` : "";
         const fileAttr = ` data-file="${filePath}" data-line="${placement.position?.lineStart ?? 0}" data-column="${placement.position?.colStart ?? 0}"`;
-        return `<span class="${classes}" data-tooltip="${tooltipData}"${fileAttr}${attrs}>${node.var}</span>`;
+        return `<span class="${classes}" data-tooltip="${escapeHtml(tooltipData)}"${fileAttr}${attrs}>${renderHighlightedInlineExpression(node.var)}</span>`;
     }
 
     // ValDerivationNode
@@ -49,20 +55,22 @@ function renderJsonTree(
         const clickableClass = hasOrigin ? "derivable-node clickable" : "";
         const pathAttr = hasOrigin ? `data-node-path="${path}"` : "";
         const idAttr = hasOrigin ? `data-error-id="${errorId}"` : "";
-        return `<span class="${valClass} ${clickableClass}" ${pathAttr} ${idAttr}>${valueNode.value}</span>`;
+        return `<span class="${valClass} ${clickableClass}" ${pathAttr} ${idAttr}>${renderHighlightedInlineExpression(String(valueNode.value))}</span>`;
     }
 
     // BinaryDerivationNode
     if ("left" in node && "right" in node) {
         const leftHtml = renderJsonTree(error, node.left, errorId, `${path}.left`, expandedPaths);
         const rightHtml = renderJsonTree(error, node.right, errorId, `${path}.right`, expandedPaths);
-        return `${leftHtml} ${node.op} ${rightHtml}`;
+        return `${leftHtml} ${renderToken(node.op)} ${rightHtml}`;
     }
 
     // UnaryDerivationNode
     if ("operand" in node) {
         const operandHtml = renderJsonTree(error, node.operand, errorId, `${path}.operand`, expandedPaths);
-        return node.op === "-" ? `${node.op}(${operandHtml})` : `${node.op}${operandHtml}`;
+        return node.op === "-"
+            ? `${renderToken(node.op)}${renderToken("(")}${operandHtml}${renderToken(")")}`
+            : `${renderToken(node.op)}${operandHtml}`;
     }
 
     // IteDerivationNode
@@ -70,11 +78,11 @@ function renderJsonTree(
         const conditionHtml = renderJsonTree(error, node.condition, errorId, `${path}.condition`, expandedPaths);
         const thenBranchHtml = renderJsonTree(error, node.thenBranch, errorId, `${path}.thenBranch`, expandedPaths);
         const elseBranchHtml = renderJsonTree(error, node.elseBranch, errorId, `${path}.elseBranch`, expandedPaths);
-        return `${conditionHtml} ? ${thenBranchHtml} : ${elseBranchHtml}`;
+        return `${conditionHtml} ${renderToken("?")} ${thenBranchHtml} ${renderToken(":")} ${elseBranchHtml}`;
     }
 
     // fallback
-    return `<span class="node-value">${JSON.stringify(node)}</span>`;
+    return `<span class="node-value">${escapeHtml(JSON.stringify(node))}</span>`;
 }
 
 function hashError(error: LJError, scope: string): string {
@@ -119,7 +127,7 @@ export function renderDerivationNode(
     node: ValDerivationNode,
     scope: "expected" | "found"
 ): string {
-    if (!node.origin) return `<pre>${node.value}</pre>`; // no derivation available
+    if (!node.origin) return renderHighlightedExpression(String(node.value)); // no derivation available
     
     const errorId = hashError(error, scope);
     const expansions = getExpansions(errorId);

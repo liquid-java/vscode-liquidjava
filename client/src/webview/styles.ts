@@ -9,6 +9,50 @@ export function getStyles(): string {
             padding: 1rem;
             font-family: var(--vscode-font-family);
             overflow-y: scroll;
+            --lj-token-keyword: var(--vscode-symbolIcon-keywordForeground, var(--vscode-editor-foreground));
+            --lj-token-control: var(--vscode-debugTokenExpression-name, var(--vscode-symbolIcon-keywordForeground, var(--vscode-editor-foreground)));
+            --lj-token-function: var(--vscode-symbolIcon-functionForeground, var(--vscode-editor-foreground));
+            --lj-token-operator: var(--vscode-editor-foreground);
+            --lj-token-type: var(--vscode-symbolIcon-classForeground, var(--vscode-editor-foreground));
+            --lj-token-string: var(--vscode-debugTokenExpression-string, var(--vscode-editor-foreground));
+            --lj-token-number: var(--vscode-debugTokenExpression-number, var(--vscode-editor-foreground));
+            --lj-token-boolean: var(--vscode-debugTokenExpression-boolean, var(--vscode-symbolIcon-booleanForeground, var(--vscode-editor-foreground)));
+            --lj-token-identifier: var(--vscode-debugTokenExpression-name, var(--vscode-editor-foreground));
+            --lj-token-punctuation: var(--vscode-editor-foreground);
+        }
+        body.vscode-light {
+            --lj-token-keyword: #0000FF;
+            --lj-token-function: #795E26;
+            --lj-token-operator: #000000;
+            --lj-token-type: #267F99;
+            --lj-token-string: #A31515;
+            --lj-token-number: #098658;
+            --lj-token-boolean: #0000FF;
+            --lj-token-identifier: #001080;
+            --lj-token-punctuation: #000000;
+        }
+        body.vscode-dark {
+            --lj-token-keyword: #569CD6;
+            --lj-token-function: #DCDCAA;
+            --lj-token-operator: #D4D4D4;
+            --lj-token-type: #4EC9B0;
+            --lj-token-string: #CE9178;
+            --lj-token-number: #B5CEA8;
+            --lj-token-boolean: #569CD6;
+            --lj-token-identifier: #9CDCFE;
+            --lj-token-punctuation: #D4D4D4;
+        }
+        body.vscode-high-contrast,
+        body.vscode-high-contrast-light {
+            --lj-token-keyword: var(--vscode-editor-foreground);
+            --lj-token-function: var(--vscode-textLink-foreground);
+            --lj-token-operator: var(--vscode-editor-foreground);
+            --lj-token-type: var(--vscode-textLink-foreground);
+            --lj-token-string: var(--vscode-editor-foreground);
+            --lj-token-number: var(--vscode-editor-foreground);
+            --lj-token-boolean: var(--vscode-editor-foreground);
+            --lj-token-identifier: var(--vscode-editor-foreground);
+            --lj-token-punctuation: var(--vscode-editor-foreground);
         }
         h2 {
             font-weight: bold;
@@ -112,17 +156,34 @@ export function getStyles(): string {
             padding: 0;
             color: var(--vscode-foreground);
             background: transparent;
-            border: none;
+            border: 1px solid transparent;
+            border-radius: 4px;
             opacity: 0.65;
             font-size: 1.25rem;
+            transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
         .copy-diagnostic-btn:hover {
             background: var(--vscode-editor-background);
+            border-color: var(--vscode-widget-border);
             opacity: 1;
         }
         .copy-diagnostic-btn:disabled {
             opacity: 0.8;
             cursor: default;
+        }
+        .copy-diagnostic-btn.copied {
+            animation: copy-diagnostic-pop 0.42s ease-out;
+        }
+        @keyframes copy-diagnostic-pop {
+            0% {
+                transform: scale(0.8);
+            }
+            45% {
+                transform: scale(1.18);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
         .diagnostic-item.revealed {
             outline: 2px solid var(--vscode-focusBorder);
@@ -172,17 +233,60 @@ export function getStyles(): string {
             text-decoration: underline;
         }
         .node-var {
-            color: #9CDCFE;
+            color: var(--lj-token-identifier);
             position: relative;
         }
         .node-value {
             color: var(--vscode-editor-foreground);
         }
         .node-number {
-            color: #B5CEA8;
+            color: var(--lj-token-number);
         }
         .node-boolean {
-            color: #569CD6;
+            color: var(--lj-token-boolean);
+        }
+        .lj-expression,
+        .lj-expression-code {
+            font-family: var(--vscode-editor-font-family);
+            font-size: var(--vscode-editor-font-size);
+            white-space: pre-wrap;
+        }
+        .lj-expression-block {
+            font-family: var(--vscode-editor-font-family);
+            font-size: var(--vscode-editor-font-size);
+        }
+        .lj-expression-block code,
+        code.lj-expression-code {
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+        .lj-token-keyword {
+            color: var(--lj-token-keyword);
+        }
+        .lj-token-function {
+            color: var(--lj-token-function);
+        }
+        .lj-token-operator {
+            color: var(--lj-token-operator);
+        }
+        .lj-token-type {
+            color: var(--lj-token-type);
+        }
+        .lj-token-string {
+            color: var(--lj-token-string);
+        }
+        .lj-token-number {
+            color: var(--lj-token-number);
+        }
+        .lj-token-boolean {
+            color: var(--lj-token-boolean);
+        }
+        .lj-token-identifier {
+            color: var(--lj-token-identifier);
+        }
+        .lj-token-punctuation {
+            color: var(--lj-token-punctuation);
+            opacity: 0.8;
         }
         .node-expand-indicator {
             opacity: 0.5;
@@ -283,7 +387,7 @@ export function getStyles(): string {
             white-space: nowrap;
             z-index: 1000;
             margin-bottom: 0.25rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 8px var(--vscode-widget-shadow);
             pointer-events: none;
         }
         .tooltip:hover::before {
@@ -356,12 +460,18 @@ export function getStyles(): string {
             text-align: left;
         }
 
-        .context-variables-table th:first-child {
+        .context-variables-table th:first-child,
+        .translation-table th:first-child {
             padding-left: calc(0.75rem + 0.8rem);
+        }
+        .context-aliases-table td:last-child,
+        .context-ghosts-table td:last-child {
+            text-align: right;
         }
         .context-variables-table td.failing-refinement {
             text-align: center;
         }
+        .failing-refinement .highlight-var-btn,
         .failing-refinement .diagnostic-reveal-btn {
             display: flex;
             justify-content: center;
@@ -411,14 +521,15 @@ export function getStyles(): string {
         }
         .highlight-var-btn.error,
         .diagnostic-reveal-btn.error {
-            background-color: #d6382f;
+            background-color: color-mix(in srgb, var(--vscode-errorForeground) 80%, transparent);
         }
-        .highlight-var-btn.error.selected {
-            background-color: #c92e26;
+        .highlight-var-btn.error.selected,
+        .diagnostic-reveal-btn.error.selected {
+            background-color: color-mix(in srgb, var(--vscode-errorForeground) 90%, transparent);
         }
         .highlight-var-btn.error:hover,
         .diagnostic-reveal-btn.error:hover {
-            background-color: #c92e26;
+            background-color: var(--vscode-errorForeground);
         }
         .diagram-section {
             margin-bottom: 1.5rem;

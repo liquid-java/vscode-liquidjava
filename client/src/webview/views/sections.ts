@@ -1,4 +1,6 @@
 import type { LJDiagnostic, PlacementInCode, SourcePosition, TranslationTable } from "../../types/diagnostics";
+import { escapeHtml } from "../utils";
+import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
@@ -13,6 +15,9 @@ export const renderCustomSection = (title: string, body: string): string => /*ht
 
 export const renderSection = (title: string, body: string): string => /*html*/
     renderCustomSection(title, `<pre>${body}</pre>`);
+
+export const renderExpressionSection = (title: string, expression: string): string => /*html*/
+    renderCustomSection(title, renderHighlightedExpression(expression));
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
     <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
@@ -44,7 +49,7 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
             <table>
                 <thead>
                     <tr>
-                        <th>Variable</th>
+                        <th>Name</th>
                         <th>Source</th>
                     </tr>
                 </thead>
@@ -52,8 +57,8 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                     ${entries.map(([variable, placement]: [string, PlacementInCode]) => {
                         return /*html*/`
                             <tr>
-                                <td><code>${variable}</code></td>
-                                <td>${renderHighlightButton(placement.position, placement.text)}</td>
+                                <td>${renderHighlightButton(placement.position!, variable)}</td>
+                                <td><code>${renderHighlightedInlineExpression(placement.text)}</code></td>
                             </tr>
                         `;
                     }).join('')}
@@ -73,7 +78,7 @@ export function renderHighlightButton(position: SourcePosition, content: string,
             data-end-column="${position.colEnd}"
             data-file="${position.file}"
         >
-            <code>${content}</code>
+            <code>${renderHighlightedInlineExpression(content)}</code>
         </button>
     `;
 }
@@ -82,7 +87,7 @@ export function renderDiagnosticRevealButton(position: SourcePosition, content: 
     return /*html*/`
         <button
             class="diagnostic-reveal-btn error"
-            data-diagnostic-target="${getDiagnosticRevealTargetKey({ file: position.file, position })}"
+            data-diagnostic-target="${getDiagnosticRevealTargetKey({ file: position.file!, position })}"
         >
             <code>${content}</code>
         </button>
@@ -97,7 +102,7 @@ export function renderLocationLink(position?: SourcePosition): string {
         data-file="${position.file}"
         data-line="${position.lineStart}"
         data-column="${position.colStart}"
-    >${getFile(position)}</a>`;
+    >${escapeHtml(getFile(position))}</a>`;
 }
 
 function getFile(position: SourcePosition): string {
