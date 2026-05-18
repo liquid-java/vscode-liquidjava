@@ -447,6 +447,10 @@ export function getStyles(): string {
         .translation-table th:first-child {
             padding-left: calc(0.75rem + 0.8rem);
         }
+        .context-aliases-table td:last-child,
+        .context-ghosts-table td:last-child {
+            text-align: right;
+        }
         .context-variables-table td.failing-refinement {
             text-align: center;
         }

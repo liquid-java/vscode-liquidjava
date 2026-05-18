@@ -9,7 +9,7 @@ export function renderContextAliases(aliases: LJAlias[], isExpanded: boolean): s
             ${renderToggleSection('Aliases', 'context-aliases', isExpanded)}
             <div id="context-aliases" class="context-section-content ${isExpanded ? '' : 'collapsed'}">
                 ${aliases.length > 0 ? /*html*/`
-                <table>
+                <table class="context-aliases-table">
                     <tbody>
                         ${aliases.map(alias => /*html*/`
                             <tr>

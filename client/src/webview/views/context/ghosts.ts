@@ -9,7 +9,7 @@ export function renderContextGhosts(ghosts: LJGhost[], isExpanded: boolean): str
             ${renderToggleSection('Ghosts', 'context-ghosts', isExpanded)}
             <div id="context-ghosts" class="context-section-content ${isExpanded ? '' : 'collapsed'}">
                 ${ghosts.length > 0 ? /*html*/`
-                <table>
+                <table class="context-ghosts-table">
                     <tbody>
                         ${ghosts.map(ghost => /*html*/`
                             <tr>
