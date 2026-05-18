@@ -1,6 +1,7 @@
 import { LJVariable } from "../../../types/context";
 import { RefinementMismatchError } from "../../../types/diagnostics";
-import { escapeHtml, getSimpleName } from "../../utils";
+import { renderHighlightedInlineExpression } from "../../highlighting";
+import { escapeHtml } from "../../utils";
 import { renderToggleSection, renderHighlightButton, renderDiagnosticRevealButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
@@ -24,8 +25,8 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                         <tbody>
                             ${variables.map(variable => /*html*/`
                                 <tr>
-                                    <td>${renderHighlightButton(variable.position!, variable.refinement)}</td>
-                                    <td><code>${escapeHtml(getSimpleName(variable.type))}</code></td>
+                                    <td>${renderHighlightButton(variable.position!, variable.name)}</td>
+                                    <td><code>${renderHighlightedInlineExpression(variable.refinement)}</code></td>
                                 </tr>
                             `).join('')}
                             ${errorAtCursor ? renderFailingRefinement(errorAtCursor, expected!) : ''}
@@ -38,5 +39,11 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
 }
 
 function renderFailingRefinement(errorAtCursor: RefinementMismatchError, expected: string): string {
-    return /*html*/`<tr><td><code class="failing-refinement" data-tooltip="${escapeHtml(errorAtCursor.title)}">${renderHighlightButton(errorAtCursor.position!, '⊢ ' + expected, true)}</code></td><td></td></tr>`;
+    return /*html*/`
+        <tr>
+            <td class="failing-refinement tooltip" colspan="2" data-tooltip="${escapeHtml(errorAtCursor.title)}">
+                ${renderDiagnosticRevealButton(errorAtCursor.position!, '⊢ ' + expected)}
+            </td>
+        </tr>
+    `;
 }

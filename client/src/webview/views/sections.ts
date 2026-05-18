@@ -49,7 +49,7 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
             <table>
                 <thead>
                     <tr>
-                        <th>Variable</th>
+                        <th>Name</th>
                         <th>Source</th>
                     </tr>
                 </thead>
@@ -57,8 +57,8 @@ export function renderTranslationTable(translationTable: TranslationTable): stri
                     ${entries.map(([variable, placement]: [string, PlacementInCode]) => {
                         return /*html*/`
                             <tr>
-                                <td><code>${renderHighlightedInlineExpression(variable)}</code></td>
-                                <td>${renderHighlightButton(placement.position!, placement.text)}</td>
+                                <td>${renderHighlightButton(placement.position!, variable)}</td>
+                                <td><code>${renderHighlightedInlineExpression(placement.text)}</code></td>
                             </tr>
                         `;
                     }).join('')}

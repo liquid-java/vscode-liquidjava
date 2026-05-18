@@ -443,12 +443,14 @@ export function getStyles(): string {
             text-align: left;
         }
 
-        .context-variables-table th:first-child {
+        .context-variables-table th:first-child,
+        .translation-table th:first-child {
             padding-left: calc(0.75rem + 0.8rem);
         }
         .context-variables-table td.failing-refinement {
             text-align: center;
         }
+        .failing-refinement .highlight-var-btn,
         .failing-refinement .diagnostic-reveal-btn {
             display: flex;
             justify-content: center;
@@ -496,13 +498,16 @@ export function getStyles(): string {
         .highlight-var-btn.selected {
             background-color: var(--vscode-button-background);
         }
-        .highlight-var-btn.error {
+        .highlight-var-btn.error,
+        .diagnostic-reveal-btn.error {
             background-color: color-mix(in srgb, var(--vscode-errorForeground) 80%, transparent);
         }
-        .highlight-var-btn.error.selected {
+        .highlight-var-btn.error.selected,
+        .diagnostic-reveal-btn.error.selected {
             background-color: color-mix(in srgb, var(--vscode-errorForeground) 90%, transparent);
         }
-        .highlight-var-btn.error:hover {
+        .highlight-var-btn.error:hover,
+        .diagnostic-reveal-btn.error:hover {
             background-color: var(--vscode-errorForeground);
         }
         .diagram-section {
