@@ -43,7 +43,7 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     sm.transitions.forEach(transition => {
         const key = `${transition.from}|${transition.to}`;
         if (!transitionMap.has(key)) transitionMap.set(key, []);
-        transitionMap.get(key).push(transition.label);
+        transitionMap.get(key)?.push(transition.label);
     });
 
     // add transitions

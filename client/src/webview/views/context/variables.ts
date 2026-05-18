@@ -1,7 +1,7 @@
 import { LJVariable } from "../../../types/context";
 import { RefinementMismatchError } from "../../../types/diagnostics";
 import { escapeHtml, getSimpleName } from "../../utils";
-import { renderToggleSection, renderHighlightButton } from "../sections";
+import { renderToggleSection, renderHighlightButton, renderDiagnosticRevealButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
     const expected  = errorAtCursor ? errorAtCursor.type == "refinement-error" ? errorAtCursor.expected.value : errorAtCursor.expected : undefined;
@@ -10,7 +10,17 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
             ${renderToggleSection('Variables', 'context-vars', isExpanded)}
             <div id="context-vars" class="context-section-content ${isExpanded ? '' : 'collapsed'}">
                 ${variables.length > 0 ? /*html*/`
-                    <table>
+                    <table class="context-variables-table">
+                        <colgroup>
+                            <col class="context-variables-column">
+                            <col class="context-refinement-column">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Refinement</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             ${variables.map(variable => /*html*/`
                                 <tr>

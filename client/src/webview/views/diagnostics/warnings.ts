@@ -1,11 +1,13 @@
 import type { ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning } from "../../../types/diagnostics";
-import { renderDiagnosticHeader, renderExpressionSection, renderLocation } from "../sections";
+import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderLocation } from "../sections";
+import { renderCopyDiagnosticButton } from "./diagnostics";
 
 export function renderWarnings(warnings: LJWarning[]): string {
     return /*html*/`
         <ul>
-            ${warnings.map(warning => /*html*/`
-                <li class="diagnostic-item warning-item">
+                ${warnings.map((warning, index) => /*html*/`
+                <li class="diagnostic-item warning-item" ${renderDiagnosticDataAttributes(warning)}>
+                    ${renderCopyDiagnosticButton('warning', index)}
                     ${renderWarning(warning)}
                 </li>
             `).join("")}
@@ -24,7 +26,7 @@ const warningContentRenderers: Partial<Record<LJWarning['type'], (warning: LJWar
 };
 
 export function renderWarning(warning: LJWarning): string {
-    const header = renderDiagnosticHeader(warning);
+    const header = renderDiagnosticHeader(warning.title, warning.message);
     const content = warningContentRenderers[warning.type]?.(warning) ?? '';
     const location = renderLocation(warning);
     return /*html*/`${header}${content}${location}`;
