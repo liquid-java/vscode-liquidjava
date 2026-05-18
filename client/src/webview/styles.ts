@@ -156,17 +156,34 @@ export function getStyles(): string {
             padding: 0;
             color: var(--vscode-foreground);
             background: transparent;
-            border: none;
+            border: 1px solid transparent;
+            border-radius: 4px;
             opacity: 0.65;
             font-size: 1.25rem;
+            transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
         .copy-diagnostic-btn:hover {
             background: var(--vscode-editor-background);
+            border-color: var(--vscode-widget-border);
             opacity: 1;
         }
         .copy-diagnostic-btn:disabled {
             opacity: 0.8;
             cursor: default;
+        }
+        .copy-diagnostic-btn.copied {
+            animation: copy-diagnostic-pop 0.42s ease-out;
+        }
+        @keyframes copy-diagnostic-pop {
+            0% {
+                transform: scale(0.8);
+            }
+            45% {
+                transform: scale(1.18);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
         .diagnostic-item.revealed {
             outline: 2px solid var(--vscode-focusBorder);
