@@ -18,6 +18,7 @@ export function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
         <html lang="en">
         <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta
                 http-equiv="Content-Security-Policy"
                 content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' https://cdn.jsdelivr.net; connect-src https://cdn.jsdelivr.net;"

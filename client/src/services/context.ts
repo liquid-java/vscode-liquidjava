@@ -5,7 +5,6 @@ import { getOriginalVariableName } from "../utils/utils";
 
 export function handleContext(context: LJContext) {
     extension.context = context;
-    extension.logger?.client.info(JSON.stringify(context.methods, null, 2))
     if (!extension.file || !extension.currentSelection) return;
 
     // update variables based on new context in current selection
