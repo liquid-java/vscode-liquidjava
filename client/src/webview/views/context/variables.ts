@@ -5,7 +5,7 @@ import { escapeHtml } from "../../utils";
 import { renderToggleSection, renderHighlightButton, renderDiagnosticRevealButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
-    const expected  = errorAtCursor ? errorAtCursor.type == "refinement-error" ? errorAtCursor.expected.value : errorAtCursor.expected : undefined;
+    const expected = errorAtCursor ? errorAtCursor.expected.value : undefined;
     return /*html*/`
         <div class="context-section">
             ${renderToggleSection('Variables', 'context-vars', isExpanded)}
