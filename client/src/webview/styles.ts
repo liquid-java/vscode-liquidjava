@@ -313,14 +313,14 @@ export function getStyles(): string {
 
         .context-variables-table th:last-child,
         .context-section table td:last-child {
-            text-align: right;
+            text-align: left;
         }
         .context-variables-table td.failing-refinement {
-            text-align: right;
+            text-align: center;
         }
         .failing-refinement .highlight-var-btn {
             display: flex;
-            justify-content: flex-end;
+            justify-content: center;
             width: 100%;
         }
         .context-toggle-btn {
