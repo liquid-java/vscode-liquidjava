@@ -53,7 +53,7 @@ function getContextCompletionItems(context: LJContext, file: string, annotation:
         }
         return [];
     }
-    const inScope = extension.context.visibleVars !== null;
+    const inScope = context.visibleVars !== null;
     const varsInScope = filterDuplicateVariables(filterInstanceVariables([...context.visibleVars || []]));
     const itemsHandlers: Record<CompletionItemKind, () => vscode.CompletionItem[]> = {
         vars: () => getVariableCompletionItems(varsInScope),
@@ -217,7 +217,7 @@ function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, position: 
     let lastAnnotationName: LJAnnotation | null = null;
     while ((match = LIQUIDJAVA_ANNOTATION_START.exec(textUntilCursor)) !== null) {
         lastAnnotationStart = match.index;
-        lastAnnotationName = match[2] as LJAnnotation || null;
+        lastAnnotationName = match[2] ? match[2] as LJAnnotation : null;
     }
     if (lastAnnotationStart === -1 || !lastAnnotationName) return null;
 
@@ -242,7 +242,8 @@ function getReceiverBeforeDot(document: vscode.TextDocument, position: vscode.Po
     const prefix = document.lineAt(position.line).text.slice(0, position.character);
     const match = prefix.match(/((?:old\s*\(\s*this\s*\))|(?:[A-Za-z_]\w*))\.\w*$/);
     if (!match) return null;
-    const receiver = match[1].trim();
+    const receiver = match[1]?.trim();
+    if (!receiver) return null;
     if (/^old\s*\(\s*this\s*\)$/.test(receiver)) return "old(this)";
     return receiver;
 }

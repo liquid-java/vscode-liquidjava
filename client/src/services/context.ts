@@ -12,7 +12,7 @@ export function handleContext(context: LJContext) {
     extension.context.visibleVars = visibleVars;
     extension.context.allVars = allVars;
     updateErrorAtCursor();
-    extension.webview.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
+    extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }
 
 export function getSelectionContextVariables(file: string, selection: Range): { visibleVars: LJVariable[]; allVars: LJVariable[] } {
@@ -27,32 +27,37 @@ export function getSelectionContextVariables(file: string, selection: Range): { 
 
 export function updateErrorAtCursor() {
     if (!extension.file || !extension.currentSelection) return;
+    const file = extension.file;
+    const selection = extension.currentSelection;
     const errors: RefinementMismatchError[] = extension.diagnostics?.filter(d => d.type === 'refinement-error' || d.type === 'state-refinement-error') as RefinementMismatchError[] || [];
-    const scopes = extension.context?.fileScopes[extension.file] || [];
+    const scopes = extension.context?.fileScopes[file] || [];
     const errorAtCursor = errors.find(error => {
-        if (!error.position) return false;
-        const sameFile = error.position.file === extension.file;
-        const beforeCursor = isPositionBefore(error.position, extension.currentSelection);
+        const position = error.position;
+        if (!position) return false;
+        const sameFile = position.file === file;
+        const beforeCursor = isPositionBefore(position, selection);
         if (!sameFile || !beforeCursor) return false;
         // check if error is within a scope that contains the cursor
-        const errorScope = scopes.find(scope => isRangeWithin(error.position, scope));
-        return errorScope && isRangeWithin(extension.currentSelection, errorScope);
+        const errorScope = scopes.find(scope => isRangeWithin(position, scope));
+        return errorScope && isRangeWithin(selection, errorScope);
     });
     extension.errorAtCursor = errorAtCursor;
 }
 
 function getVariablesInScope(variables: LJVariable[], file: string, selection: Range): LJVariable[] {
-    const scopes = extension.context.fileScopes[file] || [];
+    const scopes = extension.context?.fileScopes[file] || [];
     const enclosingScopes = scopes.filter(scope => isRangeWithin(selection, scope));
-    return variables.filter(v =>
-        v.position?.file === file &&
-        enclosingScopes.some(scope => isRangeWithin(v.position, scope))
-    );
+    return variables.filter(v => {
+        const position = v.position;
+        if (!position) return false
+        return position.file === file &&
+            enclosingScopes.some(scope => isRangeWithin(position, scope))
+    });
 }
 
 function getVisibleVariables(variables: LJVariable[], file: string, selection: Range, useAnnotationPosition: boolean): LJVariable[] {
     const isCollapsedRange = selection.lineStart === selection.lineEnd && selection.colStart === selection.colEnd;
-    const fileScopes = isCollapsedRange ? (extension.context.fileScopes[file] || []) : [];
+    const fileScopes = isCollapsedRange ? (extension.context?.fileScopes[file] || []) : [];
     return variables.filter((variable) => {
         // variable must be declared in the same file
         if (!variable.position || variable.position?.file !== file) return false;

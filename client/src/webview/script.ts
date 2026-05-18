@@ -23,12 +23,12 @@ type VSCodeApi = {
  * @param window
  */
 export function getScript(vscode: VSCodeApi, document: Document, window: Window) {
-    const root = document.getElementById('root');
+    const root = document.getElementById('root')!;
     if (!root) return;
     let diagnostics: LJDiagnostic[] = [];
     let showAllDiagnostics = false;
     let currentFile: string;
-    let expandedErrors = new Set<number>();
+    const expandedErrors = new Set<number>();
     let stateMachine: LJStateMachine;
     let context: LJContext;
     let errorAtCursor: RefinementMismatchError;
@@ -281,12 +281,13 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             case 'diagnostics':
                 root.innerHTML = renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors);
                 break;
-            case 'fsm':
+            case 'fsm': {
                 const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
                 currentDiagram = diagram;
                 root.innerHTML = renderStateMachineView(stateMachine, diagram, diagramOrientation);
                 if (stateMachine) renderMermaidDiagram(document, window);
                 break;
+            }
             case 'context':
                 root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor);
                 break;

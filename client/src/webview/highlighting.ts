@@ -19,19 +19,20 @@ type ScopeColorRule = {
 };
 
 const repository = liquidJavaGrammar.repository as GrammarRepository;
+const patterns = (name: string): GrammarPattern[] => repository[name]?.patterns || [];
 
 const expressionPatterns: GrammarPattern[] = [
     { match: "\\b(return|break|continue|if|else|switch|case|default|for|while|do|try|catch|finally|throw|throws|new)\\b", name: "keyword.control.liquidjava.webview" },
-    ...repository.keywords.patterns,
-    ...repository.functions.patterns,
-    ...repository.operators.patterns,
+    ...patterns("keywords"),
+    ...patterns("functions"),
+    ...patterns("operators"),
     { match: "\\b[a-zA-Z_][a-zA-Z0-9_#⁰¹²³⁴⁵⁶⁷⁸⁹]*(?=\\s*\\()", name: "entity.name.function.liquidjava.webview" },
     { match: "\\b[A-Z][a-zA-Z0-9_]*(?=\\s*\\()", name: "entity.name.function.constructor.liquidjava.webview" },
-    ...repository["qualified-names"].patterns,
+    ...patterns("qualified-names"),
     { match: "\\b(byte|short|long|char|void)\\b", name: "storage.type.primitive.liquidjava.webview" },
-    ...repository.types.patterns,
+    ...patterns("types"),
     { match: "\\bnull\\b", name: "constant.language.null.liquidjava.webview" },
-    ...repository.literals.patterns,
+    ...patterns("literals"),
     { match: "[(){}.,;\\[\\]]", name: "punctuation.separator.liquidjava" },
     { match: "#*[a-zA-Z_][a-zA-Z0-9_#⁰¹²³⁴⁵⁶⁷⁸⁹]*", name: "variable.other.liquidjava" }
 ];
@@ -70,13 +71,13 @@ function renderHighlightedContent(expression: string): string {
             return rule.regex.test(expression);
         });
         if (!matchingRule) {
-            html += escapeHtml(expression[index]);
+            html += escapeHtml(expression[index] || "");
             index += 1;
             continue;
         }
         matchingRule.regex.lastIndex = index;
         const match = matchingRule.regex.exec(expression);
-        const content = match?.[0] || expression[index];
+        const content = match?.[0] || expression[index] || "";
 
         html += `<span style="color:${colorForScope(matchingRule.scope)}">${escapeHtml(content)}</span>`;
         index += content.length;

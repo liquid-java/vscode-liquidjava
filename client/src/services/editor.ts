@@ -16,9 +16,10 @@ export async function openFile(filePath: string, line: number, character: number
     if (rangeToHighlight) highlightRange(editor, rangeToHighlight);
 }
 
-export function highlightRange(editor: vscode.TextEditor, range: Range) {
+export function highlightRange(editor: vscode.TextEditor | undefined, range: Range | null) {
+    if (!editor) return;
     if (!range) {
-        editor.setDecorations(highlight, []);
+        editor.setDecorations(highlight, [])
         return;
     }
     const nativeRange = new vscode.Range(

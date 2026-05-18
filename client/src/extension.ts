@@ -19,7 +19,7 @@ import { runClient, stopClient } from "./lsp/client";
  */
 export async function activate(context: vscode.ExtensionContext) {
     registerLogger(context);
-    extension.logger.client.info("Activating LiquidJava extension...");
+    extension.logger!.client.info("Activating LiquidJava extension...");
     
     registerStatusBar(context);
     registerCommands(context);
@@ -48,27 +48,27 @@ export async function deactivate() {
 export async function startExtension(context: vscode.ExtensionContext) {
     // check if already running
     if (extension.client || extension.serverProcess) {
-        extension.logger.client.info("LiquidJava is already running");
+        extension.logger!.client.info("LiquidJava is already running");
         return;
     }
-    extension.logger.client.info("Starting LiquidJava...");
+    extension.logger!.client.info("Starting LiquidJava...");
 
     // find java executable path
     const javaExecutablePath = findJavaExecutable();
     if (!javaExecutablePath) {
         vscode.window.showErrorMessage("LiquidJava - Java Runtime Not Found in JAVA_HOME or PATH");
-        extension.logger.client.error("Java Runtime not found in JAVA_HOME or PATH");
+        extension.logger!.client.error("Java Runtime not found in JAVA_HOME or PATH");
         updateStatusBar("stopped");
         return;
     }
-    extension.logger.client.info("Using Java at: " + javaExecutablePath);
+    extension.logger!.client.info("Using Java at: " + javaExecutablePath);
 
     // start server
-    extension.logger.client.info("Starting LiquidJava language server...");
+    extension.logger!.client.info("Starting LiquidJava language server...");
     const port = await runLanguageServer(context, javaExecutablePath);
 
     // start client
-    extension.logger.client.info("Starting LiquidJava client...");
+    extension.logger!.client.info("Starting LiquidJava client...");
     await runClient(context, port);
 }
 

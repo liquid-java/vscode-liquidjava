@@ -100,7 +100,7 @@ export async function connectToPort(
  */
 export async function killProcess(proc?: child_process.ChildProcess) {
     return new Promise<void>((resolve, reject) => {
-        if (!proc || proc.killed) {
+        if (!proc || proc.killed || proc.pid === undefined) {
             // already killed
             resolve();
             return;
@@ -128,7 +128,7 @@ export async function killProcess(proc?: child_process.ChildProcess) {
 
 export function getSimpleName(qualifiedName: string): string {
     const parts = qualifiedName.split(".");
-    return parts[parts.length - 1];
+    return parts[parts.length - 1] || qualifiedName;
 }
 
 export function getOriginalVariableName(name: string): string {
