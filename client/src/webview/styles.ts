@@ -428,8 +428,9 @@ export function getStyles(): string {
             min-height: calc(100vh - 2rem);
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 0.75rem;
+            padding-top: 2rem;
             text-align: center;
             color: var(--vscode-foreground);
         }
