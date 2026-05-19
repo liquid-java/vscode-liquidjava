@@ -1,10 +1,9 @@
 import { LJDiagnostic, LJError, LJWarning } from "../../../types/diagnostics";
+import { copyToClipboard } from "../../clipboard";
 import { renderCodiconButton } from "../../icons";
 import { renderErrors } from "./errors";
 import { renderMainHeader } from "../sections";
 import { renderWarnings } from "./warnings";
-
-const COPY_BUTTON_RESET_MS = 2000;
 
 export function renderDiagnosticsView(
     diagnostics: LJDiagnostic[],
@@ -68,22 +67,7 @@ export async function copyDiagnosticToClipboard(button: any, displayDiagnostics:
     if (!diagnostic) return;
 
     const diagnosticText = formatDiagnosticForClipboard(diagnostic);
-    const originalTitle = button.getAttribute('title');
-    const originalContent = button.innerHTML;
-
-    try {
-        button.disabled = true;
-        await navigator.clipboard.writeText(diagnosticText);
-        button.setAttribute('title', 'Copied!');
-    } catch (e) {
-        button.setAttribute('title', 'Copy failed');
-    } finally {
-        setTimeout(() => {
-            button.innerHTML = originalContent;
-            button.setAttribute('title', originalTitle);
-            button.disabled = false;
-        }, COPY_BUTTON_RESET_MS);
-    }
+    await copyToClipboard(button, diagnosticText);
 }
 
 export function formatDiagnosticForClipboard(diagnostic: LJDiagnostic): string {

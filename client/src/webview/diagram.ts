@@ -1,4 +1,5 @@
 import type { LJStateMachine } from "../types/fsm";
+import { copyToClipboard } from "./clipboard";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -6,7 +7,6 @@ const MAX_ZOOM = 5;
 const ZOOM_BUTTON_FACTOR = 1.5;
 const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
-const COPY_TIMEOUT_MS = 2000;
 
 // state variables
 let zoomLevel = 1;
@@ -241,18 +241,5 @@ export function registerPanListeners(document: any) {
 }
 
 export async function copyDiagramToClipboard(target: any, diagram: string) {
-    const title = target.getAttribute('title');
-    try {
-        target.disabled = true;
-        await navigator.clipboard.writeText(diagram);
-        target.setAttribute('title', 'Copied!');
-    } catch (e) {
-        target.setAttribute('title', 'Copy failed');
-    } finally {
-        // reset button after timeout
-        setTimeout(() => {
-            target.setAttribute('title', title);
-            target.disabled = false;
-        }, COPY_TIMEOUT_MS);
-    }
+    await copyToClipboard(target, diagram);
 }
