@@ -80,8 +80,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
             const icon = contextToggleButton.querySelector('.context-toggle-icon');
             if (icon) {
-                icon.classList.toggle('codicon-chevron-down', nextExpanded);
-                icon.classList.toggle('codicon-chevron-right', !nextExpanded);
+                icon.classList.toggle('codicon-triangle-down', nextExpanded);
+                icon.classList.toggle('codicon-triangle-right', !nextExpanded);
             }
 
             return;

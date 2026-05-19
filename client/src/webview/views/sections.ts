@@ -22,7 +22,7 @@ export const renderExpressionSection = (title: string, expression: string): stri
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
     <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
-        ${renderCodicon(isExpanded ? "chevron-down" : "chevron-right", "context-toggle-icon")}
+        ${renderCodicon(isExpanded ? "triangle-down" : "triangle-right", "context-toggle-icon")}
         <span>${title}</span>
     </button>
     `;
