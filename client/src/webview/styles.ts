@@ -6,7 +6,12 @@
 export function getStyles(): string {
     return /*css*/`
         html,
-        body,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            box-sizing: border-box;
+        }
         #root {
             width: 100%;
             min-height: 100%;
@@ -19,6 +24,7 @@ export function getStyles(): string {
             box-sizing: inherit;
         }
         body {
+            height: 100%;
             padding: 1rem;
             font-family: var(--vscode-font-family);
             overflow: auto;
