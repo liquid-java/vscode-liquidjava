@@ -112,7 +112,7 @@ public class StateMachineParserTests {
     public void testConjunctionPrecondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ConjunctionPrecondition.java");
         StateMachine expectedSm = new StateMachine("ConjunctionPrecondition", List.of("open", "closed"),
-                List.of(new StateMachineTransition("open", "closed", "close", "flag")),
+                List.of(new StateMachineTransition("open", "closed", "close", "flag", null)),
                 List.of(new StateMachineInitialTransition("open")));
         assertStateMachineEquals(expectedSm, sm);
     }
@@ -121,8 +121,8 @@ public class StateMachineParserTests {
     public void testDisjunctionPrecondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "DisjunctionPrecondition.java");
         StateMachine expectedSm = new StateMachine("DisjunctionPrecondition", List.of("ready", "waiting", "done"),
-                List.of(new StateMachineTransition("waiting", "done", "action", "flag"),
-                        new StateMachineTransition("done", "done", "action", "flag"),
+                List.of(new StateMachineTransition("waiting", "done", "action", "flag", null),
+                        new StateMachineTransition("done", "done", "action", "flag", null),
                         new StateMachineTransition("ready", "done", "action")),
                 List.of(new StateMachineInitialTransition("ready")));
         assertStateMachineEquals(expectedSm, sm);
@@ -132,8 +132,8 @@ public class StateMachineParserTests {
     public void testConditionalPrecondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ConditionalPrecondition.java");
         StateMachine expectedSm = new StateMachine("ConditionalPrecondition", List.of("left", "right", "done"),
-                List.of(new StateMachineTransition("left", "done", "finish", "flag"),
-                        new StateMachineTransition("right", "done", "finish", "!flag")),
+                List.of(new StateMachineTransition("left", "done", "finish", "flag", null),
+                        new StateMachineTransition("right", "done", "finish", "!flag", null)),
                 List.of(new StateMachineInitialTransition("left")));
         assertStateMachineEquals(expectedSm, sm);
     }
@@ -142,7 +142,44 @@ public class StateMachineParserTests {
     public void testPostConditionFiltering() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "PostConditionFiltering.java");
         StateMachine expectedSm = new StateMachine("PostConditionFiltering", List.of("ready", "done"),
+                List.of(new StateMachineTransition("ready", "done", "finish", null, "flag")),
+                List.of(new StateMachineInitialTransition("ready")));
+        assertStateMachineEquals(expectedSm, sm);
+    }
+
+    @Test
+    public void testCombinedPostCondition() {
+        StateMachine sm = StateMachineParser.parse(BASE_URI + "CombinedPostCondition.java");
+        StateMachine expectedSm = new StateMachine("CombinedPostCondition", List.of("ready", "done"),
+                List.of(new StateMachineTransition("ready", "done", "finish", "x", "flag")),
+                List.of(new StateMachineInitialTransition("ready")));
+        assertStateMachineEquals(expectedSm, sm);
+    }
+
+    @Test
+    public void testConditionalPostCondition() {
+        StateMachine sm = StateMachineParser.parse(BASE_URI + "ConditionalPostCondition.java");
+        StateMachine expectedSm = new StateMachine("ConditionalPostCondition", List.of("ready", "done", "error"),
+                List.of(new StateMachineTransition("ready", "done", "finish", null, "flag"),
+                        new StateMachineTransition("ready", "error", "finish", null, "!flag")),
+                List.of(new StateMachineInitialTransition("ready")));
+        assertStateMachineEquals(expectedSm, sm);
+    }
+
+    @Test
+    public void testDisjunctionPostCondition() {
+        StateMachine sm = StateMachineParser.parse(BASE_URI + "DisjunctionPostCondition.java");
+        StateMachine expectedSm = new StateMachine("DisjunctionPostCondition", List.of("ready", "done"),
                 List.of(new StateMachineTransition("ready", "done", "finish")),
+                List.of(new StateMachineInitialTransition("ready")));
+        assertStateMachineEquals(expectedSm, sm);
+    }
+
+    @Test
+    public void testGuardedSelfLoopDoesNotDuplicateCondition() {
+        StateMachine sm = StateMachineParser.parse(BASE_URI + "GuardedSelfLoop.java");
+        StateMachine expectedSm = new StateMachine("GuardedSelfLoop", List.of("ready", "done"),
+                List.of(new StateMachineTransition("ready", "ready", "poll", "flag", null)),
                 List.of(new StateMachineInitialTransition("ready")));
         assertStateMachineEquals(expectedSm, sm);
     }

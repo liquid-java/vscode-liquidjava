@@ -35,14 +35,14 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     
     // initial transitions
     sm.initialTransitions.forEach(transition => {
-        const label = getInitialTransitionLabel(transition.cond);
+        const label = getInitialTransitionLabel(transition.postCond);
         lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
     });
     
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
     sm.transitions.forEach(transition => {
-        const label = getTransitionLabel(transition.label, transition.cond);
+        const label = getTransitionLabel(transition.label, transition.preCond, transition.postCond);
         const key = `${transition.from}|${transition.to}`;
         if (!transitionMap.has(key)) transitionMap.set(key, []);
         transitionMap.get(key)?.push(label);
@@ -58,18 +58,23 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     return lines.join('\n');
 }
 
-function getTransitionLabel(label: string, cond?: string | null): string {
-    if (!cond) {
-        return escapeMermaidLabel(label);
-    }
-    return `${escapeMermaidLabel(label)} <span class="state-cond">(${escapeMermaidLabel(cond)})</span>`;
+function getTransitionLabel(label: string, preCond?: string | null, postCond?: string | null): string {
+    return [
+        getConditionLabel(preCond),
+        escapeMermaidLabel(label),
+        getConditionLabel(postCond)
+    ].filter(Boolean).join('<br/>');
 }
 
-function getInitialTransitionLabel(cond?: string | null): string {
+function getInitialTransitionLabel(postCond?: string | null): string {
+    return getConditionLabel(postCond);
+}
+
+function getConditionLabel(cond?: string | null): string {
     if (!cond) {
         return '';
     }
-    return `<span class="state-cond">(${escapeMermaidLabel(cond)})</span>`;
+    return `<span class="state-cond">${escapeMermaidLabel(cond)}</span>`;
 }
 
 function escapeMermaidLabel(label: string): string {

@@ -182,19 +182,16 @@ public class StateMachineParser {
         String from = ann.getValueAsString("from");
         String to = ann.getValueAsString("to");
 
-        // if has from but not to, to is the same as from (self-loop)
-        if (!from.isEmpty() && to.isEmpty()) {
-            to = from;
-        }
-
         // parse from and to expressions
         List<TransitionSource> fromSources = from.isEmpty() ? allStateSources(states) : parsePrecondition(from, states);
-        List<String> toStates = parseStateExpression(to, states);
+        List<TransitionSource> toSources = !from.isEmpty() && to.isEmpty()
+                ? parseStateSources(from, states)
+                : parsePostcondition(to, states);
 
         // create transitions for each combination of from and to states
         for (TransitionSource fromSource : fromSources) {
-            for (String toState : toStates) {
-                transitions.add(new StateMachineTransition(fromSource.from(), toState, method, fromSource.cond()));
+            for (TransitionSource toSource : toSources) {
+                transitions.add(new StateMachineTransition(fromSource.from(), toSource.from(), method, fromSource.cond(), toSource.cond()));
             }
         }
         return transitions;
@@ -215,6 +212,12 @@ public class StateMachineParser {
             sources = addCondition(allStateSources(states), ast.toString());
         }
         return sources;
+    }
+
+    private static List<TransitionSource> parsePostcondition(String expr, List<String> states) {
+        if (expr == null || expr.isEmpty()) return new ArrayList<>();
+        Expression ast = RefinementsParser.createAST(expr, "");
+        return getTransitionSources(ast, states, true);
     }
 
     private static List<TransitionSource> getTransitionSources(Expression expr, List<String> states, boolean stateOnlyDisjunctions) {
@@ -334,12 +337,17 @@ public class StateMachineParser {
 
     private static List<StateMachineInitialTransition> parseInitialTransitions(String expr, List<String> states) {
         if (expr == null || expr.isEmpty()) return new ArrayList<>();
-        Expression ast = RefinementsParser.createAST(expr, "");
         List<StateMachineInitialTransition> initialTransitions = new ArrayList<>();
-        for (TransitionSource source : getTransitionSources(ast, states, true)) {
+        for (TransitionSource source : parsePostcondition(expr, states)) {
             initialTransitions.add(new StateMachineInitialTransition(source.from(), source.cond()));
         }
         return initialTransitions;
+    }
+
+    private static List<TransitionSource> parseStateSources(String expr, List<String> states) {
+        if (expr == null || expr.isEmpty()) return new ArrayList<>();
+        Expression ast = RefinementsParser.createAST(expr, "");
+        return getStateSources(ast, states);
     }
 
     private static List<TransitionSource> getStateSources(Expression expr, List<String> states) {
@@ -348,18 +356,6 @@ public class StateMachineParser {
             sources.add(new TransitionSource(state, null));
         }
         return sources;
-    }
-
-    /**
-     * Parses a state expression and returns the list of states
-     * @param expr the expression
-     * @param states the list of possible states
-     * @return list of states
-     */
-    private static List<String> parseStateExpression(String expr, List<String> states) {
-        if (expr == null || expr.isEmpty()) return new ArrayList<>();
-        Expression ast = RefinementsParser.createAST(expr, "");
-        return getStateExpressions(ast, states);
     }
 
     /**
