@@ -51,6 +51,12 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     root.addEventListener('click', (e: MouseEvent) => {
         const target = e.target instanceof Element ? e.target : null;
         if (!target) return;
+        const iconButton = target.closest?.('.icon-button');
+        if (iconButton && !(iconButton as HTMLButtonElement).disabled) {
+            iconButton.classList.remove('icon-button-pop');
+            void (iconButton as HTMLElement).offsetWidth;
+            iconButton.classList.add('icon-button-pop');
+        }
 
         // context section toggle
         const contextToggleButton = target.closest?.('.context-toggle-btn');

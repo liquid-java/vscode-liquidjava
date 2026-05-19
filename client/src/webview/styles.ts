@@ -200,15 +200,15 @@ export function getStyles(): string {
             opacity: 0.8;
             cursor: default;
         }
-        .copied {
-            animation: copy-diagnostic-pop 0.42s ease-out;
+        .icon-button-pop {
+            animation: icon-button-pop 0.28s ease-out;
         }
-        @keyframes copy-diagnostic-pop {
+        @keyframes icon-button-pop {
             0% {
-                transform: scale(0.8);
+                transform: scale(0.96);
             }
-            45% {
-                transform: scale(1.18);
+            55% {
+                transform: scale(1.05);
             }
             100% {
                 transform: scale(1);

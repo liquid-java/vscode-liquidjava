@@ -245,7 +245,6 @@ export async function copyDiagramToClipboard(target: any, diagram: string) {
     try {
         target.disabled = true;
         await navigator.clipboard.writeText(diagram);
-        target.classList.add('copied');
         target.setAttribute('title', 'Copied!');
     } catch (e) {
         target.setAttribute('title', 'Copy failed');
@@ -253,7 +252,6 @@ export async function copyDiagramToClipboard(target: any, diagram: string) {
         // reset button after timeout
         setTimeout(() => {
             target.setAttribute('title', title);
-            target.classList.remove('copied');
             target.disabled = false;
         }, COPY_TIMEOUT_MS);
     }

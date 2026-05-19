@@ -1,5 +1,5 @@
 import type { LJStateMachine } from "../../../types/fsm";
-import { renderCodicon } from "../../icons";
+import { renderCodiconButton } from "../../icons";
 import { renderMainHeader } from "../sections";
 
 export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean): string {
@@ -17,12 +17,12 @@ export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: 
                 <div class="diagram-section">
                     <div class="diagram-container">
                         <div class="diagram-controls">
-                            <button id="zoom-in-btn" class="diagram-control-btn" title="Zoom In" aria-label="Zoom In">${renderCodicon("zoom-in")}</button>
-                            <button id="zoom-out-btn" class="diagram-control-btn" title="Zoom Out" aria-label="Zoom Out">${renderCodicon("zoom-out")}</button>
-                            <button id="zoom-reset-btn" class="diagram-control-btn" title="Reset Zoom" aria-label="Reset Zoom">${renderCodicon("refresh")}</button>
-                            <button id="diagram-orientation-btn" class="diagram-control-btn" title="Rotate Diagram" aria-label="Rotate Diagram">${renderCodicon(orientation === "TB" ? "arrow-down" : "arrow-right")}</button>
-                            <button id="diagram-conditions-btn" class="diagram-control-btn${showConditions ? ' active' : ''}" title="${conditionToggleLabel}" aria-label="${conditionToggleLabel}" aria-pressed="${showConditions ? 'true' : 'false'}" ${hasConditionExpansions ? '' : 'disabled'}>${renderCodicon(showConditions ? "collapse-all" : "expand-all")}</button>
-                            <button id="copy-diagram-btn" class="diagram-control-btn" title="Copy Mermaid Source" aria-label="Copy Mermaid Source">${renderCodicon("copy")}</button>
+                            ${renderCodiconButton("zoom-in", { id: "zoom-in-btn", className: "diagram-control-btn", title: "Zoom In" })}
+                            ${renderCodiconButton("zoom-out", { id: "zoom-out-btn", className: "diagram-control-btn", title: "Zoom Out" })}
+                            ${renderCodiconButton("refresh", { id: "zoom-reset-btn", className: "diagram-control-btn", title: "Reset Zoom" })}
+                            ${renderCodiconButton(orientation === "TB" ? "arrow-down" : "arrow-right", { id: "diagram-orientation-btn", className: "diagram-control-btn", title: "Rotate Diagram" })}
+                            ${renderCodiconButton(showConditions ? "collapse-all" : "expand-all", { id: "diagram-conditions-btn", className: `diagram-control-btn${showConditions ? ' active' : ''}`, title: conditionToggleLabel, attributes: `aria-pressed="${showConditions ? 'true' : 'false'}"`, disabled: !hasConditionExpansions })}
+                            ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
                         </div>
                         <div id="diagram-wrapper" class="diagram-wrapper">
                             <pre class="mermaid">${diagram}</pre>

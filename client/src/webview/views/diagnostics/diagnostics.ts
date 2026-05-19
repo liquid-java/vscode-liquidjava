@@ -1,5 +1,5 @@
 import { LJDiagnostic, LJError, LJWarning } from "../../../types/diagnostics";
-import { renderCodicon } from "../../icons";
+import { renderCodiconButton } from "../../icons";
 import { renderErrors } from "./errors";
 import { renderMainHeader } from "../sections";
 import { renderWarnings } from "./warnings";
@@ -52,7 +52,11 @@ export function getDisplayDiagnostics(diagnostics: LJDiagnostic[], showAll: bool
 }
 
 export function renderCopyDiagnosticButton(indexType: 'error' | 'warning', index: number): string {
-    return /*html*/`<button class="copy-diagnostic-btn" data-${indexType}-index="${index}" title="Copy diagnostic" aria-label="Copy diagnostic">${renderCodicon("copy")}</button>`;
+    return renderCodiconButton("copy", {
+        className: "copy-diagnostic-btn",
+        title: "Copy diagnostic",
+        attributes: `data-${indexType}-index="${index}"`,
+    });
 }
 
 export async function copyDiagnosticToClipboard(button: any, displayDiagnostics: LJDiagnostic[]) {
@@ -70,7 +74,6 @@ export async function copyDiagnosticToClipboard(button: any, displayDiagnostics:
     try {
         button.disabled = true;
         await navigator.clipboard.writeText(diagnosticText);
-        button.classList.add('copied');
         button.setAttribute('title', 'Copied!');
     } catch (e) {
         button.setAttribute('title', 'Copy failed');
@@ -78,7 +81,6 @@ export async function copyDiagnosticToClipboard(button: any, displayDiagnostics:
         setTimeout(() => {
             button.innerHTML = originalContent;
             button.setAttribute('title', originalTitle);
-            button.classList.remove('copied');
             button.disabled = false;
         }, COPY_BUTTON_RESET_MS);
     }
