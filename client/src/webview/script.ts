@@ -25,7 +25,7 @@ type VSCodeApi = {
 export function getScript(vscode: VSCodeApi, document: Document, window: Window) {
     const root = document.getElementById('root')!;
     if (!root) return;
-    let diagnostics: LJDiagnostic[] = [];
+    let diagnostics: LJDiagnostic[] | undefined;
     let showAllDiagnostics = false;
     let currentFile: string;
     const expandedErrors = new Set<number>();
@@ -241,7 +241,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (diagnosticCopyBtn) {
             e.preventDefault();
             e.stopPropagation();
-            copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics, showAllDiagnostics, currentFile));
+            copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics || [], showAllDiagnostics, currentFile));
             return;
         }
     });
@@ -256,7 +256,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 break;
             case 'file':
                 currentFile = msg.file;
-                if (!showAllDiagnostics && selectedTab === 'diagnostics') updateView();
+                if (diagnostics && !showAllDiagnostics && selectedTab === 'diagnostics') updateView();
                 break;
             case 'fsm':
                 stateMachine = msg.sm as LJStateMachine;
@@ -279,7 +279,9 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     function updateView() {
         switch (selectedTab) {
             case 'diagnostics':
-                root.innerHTML = renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors);
+                root.innerHTML = diagnostics
+                    ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors)
+                    : renderLoading();
                 break;
             case 'fsm': {
                 const diagram = createMermaidDiagram(stateMachine, diagramOrientation);

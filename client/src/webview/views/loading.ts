@@ -1,9 +1,11 @@
 
+import { renderMainHeader } from "./sections";
+
 export function renderLoading(): string {
     return /*html*/`
         <div>
-            <h2>LiquidJava</h2>
-            <p>Loading extension...</p>
+            ${renderMainHeader("Verification Pending", "diagnostics")}
+            <p class="info">Running the LiquidJava verification...</p>
         </div>
     `;
 }
