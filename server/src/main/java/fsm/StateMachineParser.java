@@ -3,9 +3,7 @@ package fsm;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import liquidjava.rj_language.ast.*;
 import liquidjava.rj_language.parsing.RefinementsParser;
@@ -52,13 +50,16 @@ public class StateMachineParser {
                 return null; // no states found
             String className = getClassName(ctType);
 
-            // get initial states and transitions
-            List<String> initialStates = getInitialStates(ctType, className, states);
+            // get initial transitions and method transitions
+            List<StateMachineInitialTransition> initialTransitions = getInitialTransitions(ctType, className, states);
+            if (initialTransitions.isEmpty()) {
+                initialTransitions = List.of(new StateMachineInitialTransition(states.get(0)));
+            }
             List<StateMachineTransition> transitions = getTransitions(ctType, className, states);
             if (transitions.isEmpty())
                 return null; // no transitions found
 
-            return new StateMachine(className, initialStates, states, transitions);
+            return new StateMachine(className, states, transitions, initialTransitions);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -125,25 +126,24 @@ public class StateMachineParser {
     }
 
     /**
-     * Gets the initial states from a class or interface
+     * Gets the initial transitions from a class or interface
      * If not explicitly defined, uses the first state in the state set
      * @param ctType the CtType (class or interface)
      * @param className the class name
      * @param states the list of states
-     * @return initial states
+     * @return initial transitions
      */
-    private static List<String> getInitialStates(CtType<?> ctType, String className, List<String> states) {
-        Set<String> initialStates = new HashSet<>();
+    private static List<StateMachineInitialTransition> getInitialTransitions(CtType<?> ctType, String className, List<String> states) {
+        List<StateMachineInitialTransition> initialTransitions = new ArrayList<>();
         for (CtElement element : getConstructorElements(ctType, className)) {
             for (CtAnnotation<?> annotation : element.getAnnotations()) {
                 if (annotation.getAnnotationType().getSimpleName().equals(STATE_REFINEMENT_ANNOTATION)) {
                     String to = annotation.getValueAsString("to");
-                    List<String> parsedStates = parseStateExpression(to, states);
-                    initialStates.addAll(parsedStates);
+                    initialTransitions.addAll(parseInitialTransitions(to, states));
                 }
             }
         }
-        return initialStates.isEmpty() ? List.of(states.get(0)) : initialStates.stream().toList();
+        return initialTransitions;
     }
 
     /**
@@ -210,27 +210,27 @@ public class StateMachineParser {
 
     private static List<TransitionSource> parsePrecondition(String expr, List<String> states) {
         Expression ast = RefinementsParser.createAST(expr, "");
-        List<TransitionSource> sources = getPreconditionSources(ast, states);
+        List<TransitionSource> sources = getTransitionSources(ast, states, false);
         if (sources.isEmpty()) {
             sources = addCondition(allStateSources(states), ast.toString());
         }
         return sources;
     }
 
-    private static List<TransitionSource> getPreconditionSources(Expression expr, List<String> states) {
+    private static List<TransitionSource> getTransitionSources(Expression expr, List<String> states, boolean stateOnlyDisjunctions) {
         String state = getStateName(expr, states);
         if (state != null) {
             return List.of(new TransitionSource(state, null));
         }
 
         if (expr instanceof GroupExpression group) {
-            return getPreconditionSources(group.getExpression(), states);
+            return getTransitionSources(group.getExpression(), states, stateOnlyDisjunctions);
         } else if (expr instanceof BinaryExpression bin) {
             String op = bin.getOperator();
             if (op.equals("&&")) {
-                return getConjunctionSources(bin, states);
+                return getConjunctionSources(bin, states, stateOnlyDisjunctions);
             } else if (op.equals("||")) {
-                return getDisjunctionSources(bin, states);
+                return stateOnlyDisjunctions ? getStateSources(bin, states) : getDisjunctionSources(bin, states);
             }
         } else if (expr instanceof UnaryExpression unary) {
             if (unary.getOp().equals("!")) {
@@ -247,16 +247,16 @@ public class StateMachineParser {
             }
         } else if (expr instanceof Ite ite) {
             List<TransitionSource> sources = new ArrayList<>();
-            sources.addAll(addCondition(getPreconditionSources(ite.getThen(), states), ite.getCondition().toString()));
-            sources.addAll(addCondition(getPreconditionSources(ite.getElse(), states), negateCondition(ite.getCondition())));
+            sources.addAll(addCondition(getTransitionSources(ite.getThen(), states, stateOnlyDisjunctions), ite.getCondition().toString()));
+            sources.addAll(addCondition(getTransitionSources(ite.getElse(), states, stateOnlyDisjunctions), negateCondition(ite.getCondition())));
             return sources;
         }
         return new ArrayList<>();
     }
 
-    private static List<TransitionSource> getConjunctionSources(BinaryExpression bin, List<String> states) {
-        List<TransitionSource> leftSources = getPreconditionSources(bin.getFirstOperand(), states);
-        List<TransitionSource> rightSources = getPreconditionSources(bin.getSecondOperand(), states);
+    private static List<TransitionSource> getConjunctionSources(BinaryExpression bin, List<String> states, boolean stateOnlyDisjunctions) {
+        List<TransitionSource> leftSources = getTransitionSources(bin.getFirstOperand(), states, stateOnlyDisjunctions);
+        List<TransitionSource> rightSources = getTransitionSources(bin.getSecondOperand(), states, stateOnlyDisjunctions);
 
         if (leftSources.isEmpty() && rightSources.isEmpty()) {
             return new ArrayList<>();
@@ -279,7 +279,7 @@ public class StateMachineParser {
     }
 
     private static void addDisjunctionBranch(List<TransitionSource> sources, Expression expr, List<String> states) {
-        List<TransitionSource> parsedSources = getPreconditionSources(expr, states);
+        List<TransitionSource> parsedSources = getTransitionSources(expr, states, false);
         if (parsedSources.isEmpty()) {
             sources.addAll(addCondition(allStateSources(states), expr.toString()));
         } else {
@@ -330,6 +330,24 @@ public class StateMachineParser {
             return "!" + condition;
         }
         return "!(" + condition + ")";
+    }
+
+    private static List<StateMachineInitialTransition> parseInitialTransitions(String expr, List<String> states) {
+        if (expr == null || expr.isEmpty()) return new ArrayList<>();
+        Expression ast = RefinementsParser.createAST(expr, "");
+        List<StateMachineInitialTransition> initialTransitions = new ArrayList<>();
+        for (TransitionSource source : getTransitionSources(ast, states, true)) {
+            initialTransitions.add(new StateMachineInitialTransition(source.from(), source.cond()));
+        }
+        return initialTransitions;
+    }
+
+    private static List<TransitionSource> getStateSources(Expression expr, List<String> states) {
+        List<TransitionSource> sources = new ArrayList<>();
+        for (String state : getStateExpressions(expr, states)) {
+            sources.add(new TransitionSource(state, null));
+        }
+        return sources;
     }
 
     /**

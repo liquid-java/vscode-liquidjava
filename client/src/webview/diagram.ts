@@ -33,9 +33,10 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
     
-    // initial states
-    sm.initialStates.forEach(state => {
-        lines.push(`    [*] --> ${state}`);
+    // initial transitions
+    sm.initialTransitions.forEach(transition => {
+        const label = getInitialTransitionLabel(transition.cond);
+        lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
     });
     
     // group transitions by from/to states and merge labels
@@ -62,6 +63,13 @@ function getTransitionLabel(label: string, cond?: string | null): string {
         return escapeMermaidLabel(label);
     }
     return `${escapeMermaidLabel(label)} <span class="state-cond">(${escapeMermaidLabel(cond)})</span>`;
+}
+
+function getInitialTransitionLabel(cond?: string | null): string {
+    if (!cond) {
+        return '';
+    }
+    return `<span class="state-cond">(${escapeMermaidLabel(cond)})</span>`;
 }
 
 function escapeMermaidLabel(label: string): string {

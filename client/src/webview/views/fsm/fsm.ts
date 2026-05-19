@@ -2,6 +2,8 @@ import type { LJStateMachine } from "../../../types/fsm";
 import { renderMainHeader } from "../sections";
 
 export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB"): string {
+    const initialStateNames = sm ? [...new Set(sm.initialTransitions.map(transition => transition.to))] : [];
+
     return /*html*/`
         <div>
             ${renderMainHeader("", 'fsm')}
@@ -21,9 +23,9 @@ export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: 
                     </div>
                     <div>
                         <p><strong>States:</strong> ${sm.states.join(', ')}</p>
-                        <p><strong>Initial state${sm.initialStates.length > 1 ? 's' : ''}:</strong> ${sm.initialStates.join(', ')}</p>
+                        <p><strong>Initial state${initialStateNames.length > 1 ? 's' : ''}:</strong> ${initialStateNames.join(', ')}</p>
                         <p><strong>Number of states:</strong> ${sm.states.length}</p>
-                        <p><strong>Number of transitions:</strong> ${sm.transitions.length + 1}</p>
+                        <p><strong>Number of transitions:</strong> ${sm.transitions.length + sm.initialTransitions.length}</p>
                     </div>
                 </div>`
             : 'No state machine available for the current file'}

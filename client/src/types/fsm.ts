@@ -2,7 +2,7 @@
 
 export type LJStateMachine = {
     className: string;
-    initialStates: string[];
+    initialTransitions: { to: string; cond?: string | null }[];
     states: string[];
     transitions: { from: string; to: string; label: string; cond?: string | null }[];
 };
