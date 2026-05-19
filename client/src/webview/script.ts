@@ -289,6 +289,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             root.innerHTML = renderStopped();
             return;
         }
+        if (status === 'loading') {
+            currentDiagram = '';
+            root.innerHTML = renderLoading();
+            return;
+        }
 
         switch (selectedTab) {
             case 'diagnostics':

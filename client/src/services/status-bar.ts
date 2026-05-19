@@ -24,7 +24,7 @@ const statusText = {
 export function registerStatusBar(context: vscode.ExtensionContext) {
     extension.statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
     extension.statusBar.command = "liquidjava.showCommands";
-    updateStatusBar("loading");
+    updateStatusBar("loading", true);
     extension.statusBar.show();
     context.subscriptions.push(extension.statusBar);
 }
@@ -32,11 +32,13 @@ export function registerStatusBar(context: vscode.ExtensionContext) {
 /**
  * Updates the status bar with the current state
  * @param status The current status ("loading", "stopped", "passed", "failed")
+ * @param notifyWebview Whether the webview should reflect this status update.
  */
-export function updateStatusBar(status: StatusBarState) {
-    extension.status = status;
-    extension.webview?.sendMessage({ type: "status", status });
-
+export function updateStatusBar(status: StatusBarState, notifyWebview = status !== "loading") {
+    if (notifyWebview) {
+        extension.status = status;
+        extension.webview?.sendMessage({ type: "status", status });
+    }
     const color = status === "stopped" ? "errorForeground" : "statusBar.foreground";
     if (!extension.statusBar) return;
     extension.statusBar.color = new vscode.ThemeColor(color);
