@@ -91,6 +91,45 @@ public class StateMachineParserTests {
         assertStateMachineEquals(expectedSm, sm);
     }
 
+    @Test
+    public void testConjunctionPrecondition() {
+        StateMachine sm = StateMachineParser.parse(BASE_URI + "ConjunctionPrecondition.java");
+        StateMachine expectedSm = new StateMachine("ConjunctionPrecondition", List.of("open"),
+                List.of("open", "closed"),
+                List.of(new StateMachineTransition("open", "closed", "close", "flag")));
+        assertStateMachineEquals(expectedSm, sm);
+    }
+
+    @Test
+    public void testDisjunctionPrecondition() {
+        StateMachine sm = StateMachineParser.parse(BASE_URI + "DisjunctionPrecondition.java");
+        StateMachine expectedSm = new StateMachine("DisjunctionPrecondition", List.of("ready"),
+                List.of("ready", "waiting", "done"),
+                List.of(new StateMachineTransition("waiting", "done", "action", "flag"),
+                        new StateMachineTransition("done", "done", "action", "flag"),
+                        new StateMachineTransition("ready", "done", "action")));
+        assertStateMachineEquals(expectedSm, sm);
+    }
+
+    @Test
+    public void testConditionalPrecondition() {
+        StateMachine sm = StateMachineParser.parse(BASE_URI + "ConditionalPrecondition.java");
+        StateMachine expectedSm = new StateMachine("ConditionalPrecondition", List.of("left"),
+                List.of("left", "right", "done"),
+                List.of(new StateMachineTransition("left", "done", "finish", "flag"),
+                        new StateMachineTransition("right", "done", "finish", "!flag")));
+        assertStateMachineEquals(expectedSm, sm);
+    }
+
+    @Test
+    public void testPostConditionFiltering() {
+        StateMachine sm = StateMachineParser.parse(BASE_URI + "PostConditionFiltering.java");
+        StateMachine expectedSm = new StateMachine("PostConditionFiltering", List.of("ready"),
+                List.of("ready", "done"),
+                List.of(new StateMachineTransition("ready", "done", "finish")));
+        assertStateMachineEquals(expectedSm, sm);
+    }
+
     private static void assertStateMachineEquals(StateMachine expected, StateMachine actual) {
         assertNotNull(actual, "State machine should not be null");
         assertEquals(expected.className(), actual.className(), "Class names should match");

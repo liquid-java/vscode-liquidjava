@@ -24,6 +24,8 @@ public class StateMachineParser {
     private static final String STATE_REFINEMENT_ANNOTATION = "StateRefinement";
     private static final String EXTERNAL_REFINEMENTS_FOR_ANNOTATION = "ExternalRefinementsFor";
 
+    private record TransitionSource(String from, String cond) {}
+
     /**
      * Parses a class or interface for the given uri and extracts the state machine information
      * @param uri the document URI
@@ -186,21 +188,148 @@ public class StateMachineParser {
         }
 
         // parse from and to expressions
-        List<String> fromStates = parseStateExpression(from, states);
+        List<TransitionSource> fromSources = from.isEmpty() ? allStateSources(states) : parsePrecondition(from, states);
         List<String> toStates = parseStateExpression(to, states);
 
-        // if no from states, use all states
-        if (fromStates.isEmpty()) {
-            fromStates = new ArrayList<>(states);
-        }
-
         // create transitions for each combination of from and to states
-        for (String fromState : fromStates) {
+        for (TransitionSource fromSource : fromSources) {
             for (String toState : toStates) {
-                transitions.add(new StateMachineTransition(fromState, toState, method));
+                transitions.add(new StateMachineTransition(fromSource.from(), toState, method, fromSource.cond()));
             }
         }
         return transitions;
+    }
+
+    private static List<TransitionSource> allStateSources(List<String> states) {
+        List<TransitionSource> sources = new ArrayList<>();
+        for (String state : states) {
+            sources.add(new TransitionSource(state, null));
+        }
+        return sources;
+    }
+
+    private static List<TransitionSource> parsePrecondition(String expr, List<String> states) {
+        Expression ast = RefinementsParser.createAST(expr, "");
+        List<TransitionSource> sources = getPreconditionSources(ast, states);
+        if (sources.isEmpty()) {
+            sources = addCondition(allStateSources(states), ast.toString());
+        }
+        return sources;
+    }
+
+    private static List<TransitionSource> getPreconditionSources(Expression expr, List<String> states) {
+        String state = getStateName(expr, states);
+        if (state != null) {
+            return List.of(new TransitionSource(state, null));
+        }
+
+        if (expr instanceof GroupExpression group) {
+            return getPreconditionSources(group.getExpression(), states);
+        } else if (expr instanceof BinaryExpression bin) {
+            String op = bin.getOperator();
+            if (op.equals("&&")) {
+                return getConjunctionSources(bin, states);
+            } else if (op.equals("||")) {
+                return getDisjunctionSources(bin, states);
+            }
+        } else if (expr instanceof UnaryExpression unary) {
+            if (unary.getOp().equals("!")) {
+                List<String> negatedStates = getStateExpressions(unary.getExpression(), states);
+                if (!negatedStates.isEmpty()) {
+                    List<TransitionSource> sources = new ArrayList<>();
+                    for (String possibleState : states) {
+                        if (!negatedStates.contains(possibleState)) {
+                            sources.add(new TransitionSource(possibleState, null));
+                        }
+                    }
+                    return sources;
+                }
+            }
+        } else if (expr instanceof Ite ite) {
+            List<TransitionSource> sources = new ArrayList<>();
+            sources.addAll(addCondition(getPreconditionSources(ite.getThen(), states), ite.getCondition().toString()));
+            sources.addAll(addCondition(getPreconditionSources(ite.getElse(), states), negateCondition(ite.getCondition())));
+            return sources;
+        }
+        return new ArrayList<>();
+    }
+
+    private static List<TransitionSource> getConjunctionSources(BinaryExpression bin, List<String> states) {
+        List<TransitionSource> leftSources = getPreconditionSources(bin.getFirstOperand(), states);
+        List<TransitionSource> rightSources = getPreconditionSources(bin.getSecondOperand(), states);
+
+        if (leftSources.isEmpty() && rightSources.isEmpty()) {
+            return new ArrayList<>();
+        } else if (leftSources.isEmpty()) {
+            return addCondition(rightSources, bin.getFirstOperand().toString());
+        } else if (rightSources.isEmpty()) {
+            return addCondition(leftSources, bin.getSecondOperand().toString());
+        }
+
+        List<TransitionSource> sources = new ArrayList<>(leftSources);
+        sources.addAll(rightSources);
+        return sources;
+    }
+
+    private static List<TransitionSource> getDisjunctionSources(BinaryExpression bin, List<String> states) {
+        List<TransitionSource> sources = new ArrayList<>();
+        addDisjunctionBranch(sources, bin.getFirstOperand(), states);
+        addDisjunctionBranch(sources, bin.getSecondOperand(), states);
+        return removeRedundantGuardedSources(sources);
+    }
+
+    private static void addDisjunctionBranch(List<TransitionSource> sources, Expression expr, List<String> states) {
+        List<TransitionSource> parsedSources = getPreconditionSources(expr, states);
+        if (parsedSources.isEmpty()) {
+            sources.addAll(addCondition(allStateSources(states), expr.toString()));
+        } else {
+            sources.addAll(parsedSources);
+        }
+    }
+
+    private static List<TransitionSource> removeRedundantGuardedSources(List<TransitionSource> sources) {
+        List<TransitionSource> filteredSources = new ArrayList<>();
+        for (TransitionSource source : sources) {
+            if (source.cond() == null || !hasUnguardedSource(sources, source.from())) {
+                filteredSources.add(source);
+            }
+        }
+        return filteredSources;
+    }
+
+    private static boolean hasUnguardedSource(List<TransitionSource> sources, String from) {
+        for (TransitionSource source : sources) {
+            if (source.from().equals(from) && source.cond() == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<TransitionSource> addCondition(List<TransitionSource> sources, String cond) {
+        List<TransitionSource> guardedSources = new ArrayList<>();
+        for (TransitionSource source : sources) {
+            guardedSources.add(new TransitionSource(source.from(), combineConditions(source.cond(), cond)));
+        }
+        return guardedSources;
+    }
+
+    private static String combineConditions(String first, String second) {
+        if (first == null || first.isEmpty()) {
+            return second;
+        }
+        if (second == null || second.isEmpty()) {
+            return first;
+        }
+        return first + " && " + second;
+    }
+
+    private static String negateCondition(Expression expr) {
+        String condition = expr.toString();
+        if (expr instanceof Var || expr instanceof FunctionInvocation) {
+            return "!" + condition;
+        }
+        return "!(" + condition + ")";
     }
 
     /**
@@ -223,35 +352,53 @@ public class StateMachineParser {
      */
     private static List<String> getStateExpressions(Expression expr, List<String> states) {
         List<String> stateExpressions = new ArrayList<>();
-        if (expr instanceof Var var) {
-            stateExpressions.add(var.getName());
-        } else if (expr instanceof FunctionInvocation func) {
-            stateExpressions.add(func.getName());
+        String state = getStateName(expr, states);
+        if (state != null) {
+            stateExpressions.add(state);
         } else if (expr instanceof GroupExpression group) {
             stateExpressions.addAll(getStateExpressions(group.getExpression(), states));
         } else if (expr instanceof BinaryExpression bin) {
-            String op = bin.getOperator();
-            if (op.equals("||")) {
-                // combine states from both operands
-                stateExpressions.addAll(getStateExpressions(bin.getFirstOperand(), states));
-                stateExpressions.addAll(getStateExpressions(bin.getSecondOperand(), states));
-            }
+            stateExpressions.addAll(getStateExpressions(bin.getFirstOperand(), states));
+            stateExpressions.addAll(getStateExpressions(bin.getSecondOperand(), states));
         } else if (expr instanceof UnaryExpression unary) {
             if (unary.getOp().equals("!")) {
                 // all except those in the expression
                 List<String> negatedStates = getStateExpressions(unary.getExpression(), states);
-                for (String state : states) {
-                    if (!negatedStates.contains(state)) {
-                        stateExpressions.add(state);
+                if (!negatedStates.isEmpty()) {
+                    for (String possibleState : states) {
+                        if (!negatedStates.contains(possibleState)) {
+                            stateExpressions.add(possibleState);
+                        }
                     }
                 }
             }
         } else if (expr instanceof Ite ite) {
             // combine states from then and else branches
-            // TODO: handle conditional transitions
             stateExpressions.addAll(getStateExpressions(ite.getThen(), states));
             stateExpressions.addAll(getStateExpressions(ite.getElse(), states));
         }
         return stateExpressions;
+    }
+
+    private static String getStateName(Expression expr, List<String> states) {
+        if (expr instanceof Var var) {
+            return findState(var.getName(), states);
+        } else if (expr instanceof FunctionInvocation func) {
+            return findState(func.getName(), states);
+        }
+        return null;
+    }
+
+    private static String findState(String name, List<String> states) {
+        if (states.contains(name)) {
+            return name;
+        }
+        String simpleName = Utils.getSimpleName(name);
+        for (String state : states) {
+            if (state.equals(simpleName) || Utils.getSimpleName(state).equals(simpleName)) {
+                return state;
+            }
+        }
+        return null;
     }
 }

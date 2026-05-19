@@ -4,5 +4,5 @@ export type LJStateMachine = {
     className: string;
     initialStates: string[];
     states: string[];
-    transitions: { from: string; to: string; label: string }[];
+    transitions: { from: string; to: string; label: string; cond?: string | null }[];
 };

@@ -650,6 +650,10 @@ export function getStyles(): string {
             color: var(--vscode-foreground) !important;
             background: var(--vscode-editor-background) !important;
         }
+        .diagram-container .mermaid .edgeLabel .state-cond {
+            color: var(--vscode-descriptionForeground) !important;
+            font-size: 0.85em !important;
+        }
         .diagram-container .mermaid svg rect,
         .diagram-container .mermaid svg circle,
         .diagram-container .mermaid svg ellipse,

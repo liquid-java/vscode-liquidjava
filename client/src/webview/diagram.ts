@@ -41,9 +41,10 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
     sm.transitions.forEach(transition => {
+        const label = getTransitionLabel(transition.label, transition.cond);
         const key = `${transition.from}|${transition.to}`;
         if (!transitionMap.has(key)) transitionMap.set(key, []);
-        transitionMap.get(key)?.push(transition.label);
+        transitionMap.get(key)?.push(label);
     });
 
     // add transitions
@@ -54,6 +55,17 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     });
     
     return lines.join('\n');
+}
+
+function getTransitionLabel(label: string, cond?: string | null): string {
+    if (!cond) {
+        return escapeMermaidLabel(label);
+    }
+    return `${escapeMermaidLabel(label)} <span class="state-cond">(${escapeMermaidLabel(cond)})</span>`;
+}
+
+function escapeMermaidLabel(label: string): string {
+    return label.replace(/&/g, '&amp;').replace(/"/g, '\\"').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
