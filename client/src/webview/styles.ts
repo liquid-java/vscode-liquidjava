@@ -38,6 +38,8 @@ export function getStyles(): string {
             --lj-token-boolean: var(--vscode-debugTokenExpression-boolean, var(--vscode-symbolIcon-booleanForeground, var(--vscode-editor-foreground)));
             --lj-token-identifier: var(--vscode-debugTokenExpression-name, var(--vscode-editor-foreground));
             --lj-token-punctuation: var(--vscode-editor-foreground);
+            --lj-state-cond-pre: var(--lj-token-function);
+            --lj-state-cond-post: var(--lj-token-type);
         }
         body.vscode-light {
             --lj-token-keyword: #0000FF;
@@ -658,6 +660,12 @@ export function getStyles(): string {
             display: inline-block !important;
             font-size: 0.82em !important;
             line-height: 1.2 !important;
+        }
+        .diagram-container .mermaid .edgeLabel .state-cond-pre {
+            color: var(--lj-state-cond-pre) !important;
+        }
+        .diagram-container .mermaid .edgeLabel .state-cond-post {
+            color: var(--lj-state-cond-post) !important;
         }
         .diagram-container .mermaid svg rect,
         .diagram-container .mermaid svg circle,

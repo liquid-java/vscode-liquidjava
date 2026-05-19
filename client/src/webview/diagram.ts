@@ -64,21 +64,21 @@ function getTransitionLabel(label: string, preCond?: string | null, postCond?: s
     }
 
     return [
-        getConditionLabel(preCond),
+        getConditionLabel('pre', preCond),
         escapeMermaidLabel(label),
-        getConditionLabel(postCond)
+        getConditionLabel('post', postCond)
     ].filter(Boolean).join('<br/>');
 }
 
 function getInitialTransitionLabel(postCond?: string | null, showConditions = false): string {
-    return showConditions ? getConditionLabel(postCond) : '';
+    return showConditions ? getConditionLabel('post', postCond) : '';
 }
 
-function getConditionLabel(cond?: string | null): string {
+function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
     if (!cond) {
         return '';
     }
-    return `<span class="state-cond">${escapeMermaidLabel(cond)}</span>`;
+    return `<span class="state-cond state-cond-${kind}">${kind}: ${escapeMermaidLabel(cond)}</span>`;
 }
 
 function escapeMermaidLabel(label: string): string {
