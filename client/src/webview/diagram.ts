@@ -21,7 +21,7 @@ let startY = 0;
  * @param sm 
  * @returns Mermaid diagram string
  */
-export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation: "LR" | "TB"): string {
+export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation: "LR" | "TB", showConditions = false): string {
     if (!sm) return '';
     
     const lines: string[] = [];
@@ -35,14 +35,14 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     
     // initial transitions
     sm.initialTransitions.forEach(transition => {
-        const label = getInitialTransitionLabel(transition.postCond);
+        const label = getInitialTransitionLabel(transition.postCond, showConditions);
         lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
     });
     
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
     sm.transitions.forEach(transition => {
-        const label = getTransitionLabel(transition.label, transition.preCond, transition.postCond);
+        const label = getTransitionLabel(transition.label, transition.preCond, transition.postCond, showConditions);
         const key = `${transition.from}|${transition.to}`;
         if (!transitionMap.has(key)) transitionMap.set(key, []);
         transitionMap.get(key)?.push(label);
@@ -58,7 +58,11 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     return lines.join('\n');
 }
 
-function getTransitionLabel(label: string, preCond?: string | null, postCond?: string | null): string {
+function getTransitionLabel(label: string, preCond?: string | null, postCond?: string | null, showConditions = false): string {
+    if (!showConditions) {
+        return escapeMermaidLabel(label);
+    }
+
     return [
         getConditionLabel(preCond),
         escapeMermaidLabel(label),
@@ -66,8 +70,8 @@ function getTransitionLabel(label: string, preCond?: string | null, postCond?: s
     ].filter(Boolean).join('<br/>');
 }
 
-function getInitialTransitionLabel(postCond?: string | null): string {
-    return getConditionLabel(postCond);
+function getInitialTransitionLabel(postCond?: string | null, showConditions = false): string {
+    return showConditions ? getConditionLabel(postCond) : '';
 }
 
 function getConditionLabel(cond?: string | null): string {

@@ -619,9 +619,12 @@ export function getStyles(): string {
             background: none;
             opacity: 1;
         }
+        .diagram-control-btn.active {
+            opacity: 1;
+        }
         .diagram-control-btn:disabled {
             cursor: default;
-            opacity: 0.8;
+            opacity: 0.35;
         }
         .mermaid .statediagramTitleText {
             font-size: 30px!important;

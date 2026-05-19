@@ -34,6 +34,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let errorAtCursor: RefinementMismatchError;
     let selectedTab: NavTab = 'diagnostics';
     let diagramOrientation: "LR" | "TB" = "TB";
+    let showDiagramConditions = false;
     let currentDiagram: string = '';
     let revealTimeout: ReturnType<typeof setTimeout> | undefined;
     const contextSectionState: ContextSectionState = {
@@ -143,6 +144,15 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             e.stopPropagation();
             diagramOrientation = diagramOrientation === "TB" ? "LR" : "TB";
             resetZoom(document);
+            updateView();
+            return;
+        }
+
+        // toggle diagram conditions
+        if (target.id === 'diagram-conditions-btn') {
+            e.stopPropagation();
+            if ((target as HTMLButtonElement).disabled) return;
+            showDiagramConditions = !showDiagramConditions;
             updateView();
             return;
         }
@@ -260,6 +270,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 break;
             case 'fsm':
                 stateMachine = msg.sm as LJStateMachine;
+                showDiagramConditions = false;
                 if (selectedTab === 'fsm') updateView();
                 break;
             case 'context':
@@ -282,9 +293,9 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 root.innerHTML = renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors);
                 break;
             case 'fsm': {
-                const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
+                const diagram = createMermaidDiagram(stateMachine, diagramOrientation, showDiagramConditions);
                 currentDiagram = diagram;
-                root.innerHTML = renderStateMachineView(stateMachine, diagram, diagramOrientation);
+                root.innerHTML = renderStateMachineView(stateMachine, diagram, diagramOrientation, showDiagramConditions);
                 if (stateMachine) renderMermaidDiagram(document, window);
                 break;
             }
