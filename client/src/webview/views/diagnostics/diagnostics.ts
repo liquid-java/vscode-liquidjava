@@ -1,4 +1,5 @@
 import { LJDiagnostic, LJError, LJWarning } from "../../../types/diagnostics";
+import { renderCodicon } from "../../icons";
 import { renderErrors } from "./errors";
 import { renderMainHeader } from "../sections";
 import { renderWarnings } from "./warnings";
@@ -51,7 +52,7 @@ export function getDisplayDiagnostics(diagnostics: LJDiagnostic[], showAll: bool
 }
 
 export function renderCopyDiagnosticButton(indexType: 'error' | 'warning', index: number): string {
-    return /*html*/`<button class="copy-diagnostic-btn" data-${indexType}-index="${index}" title="Copy diagnostic" aria-label="Copy diagnostic"><span>⎘</span></button>`;
+    return /*html*/`<button class="copy-diagnostic-btn" data-${indexType}-index="${index}" title="Copy diagnostic" aria-label="Copy diagnostic">${renderCodicon("copy")}</button>`;
 }
 
 export async function copyDiagnosticToClipboard(button: any, displayDiagnostics: LJDiagnostic[]) {

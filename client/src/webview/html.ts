@@ -13,6 +13,7 @@ export function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
     const nonce = Date.now().toString();
     const cspSource = webview.cspSource;
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "media", "webview.js"));
+    const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "node_modules", "@vscode", "codicons", "dist", "codicon.css"));
     return /*html*/ `
         <!DOCTYPE html>
         <html lang="en">
@@ -21,8 +22,9 @@ export function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta
                 http-equiv="Content-Security-Policy"
-                content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' https://cdn.jsdelivr.net; connect-src https://cdn.jsdelivr.net;"
+                content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; font-src ${cspSource}; script-src 'nonce-${nonce}' https://cdn.jsdelivr.net; connect-src https://cdn.jsdelivr.net;"
             >
+            <link href="${codiconsUri}" rel="stylesheet">
             <style>${getStyles()}</style>
         </head>
         <body>

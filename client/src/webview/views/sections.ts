@@ -2,6 +2,7 @@ import type { LJDiagnostic, PlacementInCode, SourcePosition, TranslationTable } 
 import { escapeHtml } from "../utils";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
+import { renderCodicon } from "../icons";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
     <div class="header">
@@ -21,7 +22,7 @@ export const renderExpressionSection = (title: string, expression: string): stri
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
     <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
-        <span class="context-toggle-icon">${isExpanded ? '▾' : '▸'}</span>
+        ${renderCodicon(isExpanded ? "chevron-down" : "chevron-right", "context-toggle-icon")}
         <span>${title}</span>
     </button>
     `;

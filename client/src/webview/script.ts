@@ -74,7 +74,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
             const icon = contextToggleButton.querySelector('.context-toggle-icon');
             if (icon) {
-                icon.textContent = nextExpanded ? '▾' : '▸';
+                icon.classList.toggle('codicon-chevron-down', nextExpanded);
+                icon.classList.toggle('codicon-chevron-right', !nextExpanded);
             }
 
             return;
@@ -140,7 +141,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         }
 
         // toggle diagram orientation
-        if (target.id === 'diagram-orientation-btn') {
+        if (target.closest?.('#diagram-orientation-btn')) {
             e.stopPropagation();
             diagramOrientation = diagramOrientation === "TB" ? "LR" : "TB";
             resetZoom(document);
@@ -149,40 +150,42 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         }
 
         // toggle diagram conditions
-        if (target.id === 'diagram-conditions-btn') {
+        const diagramConditionsButton = target.closest?.('#diagram-conditions-btn');
+        if (diagramConditionsButton) {
             e.stopPropagation();
-            if ((target as HTMLButtonElement).disabled) return;
+            if ((diagramConditionsButton as HTMLButtonElement).disabled) return;
             showDiagramConditions = !showDiagramConditions;
             updateView();
             return;
         }
 
         // zoom in
-        if (target.id === 'zoom-in-btn') {
+        if (target.closest?.('#zoom-in-btn')) {
             e.stopPropagation();
             zoomIn(document);
             return;
         }
 
         // zoom out
-        if (target.id === 'zoom-out-btn') {
+        if (target.closest?.('#zoom-out-btn')) {
             e.stopPropagation();
             zoomOut(document);
             return;
         }
 
         // reset zoom
-        if (target.id === 'zoom-reset-btn') {
+        if (target.closest?.('#zoom-reset-btn')) {
             e.stopPropagation();
             resetZoom(document);
             return;
         }
 
         // copy diagram source
-        if (target.id === 'copy-diagram-btn') {
+        const copyDiagramButton = target.closest?.('#copy-diagram-btn');
+        if (copyDiagramButton) {
             e.stopPropagation();
             if (!currentDiagram) return
-            copyDiagramToClipboard(target, currentDiagram);
+            copyDiagramToClipboard(copyDiagramButton, currentDiagram);
             return;
         }
 

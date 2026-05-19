@@ -164,6 +164,16 @@ export function getStyles(): string {
             border-radius: 4px;
             position: relative;
         }
+        .codicon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1em;
+            height: 1em;
+            font-size: 1rem;
+            line-height: 1;
+            pointer-events: none;
+        }
         .copy-diagnostic-btn {
             position: absolute;
             top: 0.5rem;
@@ -179,7 +189,6 @@ export function getStyles(): string {
             border: 1px solid transparent;
             border-radius: 4px;
             opacity: 0.65;
-            font-size: 1.25rem;
             transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
         .copy-diagnostic-btn:hover {
@@ -328,14 +337,18 @@ export function getStyles(): string {
         }
         .reset-btn {
             margin: 0;
-            padding: 0.4rem 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            padding: 0;
             background-color: transparent;
             color: var(--vscode-button-foreground);
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-family: var(--vscode-font-family);
-            font-size: larger;
             flex-shrink: 0;
             opacity: 0.7;
         }
@@ -529,7 +542,6 @@ export function getStyles(): string {
             width: 1rem;
             text-align: center;
             flex-shrink: 0;
-            font-size: larger;
         }
         .context-section-content.collapsed {
             display: none;
@@ -609,12 +621,15 @@ export function getStyles(): string {
             z-index: 10;
         }
         .diagram-control-btn {
-            font-size: clamp(0.75rem, 5vw, 1.5rem);
-            padding: clamp(0.25rem, 1vw, 0.5rem);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            padding: 0;
             color: var(--vscode-foreground);
             background: none;
             border: none;
-            font-family: 'Courier New', Courier, monospace;
             opacity: 0.7;
         }
         .diagram-control-btn:hover {
