@@ -1,6 +1,7 @@
 import type { LJError, RefinementMismatchError } from "../../../types/diagnostics";
 import type { DerivationNode, ValDerivationNode } from "../../../types/derivation-nodes";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../../highlighting";
+import { renderCodicon } from "../../icons";
 import { escapeHtml } from "../../utils";
 
 // Handles rendering and interaction of derivation nodes in refinement errors
@@ -138,7 +139,7 @@ export function renderDerivationNode(
                 ${renderJsonTree(error, node, errorId, "root", expansions)}
                 ${expansions.size === 0 ? '<span class="node-expand-indicator">&nbsp;(click to expand)</span>' : ''}
             </div>
-            <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" ${expansions.size === 0 ? "disabled" : ""}>↻</button>
+            <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" title="Reset derivation" aria-label="Reset derivation" ${expansions.size === 0 ? "disabled" : ""}>${renderCodicon("refresh")}</button>
         </div>
     `;
 }

@@ -1,4 +1,5 @@
 import type { LJStateMachine } from "../types/fsm";
+import { copyToClipboard } from "./clipboard";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -6,7 +7,6 @@ const MAX_ZOOM = 5;
 const ZOOM_BUTTON_FACTOR = 1.5;
 const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
-const COPY_TIMEOUT_MS = 2000;
 
 // state variables
 let zoomLevel = 1;
@@ -51,7 +51,7 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     // add transitions
     transitionMap.forEach((labels, key) => {
         const [from, to] = key.split('|');
-        const mergedLabel = labels.join(', ');
+        const mergedLabel = labels.join('<br/>');
         lines.push(`    ${from} --> ${to} : ${mergedLabel}`);
     });
     
@@ -59,10 +59,7 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
 }
 
 function getTransitionLabel(label: string, preCond?: string | null, postCond?: string | null, showConditions = false): string {
-    if (!showConditions) {
-        return escapeMermaidLabel(label);
-    }
-
+    if (!showConditions) return escapeMermaidLabel(label);
     return [
         getConditionLabel('pre', preCond),
         escapeMermaidLabel(label),
@@ -75,9 +72,8 @@ function getInitialTransitionLabel(postCond?: string | null, showConditions = fa
 }
 
 function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
-    if (!cond) {
-        return '';
-    }
+    if (!cond) return '';
+    
     return `<span class="state-cond state-cond-${kind}">${escapeMermaidLabel(cond)}</span>`;
 }
 
@@ -101,6 +97,8 @@ export async function renderMermaidDiagram(document: any, window: any) {
         await mermaid.run({ nodes: mermaidElements });
         applyTransform(document);
         registerPanListeners(document);
+        const diagramContainer = document.querySelector('.diagram-container') as HTMLElement | null;
+        if (diagramContainer) diagramContainer.style.minHeight = '';
     } catch (e) {
         console.error('Failed to render Mermaid diagram:', e);
     }
@@ -241,20 +239,5 @@ export function registerPanListeners(document: any) {
 }
 
 export async function copyDiagramToClipboard(target: any, diagram: string) {
-    const title = target.getAttribute('title');
-    try {
-        target.disabled = true;
-        await navigator.clipboard.writeText(diagram);
-        target.classList.add('copied');
-        target.setAttribute('title', 'Copied!');
-    } catch (e) {
-        target.setAttribute('title', 'Copy failed');
-    } finally {
-        // reset button after timeout
-        setTimeout(() => {
-            target.setAttribute('title', title);
-            target.classList.remove('copied');
-            target.disabled = false;
-        }, COPY_TIMEOUT_MS);
-    }
+    await copyToClipboard(target, diagram);
 }
