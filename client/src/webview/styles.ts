@@ -11,6 +11,7 @@ export function getStyles(): string {
             height: 100%;
             margin: 0;
             box-sizing: border-box;
+            scrollbar-gutter: stable both-edges;
         }
         #root {
             width: 100%;
@@ -27,7 +28,8 @@ export function getStyles(): string {
             height: 100%;
             padding: 1rem;
             font-family: var(--vscode-font-family);
-            overflow: auto;
+            overflow-x: hidden;
+            overflow-y: auto;
             --lj-token-keyword: var(--vscode-symbolIcon-keywordForeground, var(--vscode-editor-foreground));
             --lj-token-control: var(--vscode-debugTokenExpression-name, var(--vscode-symbolIcon-keywordForeground, var(--vscode-editor-foreground)));
             --lj-token-function: var(--vscode-symbolIcon-functionForeground, var(--vscode-editor-foreground));
