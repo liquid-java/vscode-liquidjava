@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { extension } from "../state";
+import { ExtensionStatus, extension } from "../state";
 
-export type StatusBarState = "loading" | "stopped" | "passed" | "failed";
+export type StatusBarState = ExtensionStatus;
 
  const icons = {
     loading: "$(sync~spin)",
@@ -24,19 +24,24 @@ const statusText = {
 export function registerStatusBar(context: vscode.ExtensionContext) {
     extension.statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
     extension.statusBar.command = "liquidjava.showCommands";
-    updateStatusBar("loading");
+    updateStatusBar("loading", true);
     extension.statusBar.show();
     context.subscriptions.push(extension.statusBar);
 }
 
 /**
  * Updates the status bar with the current state
- * @param state The current state ("loading", "stopped", "passed", "failed")
+ * @param status The current status ("loading", "stopped", "passed", "failed")
+ * @param notifyWebview Whether the webview should reflect this status update.
  */
-export function updateStatusBar(state: StatusBarState) {
-    const color = state === "stopped" ? "errorForeground" : "statusBar.foreground";
+export function updateStatusBar(status: StatusBarState, notifyWebview = status !== "loading") {
+    if (notifyWebview) {
+        extension.status = status;
+        extension.webview?.sendMessage({ type: "status", status });
+    }
+    const color = status === "stopped" ? "errorForeground" : "statusBar.foreground";
     if (!extension.statusBar) return;
     extension.statusBar.color = new vscode.ThemeColor(color);
-    extension.statusBar.text = icons[state] + " LiquidJava";
-    extension.statusBar.tooltip = statusText[state];
+    extension.statusBar.text = icons[status] + " LiquidJava";
+    extension.statusBar.tooltip = statusText[status];
 }
