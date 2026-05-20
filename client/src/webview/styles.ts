@@ -614,8 +614,8 @@ export function getStyles(): string {
         }
         .diagram-controls {
             position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
+            top: 1rem;
+            right: 1rem;
             display: flex;
             gap: 0.5rem;
             z-index: 10;
