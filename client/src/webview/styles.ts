@@ -40,7 +40,7 @@ export function getStyles(): string {
             --lj-token-boolean: var(--vscode-debugTokenExpression-boolean, var(--vscode-symbolIcon-booleanForeground, var(--vscode-editor-foreground)));
             --lj-token-identifier: var(--vscode-debugTokenExpression-name, var(--vscode-editor-foreground));
             --lj-token-punctuation: var(--vscode-editor-foreground);
-            --lj-state-cond-pre: var(--lj-token-function);
+            --lj-state-cond-pre: var(--lj-token-identifier);
             --lj-state-cond-post: var(--lj-token-type);
         }
         body.vscode-light {
