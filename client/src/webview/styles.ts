@@ -673,7 +673,7 @@ export function getStyles(): string {
         .diagram-container .mermaid .edgeLabel .state-cond {
             color: var(--vscode-descriptionForeground) !important;
             display: inline-block !important;
-            font-size: 0.82em !important;
+            font-size: 0.76em !important;
             line-height: 1.2 !important;
         }
         .diagram-container .mermaid .edgeLabel .state-cond-pre {
