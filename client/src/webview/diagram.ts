@@ -51,7 +51,7 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     // add transitions
     transitionMap.forEach((labels, key) => {
         const [from, to] = key.split('|');
-        const mergedLabel = labels.join(', ');
+        const mergedLabel = labels.join('<br/>');
         lines.push(`    ${from} --> ${to} : ${mergedLabel}`);
     });
     
@@ -59,10 +59,7 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
 }
 
 function getTransitionLabel(label: string, preCond?: string | null, postCond?: string | null, showConditions = false): string {
-    if (!showConditions) {
-        return escapeMermaidLabel(label);
-    }
-
+    if (!showConditions) return escapeMermaidLabel(label);
     return [
         getConditionLabel('pre', preCond),
         escapeMermaidLabel(label),
@@ -75,9 +72,8 @@ function getInitialTransitionLabel(postCond?: string | null, showConditions = fa
 }
 
 function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
-    if (!cond) {
-        return '';
-    }
+    if (!cond) return '';
+    
     return `<span class="state-cond state-cond-${kind}">${escapeMermaidLabel(cond)}</span>`;
 }
 
