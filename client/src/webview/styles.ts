@@ -620,6 +620,23 @@ export function getStyles(): string {
             gap: 0.5rem;
             z-index: 10;
         }
+        .diagram-condition-legend {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .diagram-condition-legend-pre {
+            color: var(--lj-state-cond-pre);
+        }
+        .diagram-condition-legend-post {
+            color: var(--lj-state-cond-post);
+        }
         .diagram-control-btn {
             display: inline-flex;
             align-items: center;

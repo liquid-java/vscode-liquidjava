@@ -30,6 +30,12 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                             ${renderCodiconButton(showConditions ? "collapse-all" : "expand-all", { id: "diagram-conditions-btn", className: `diagram-control-btn${showConditions ? ' active' : ''}`, title: conditionToggleLabel, attributes: `aria-pressed="${showConditions ? 'true' : 'false'}"`, disabled: !hasConditionExpansions })}
                             ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
                         </div>
+                        ${showConditions && hasConditionExpansions ? /*html*/`
+                            <div class="diagram-condition-legend">
+                                <span class="diagram-condition-legend-pre">Precondition</span>
+                                <span class="diagram-condition-legend-post">Postcondition</span>
+                            </div>
+                        ` : ''}
                         <div id="diagram-wrapper" class="diagram-wrapper">
                             <pre class="mermaid">${diagram}</pre>
                         </div>
