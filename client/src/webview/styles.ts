@@ -423,6 +423,37 @@ export function getStyles(): string {
         .info {
             margin: 1rem 0;
         }
+        .stopped-view {
+            display: flex;
+            min-height: calc(100vh - 2rem);
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.75rem;
+            padding-top: 2rem;
+            text-align: center;
+            color: var(--vscode-foreground);
+        }
+        .stopped-view h2 {
+            margin: 0;
+        }
+        .stopped-view .info {
+            max-width: 28rem;
+            color: var(--vscode-descriptionForeground);
+        }
+        .stopped-status-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            border: 1px solid var(--vscode-errorForeground);
+            border-radius: 50%;
+            color: var(--vscode-errorForeground);
+            font-weight: 700;
+            font-size: 1.35rem;
+            line-height: 1;
+        }
         .more-indicator {
             text-align: center;
             font-size: 0.8rem;
