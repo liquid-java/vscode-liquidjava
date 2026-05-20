@@ -279,7 +279,6 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 break;
             case 'fsm':
                 stateMachine = msg.sm as LJStateMachine;
-                showDiagramConditions = false;
                 if (selectedTab === 'fsm') updateView();
                 break;
             case 'context':
