@@ -304,7 +304,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             case 'fsm': {
                 const diagram = createMermaidDiagram(stateMachine, diagramOrientation, showDiagramConditions);
                 currentDiagram = diagram;
-                root.innerHTML = renderStateMachineView(stateMachine, diagram, diagramOrientation, showDiagramConditions);
+                renderStateMachineView(root, stateMachine, diagram, diagramOrientation, showDiagramConditions);
                 if (stateMachine) renderMermaidDiagram(document, window);
                 break;
             }

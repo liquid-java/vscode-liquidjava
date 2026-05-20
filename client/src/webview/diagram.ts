@@ -101,6 +101,8 @@ export async function renderMermaidDiagram(document: any, window: any) {
         await mermaid.run({ nodes: mermaidElements });
         applyTransform(document);
         registerPanListeners(document);
+        const diagramContainer = document.querySelector('.diagram-container') as HTMLElement | null;
+        if (diagramContainer) diagramContainer.style.minHeight = '';
     } catch (e) {
         console.error('Failed to render Mermaid diagram:', e);
     }

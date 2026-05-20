@@ -2,7 +2,13 @@ import type { LJStateMachine } from "../../../types/fsm";
 import { renderCodiconButton } from "../../icons";
 import { renderMainHeader } from "../sections";
 
-export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean): string {
+export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean) {
+    const previousDiagramContainer = root.querySelector('.diagram-container') as HTMLElement | null;
+    const diagramHeight = previousDiagramContainer?.offsetHeight;
+    root.innerHTML = renderStateMachineViewHtml(sm, diagram, orientation, showConditions, diagramHeight);
+}
+
+function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, diagramHeight?: number): string {
     const initialStateNames = sm ? [...new Set(sm.initialTransitions.map(transition => transition.to))] : [];
     const hasConditionExpansions = sm
         ? sm.initialTransitions.some(transition => !!transition.postCond)
@@ -15,7 +21,7 @@ export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: 
             ${renderMainHeader("", 'fsm')}
             ${sm ? /*html*/`
                 <div class="diagram-section">
-                    <div class="diagram-container">
+                    <div class="diagram-container"${diagramHeight ? ` style="min-height: ${diagramHeight}px"` : ''}>
                         <div class="diagram-controls">
                             ${renderCodiconButton("zoom-in", { id: "zoom-in-btn", className: "diagram-control-btn", title: "Zoom In" })}
                             ${renderCodiconButton("zoom-out", { id: "zoom-out-btn", className: "diagram-control-btn", title: "Zoom Out" })}
