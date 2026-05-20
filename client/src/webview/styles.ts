@@ -630,6 +630,7 @@ export function getStyles(): string {
             font-size: 0.8rem;
             z-index: 10;
             pointer-events: none;
+            font-weight: 500;
         }
         .diagram-condition-legend-pre {
             color: var(--lj-state-cond-pre);
