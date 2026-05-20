@@ -11,6 +11,7 @@ export function getStyles(): string {
             height: 100%;
             margin: 0;
             box-sizing: border-box;
+            scrollbar-gutter: stable both-edges;
         }
         #root {
             width: 100%;
@@ -27,7 +28,8 @@ export function getStyles(): string {
             height: 100%;
             padding: 1rem;
             font-family: var(--vscode-font-family);
-            overflow: auto;
+            overflow-x: hidden;
+            overflow-y: auto;
             --lj-token-keyword: var(--vscode-symbolIcon-keywordForeground, var(--vscode-editor-foreground));
             --lj-token-control: var(--vscode-debugTokenExpression-name, var(--vscode-symbolIcon-keywordForeground, var(--vscode-editor-foreground)));
             --lj-token-function: var(--vscode-symbolIcon-functionForeground, var(--vscode-editor-foreground));
@@ -38,6 +40,8 @@ export function getStyles(): string {
             --lj-token-boolean: var(--vscode-debugTokenExpression-boolean, var(--vscode-symbolIcon-booleanForeground, var(--vscode-editor-foreground)));
             --lj-token-identifier: var(--vscode-debugTokenExpression-name, var(--vscode-editor-foreground));
             --lj-token-punctuation: var(--vscode-editor-foreground);
+            --lj-state-cond-pre: var(--lj-token-identifier);
+            --lj-state-cond-post: var(--lj-token-type);
         }
         body.vscode-light {
             --lj-token-keyword: #0000FF;
@@ -162,6 +166,16 @@ export function getStyles(): string {
             border-radius: 4px;
             position: relative;
         }
+        .codicon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1em;
+            height: 1em;
+            font-size: 1rem;
+            line-height: 1;
+            pointer-events: none;
+        }
         .copy-diagnostic-btn {
             position: absolute;
             top: 0.5rem;
@@ -177,7 +191,6 @@ export function getStyles(): string {
             border: 1px solid transparent;
             border-radius: 4px;
             opacity: 0.65;
-            font-size: 1.25rem;
             transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
         .copy-diagnostic-btn:hover {
@@ -189,15 +202,15 @@ export function getStyles(): string {
             opacity: 0.8;
             cursor: default;
         }
-        .copied {
-            animation: copy-diagnostic-pop 0.42s ease-out;
+        .icon-button-pop {
+            animation: icon-button-pop 0.28s ease-out;
         }
-        @keyframes copy-diagnostic-pop {
+        @keyframes icon-button-pop {
             0% {
-                transform: scale(0.8);
+                transform: scale(0.96);
             }
-            45% {
-                transform: scale(1.18);
+            55% {
+                transform: scale(1.05);
             }
             100% {
                 transform: scale(1);
@@ -326,14 +339,18 @@ export function getStyles(): string {
         }
         .reset-btn {
             margin: 0;
-            padding: 0.4rem 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            padding: 0;
             background-color: transparent;
             color: var(--vscode-button-foreground);
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-family: var(--vscode-font-family);
-            font-size: larger;
             flex-shrink: 0;
             opacity: 0.7;
         }
@@ -422,6 +439,37 @@ export function getStyles(): string {
         }
         .info {
             margin: 1rem 0;
+        }
+        .stopped-view {
+            display: flex;
+            min-height: calc(100vh - 2rem);
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.75rem;
+            padding-top: 2rem;
+            text-align: center;
+            color: var(--vscode-foreground);
+        }
+        .stopped-view h2 {
+            margin: 0;
+        }
+        .stopped-view .info {
+            max-width: 28rem;
+            color: var(--vscode-descriptionForeground);
+        }
+        .stopped-status-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            border: 1px solid var(--vscode-errorForeground);
+            border-radius: 50%;
+            color: var(--vscode-errorForeground);
+            font-weight: 700;
+            font-size: 1.35rem;
+            line-height: 1;
         }
         .more-indicator {
             text-align: center;
@@ -527,7 +575,6 @@ export function getStyles(): string {
             width: 1rem;
             text-align: center;
             flex-shrink: 0;
-            font-size: larger;
         }
         .context-section-content.collapsed {
             display: none;
@@ -600,28 +647,52 @@ export function getStyles(): string {
         }
         .diagram-controls {
             position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
+            top: 1rem;
+            right: 1rem;
             display: flex;
             gap: 0.5rem;
             z-index: 10;
         }
+        .diagram-condition-legend {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            z-index: 10;
+            pointer-events: none;
+            font-weight: 500;
+        }
+        .diagram-condition-legend-pre {
+            color: var(--lj-state-cond-pre);
+        }
+        .diagram-condition-legend-post {
+            color: var(--lj-state-cond-post);
+        }
         .diagram-control-btn {
-            font-size: clamp(0.75rem, 5vw, 1.5rem);
-            padding: clamp(0.25rem, 1vw, 0.5rem);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            padding: 0;
             color: var(--vscode-foreground);
             background: none;
             border: none;
-            font-family: 'Courier New', Courier, monospace;
             opacity: 0.7;
         }
         .diagram-control-btn:hover {
             background: none;
             opacity: 1;
         }
+        .diagram-control-btn.active {
+            opacity: 1;
+        }
         .diagram-control-btn:disabled {
             cursor: default;
-            opacity: 0.8;
+            opacity: 0.35;
         }
         .mermaid .statediagramTitleText {
             font-size: 30px!important;
@@ -649,6 +720,18 @@ export function getStyles(): string {
         .diagram-container .mermaid .edgeLabel div {
             color: var(--vscode-foreground) !important;
             background: var(--vscode-editor-background) !important;
+        }
+        .diagram-container .mermaid .edgeLabel .state-cond {
+            color: var(--vscode-descriptionForeground) !important;
+            display: inline-block !important;
+            font-size: 0.76em !important;
+            line-height: 1.2 !important;
+        }
+        .diagram-container .mermaid .edgeLabel .state-cond-pre {
+            color: var(--lj-state-cond-pre) !important;
+        }
+        .diagram-container .mermaid .edgeLabel .state-cond-post {
+            color: var(--lj-state-cond-post) !important;
         }
         .diagram-container .mermaid svg rect,
         .diagram-container .mermaid svg circle,

@@ -1,4 +1,5 @@
 import type { LJStateMachine } from "../types/fsm";
+import { copyToClipboard } from "./clipboard";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -6,7 +7,6 @@ const MAX_ZOOM = 5;
 const ZOOM_BUTTON_FACTOR = 1.5;
 const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
-const COPY_TIMEOUT_MS = 2000;
 
 // state variables
 let zoomLevel = 1;
@@ -21,7 +21,7 @@ let startY = 0;
  * @param sm 
  * @returns Mermaid diagram string
  */
-export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation: "LR" | "TB"): string {
+export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation: "LR" | "TB", showConditions = false): string {
     if (!sm) return '';
     
     const lines: string[] = [];
@@ -33,27 +33,52 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
     
-    // initial states
-    sm.initialStates.forEach(state => {
-        lines.push(`    [*] --> ${state}`);
+    // initial transitions
+    sm.initialTransitions.forEach(transition => {
+        const label = getInitialTransitionLabel(transition.postCond, showConditions);
+        lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
     });
     
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
     sm.transitions.forEach(transition => {
+        const label = getTransitionLabel(transition.label, transition.preCond, transition.postCond, showConditions);
         const key = `${transition.from}|${transition.to}`;
         if (!transitionMap.has(key)) transitionMap.set(key, []);
-        transitionMap.get(key)?.push(transition.label);
+        transitionMap.get(key)?.push(label);
     });
 
     // add transitions
     transitionMap.forEach((labels, key) => {
         const [from, to] = key.split('|');
-        const mergedLabel = labels.join(', ');
+        const mergedLabel = labels.join('<br/>');
         lines.push(`    ${from} --> ${to} : ${mergedLabel}`);
     });
     
     return lines.join('\n');
+}
+
+function getTransitionLabel(label: string, preCond?: string | null, postCond?: string | null, showConditions = false): string {
+    if (!showConditions) return escapeMermaidLabel(label);
+    return [
+        getConditionLabel('pre', preCond),
+        escapeMermaidLabel(label),
+        getConditionLabel('post', postCond)
+    ].filter(Boolean).join('<br/>');
+}
+
+function getInitialTransitionLabel(postCond?: string | null, showConditions = false): string {
+    return showConditions ? getConditionLabel('post', postCond) : '';
+}
+
+function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
+    if (!cond) return '';
+    
+    return `<span class="state-cond state-cond-${kind}">${escapeMermaidLabel(cond)}</span>`;
+}
+
+function escapeMermaidLabel(label: string): string {
+    return label.replace(/&/g, '&amp;').replace(/"/g, '\\"').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
@@ -72,6 +97,8 @@ export async function renderMermaidDiagram(document: any, window: any) {
         await mermaid.run({ nodes: mermaidElements });
         applyTransform(document);
         registerPanListeners(document);
+        const diagramContainer = document.querySelector('.diagram-container') as HTMLElement | null;
+        if (diagramContainer) diagramContainer.style.minHeight = '';
     } catch (e) {
         console.error('Failed to render Mermaid diagram:', e);
     }
@@ -212,20 +239,5 @@ export function registerPanListeners(document: any) {
 }
 
 export async function copyDiagramToClipboard(target: any, diagram: string) {
-    const title = target.getAttribute('title');
-    try {
-        target.disabled = true;
-        await navigator.clipboard.writeText(diagram);
-        target.classList.add('copied');
-        target.setAttribute('title', 'Copied!');
-    } catch (e) {
-        target.setAttribute('title', 'Copy failed');
-    } finally {
-        // reset button after timeout
-        setTimeout(() => {
-            target.setAttribute('title', title);
-            target.classList.remove('copied');
-            target.disabled = false;
-        }, COPY_TIMEOUT_MS);
-    }
+    await copyToClipboard(target, diagram);
 }

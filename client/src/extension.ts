@@ -52,6 +52,7 @@ export async function startExtension(context: vscode.ExtensionContext) {
         return;
     }
     extension.logger!.client.info("Starting LiquidJava...");
+    updateStatusBar("loading");
 
     // find java executable path
     const javaExecutablePath = findJavaExecutable();

@@ -1,10 +1,12 @@
 import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/diagnostics/derivation-nodes";
 import { renderLoading } from "./views/loading";
+import { renderStopped } from "./views/stopped";
 import { renderStateMachineView } from "./views/fsm/fsm";
 import { createMermaidDiagram, renderMermaidDiagram, resetZoom, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
 import type { LJDiagnostic, RefinementMismatchError } from "../types/diagnostics";
 import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
+import type { ExtensionStatus } from "../state";
 import type { NavTab } from "./views/sections";
 import { copyDiagnosticToClipboard, getDisplayDiagnostics, renderDiagnosticsView } from "./views/diagnostics/diagnostics";
 import type { LJContext } from "../types/context";
@@ -25,7 +27,7 @@ type VSCodeApi = {
 export function getScript(vscode: VSCodeApi, document: Document, window: Window) {
     const root = document.getElementById('root')!;
     if (!root) return;
-    let diagnostics: LJDiagnostic[] = [];
+    let diagnostics: LJDiagnostic[] | undefined;
     let showAllDiagnostics = false;
     let currentFile: string;
     const expandedErrors = new Set<number>();
@@ -33,7 +35,9 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let context: LJContext;
     let errorAtCursor: RefinementMismatchError;
     let selectedTab: NavTab = 'diagnostics';
+    let status: ExtensionStatus = 'loading';
     let diagramOrientation: "LR" | "TB" = "TB";
+    let showDiagramConditions = false;
     let currentDiagram: string = '';
     let revealTimeout: ReturnType<typeof setTimeout> | undefined;
     const contextSectionState: ContextSectionState = {
@@ -50,6 +54,12 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     root.addEventListener('click', (e: MouseEvent) => {
         const target = e.target instanceof Element ? e.target : null;
         if (!target) return;
+        const iconButton = target.closest?.('.icon-button');
+        if (iconButton && !(iconButton as HTMLButtonElement).disabled) {
+            iconButton.classList.remove('icon-button-pop');
+            void (iconButton as HTMLElement).offsetWidth;
+            iconButton.classList.add('icon-button-pop');
+        }
 
         // context section toggle
         const contextToggleButton = target.closest?.('.context-toggle-btn');
@@ -73,7 +83,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
             const icon = contextToggleButton.querySelector('.context-toggle-icon');
             if (icon) {
-                icon.textContent = nextExpanded ? '▾' : '▸';
+                icon.classList.toggle('codicon-triangle-down', nextExpanded);
+                icon.classList.toggle('codicon-triangle-right', !nextExpanded);
             }
 
             return;
@@ -139,7 +150,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         }
 
         // toggle diagram orientation
-        if (target.id === 'diagram-orientation-btn') {
+        if (target.closest?.('#diagram-orientation-btn')) {
             e.stopPropagation();
             diagramOrientation = diagramOrientation === "TB" ? "LR" : "TB";
             resetZoom(document);
@@ -147,32 +158,43 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
+        // toggle diagram conditions
+        const diagramConditionsButton = target.closest?.('#diagram-conditions-btn');
+        if (diagramConditionsButton) {
+            e.stopPropagation();
+            if ((diagramConditionsButton as HTMLButtonElement).disabled) return;
+            showDiagramConditions = !showDiagramConditions;
+            updateView();
+            return;
+        }
+
         // zoom in
-        if (target.id === 'zoom-in-btn') {
+        if (target.closest?.('#zoom-in-btn')) {
             e.stopPropagation();
             zoomIn(document);
             return;
         }
 
         // zoom out
-        if (target.id === 'zoom-out-btn') {
+        if (target.closest?.('#zoom-out-btn')) {
             e.stopPropagation();
             zoomOut(document);
             return;
         }
 
         // reset zoom
-        if (target.id === 'zoom-reset-btn') {
+        if (target.closest?.('#zoom-reset-btn')) {
             e.stopPropagation();
             resetZoom(document);
             return;
         }
 
         // copy diagram source
-        if (target.id === 'copy-diagram-btn') {
+        const copyDiagramButton = target.closest?.('#copy-diagram-btn');
+        if (copyDiagramButton) {
             e.stopPropagation();
             if (!currentDiagram) return
-            copyDiagramToClipboard(target, currentDiagram);
+            copyDiagramToClipboard(copyDiagramButton, currentDiagram);
             return;
         }
 
@@ -241,7 +263,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (diagnosticCopyBtn) {
             e.preventDefault();
             e.stopPropagation();
-            copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics, showAllDiagnostics, currentFile));
+            copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics || [], showAllDiagnostics, currentFile));
             return;
         }
     });
@@ -250,16 +272,21 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     window.addEventListener('message', event => {
         const msg = event.data;
         switch (msg.type) {
+            case 'status':
+                status = msg.status as ExtensionStatus;
+                updateView();
+                break;
             case 'diagnostics':
                 diagnostics = msg.diagnostics as LJDiagnostic[];
                 if (selectedTab === 'diagnostics') updateView();
                 break;
             case 'file':
                 currentFile = msg.file;
-                if (!showAllDiagnostics && selectedTab === 'diagnostics') updateView();
+                if (diagnostics && !showAllDiagnostics && selectedTab === 'diagnostics') updateView();
                 break;
             case 'fsm':
                 stateMachine = msg.sm as LJStateMachine;
+                showDiagramConditions = false;
                 if (selectedTab === 'fsm') updateView();
                 break;
             case 'context':
@@ -277,14 +304,27 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
      * Updates the webview content based on the current state
      */
     function updateView() {
+        if (status === 'stopped') {
+            currentDiagram = '';
+            root.innerHTML = renderStopped();
+            return;
+        }
+        if (status === 'loading') {
+            currentDiagram = '';
+            root.innerHTML = renderLoading();
+            return;
+        }
+
         switch (selectedTab) {
             case 'diagnostics':
-                root.innerHTML = renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors);
+                root.innerHTML = diagnostics
+                    ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors)
+                    : renderLoading();
                 break;
             case 'fsm': {
-                const diagram = createMermaidDiagram(stateMachine, diagramOrientation);
+                const diagram = createMermaidDiagram(stateMachine, diagramOrientation, showDiagramConditions);
                 currentDiagram = diagram;
-                root.innerHTML = renderStateMachineView(stateMachine, diagram, diagramOrientation);
+                renderStateMachineView(root, stateMachine, diagram, diagramOrientation, showDiagramConditions);
                 if (stateMachine) renderMermaidDiagram(document, window);
                 break;
             }

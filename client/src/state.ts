@@ -8,6 +8,8 @@ import type { LJDiagnostic, RefinementMismatchError } from "./types/diagnostics"
 import type { LJStateMachine } from "./types/fsm";
 import { LJContext, Range } from "./types/context";
 
+export type ExtensionStatus = "loading" | "stopped" | "passed" | "failed";
+
 export class ExtensionState {
     // server/client state
     serverProcess?: child_process.ChildProcess;
@@ -18,6 +20,7 @@ export class ExtensionState {
     logger?: LiquidJavaLogger;
     statusBar?: vscode.StatusBarItem;
     webview?: LiquidJavaWebviewProvider;
+    status?: ExtensionStatus;
     
     // application state
     file?: string;
