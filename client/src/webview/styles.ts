@@ -38,6 +38,8 @@ export function getStyles(): string {
             --lj-token-boolean: var(--vscode-debugTokenExpression-boolean, var(--vscode-symbolIcon-booleanForeground, var(--vscode-editor-foreground)));
             --lj-token-identifier: var(--vscode-debugTokenExpression-name, var(--vscode-editor-foreground));
             --lj-token-punctuation: var(--vscode-editor-foreground);
+            --lj-state-cond-pre: var(--lj-token-function);
+            --lj-state-cond-post: var(--lj-token-type);
         }
         body.vscode-light {
             --lj-token-keyword: #0000FF;
@@ -650,9 +652,12 @@ export function getStyles(): string {
             background: none;
             opacity: 1;
         }
+        .diagram-control-btn.active {
+            opacity: 1;
+        }
         .diagram-control-btn:disabled {
             cursor: default;
-            opacity: 0.8;
+            opacity: 0.35;
         }
         .mermaid .statediagramTitleText {
             font-size: 30px!important;
@@ -680,6 +685,18 @@ export function getStyles(): string {
         .diagram-container .mermaid .edgeLabel div {
             color: var(--vscode-foreground) !important;
             background: var(--vscode-editor-background) !important;
+        }
+        .diagram-container .mermaid .edgeLabel .state-cond {
+            color: var(--vscode-descriptionForeground) !important;
+            display: inline-block !important;
+            font-size: 0.82em !important;
+            line-height: 1.2 !important;
+        }
+        .diagram-container .mermaid .edgeLabel .state-cond-pre {
+            color: var(--lj-state-cond-pre) !important;
+        }
+        .diagram-container .mermaid .edgeLabel .state-cond-post {
+            color: var(--lj-state-cond-post) !important;
         }
         .diagram-container .mermaid svg rect,
         .diagram-container .mermaid svg circle,

@@ -1,7 +1,15 @@
 import type { LJStateMachine } from "../../../types/fsm";
 import { renderMainHeader } from "../sections";
 
-export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB"): string {
+export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean): string {
+    const initialStateNames = sm ? [...new Set(sm.initialTransitions.map(transition => transition.to))] : [];
+    const hasConditionExpansions = sm
+        ? sm.initialTransitions.some(transition => !!transition.postCond)
+            || sm.transitions.some(transition => !!transition.preCond || !!transition.postCond)
+        : false;
+    const conditionToggleLabel = showConditions ? 'Collapse Conditions' : 'Expand Conditions';
+    const conditionToggleIcon = showConditions ? '⊟' : '⊞';
+
     return /*html*/`
         <div>
             ${renderMainHeader("", 'fsm')}
@@ -13,6 +21,7 @@ export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: 
                             <button id="zoom-out-btn" class="diagram-control-btn" title="Zoom Out">-</button>
                             <button id="zoom-reset-btn" class="diagram-control-btn" title="Reset Zoom">⟲</button>
                             <button id="diagram-orientation-btn" class="diagram-control-btn" title="Rotate Diagram">${orientation === "TB" ? "↓" : "→"}</button>
+                            <button id="diagram-conditions-btn" class="diagram-control-btn${showConditions ? ' active' : ''}" title="${conditionToggleLabel}" aria-label="${conditionToggleLabel}" aria-pressed="${showConditions ? 'true' : 'false'}" ${hasConditionExpansions ? '' : 'disabled'}>${conditionToggleIcon}</button>
                             <button id="copy-diagram-btn" class="diagram-control-btn" title="Copy Mermaid Source">⎘</button>
                         </div>
                         <div id="diagram-wrapper" class="diagram-wrapper">
@@ -21,9 +30,9 @@ export function renderStateMachineView(sm: LJStateMachine | undefined, diagram: 
                     </div>
                     <div>
                         <p><strong>States:</strong> ${sm.states.join(', ')}</p>
-                        <p><strong>Initial state${sm.initialStates.length > 1 ? 's' : ''}:</strong> ${sm.initialStates.join(', ')}</p>
+                        <p><strong>Initial state${initialStateNames.length > 1 ? 's' : ''}:</strong> ${initialStateNames.join(', ')}</p>
                         <p><strong>Number of states:</strong> ${sm.states.length}</p>
-                        <p><strong>Number of transitions:</strong> ${sm.transitions.length + 1}</p>
+                        <p><strong>Number of transitions:</strong> ${sm.transitions.length + sm.initialTransitions.length}</p>
                     </div>
                 </div>`
             : 'No state machine available for the current file'}

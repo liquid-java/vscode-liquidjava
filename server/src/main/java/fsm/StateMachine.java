@@ -7,7 +7,7 @@ import java.util.List;
  */
 public record StateMachine(
     String className,
-    List<String> initialStates,
     List<String> states,
-    List<StateMachineTransition> transitions
+    List<StateMachineTransition> transitions,
+    List<StateMachineInitialTransition> initialTransitions
 ) { }

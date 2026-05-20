@@ -21,7 +21,7 @@ let startY = 0;
  * @param sm 
  * @returns Mermaid diagram string
  */
-export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation: "LR" | "TB"): string {
+export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation: "LR" | "TB", showConditions = false): string {
     if (!sm) return '';
     
     const lines: string[] = [];
@@ -33,17 +33,19 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
     
-    // initial states
-    sm.initialStates.forEach(state => {
-        lines.push(`    [*] --> ${state}`);
+    // initial transitions
+    sm.initialTransitions.forEach(transition => {
+        const label = getInitialTransitionLabel(transition.postCond, showConditions);
+        lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
     });
     
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
     sm.transitions.forEach(transition => {
+        const label = getTransitionLabel(transition.label, transition.preCond, transition.postCond, showConditions);
         const key = `${transition.from}|${transition.to}`;
         if (!transitionMap.has(key)) transitionMap.set(key, []);
-        transitionMap.get(key)?.push(transition.label);
+        transitionMap.get(key)?.push(label);
     });
 
     // add transitions
@@ -54,6 +56,33 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     });
     
     return lines.join('\n');
+}
+
+function getTransitionLabel(label: string, preCond?: string | null, postCond?: string | null, showConditions = false): string {
+    if (!showConditions) {
+        return escapeMermaidLabel(label);
+    }
+
+    return [
+        getConditionLabel('pre', preCond),
+        escapeMermaidLabel(label),
+        getConditionLabel('post', postCond)
+    ].filter(Boolean).join('<br/>');
+}
+
+function getInitialTransitionLabel(postCond?: string | null, showConditions = false): string {
+    return showConditions ? getConditionLabel('post', postCond) : '';
+}
+
+function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
+    if (!cond) {
+        return '';
+    }
+    return `<span class="state-cond state-cond-${kind}">${escapeMermaidLabel(cond)}</span>`;
+}
+
+function escapeMermaidLabel(label: string): string {
+    return label.replace(/&/g, '&amp;').replace(/"/g, '\\"').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
