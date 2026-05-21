@@ -265,7 +265,6 @@ export function getStyles(): string {
         }
         .node-var {
             color: var(--lj-token-identifier);
-            position: relative;
         }
         .node-value {
             color: var(--vscode-editor-foreground);
