@@ -40,10 +40,14 @@ jobs:
       - name: Install vsce
         run: npm install -g @vscode/vsce
 
+      - name: Package extension
+        working-directory: ./client
+        run: vsce package --no-dependencies --out liquid-java.vsix
+
       - name: Publish to VS Code Marketplace
         working-directory: ./client
-        run: vsce publish -p ${{ secrets.VSCE_TOKEN }}
+        run: vsce publish --packagePath liquid-java.vsix -p ${{ secrets.VSCE_TOKEN }}
 
-      - name: Publish to Open VSX Marketplace
-        working-directory: ./client
-        run: npx ovsx publish --pat ${{ secrets.OVSX_TOKEN }}
+      # - name: Publish to Open VSX Marketplace
+      #   working-directory: ./client
+      #   run: npx ovsx publish liquid-java.vsix --pat ${{ secrets.OVSX_TOKEN }}
