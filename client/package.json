@@ -2,7 +2,7 @@
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
 	"description": "Extending Java with Liquid Types",
-	"version": "0.0.84",
+	"version": "0.0.85",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
@@ -163,6 +163,9 @@
 		"test": "node ./out/test/runTest.js"
 	},
 	"extensionDependencies": [],
+	"dependencies": {
+		"@vscode/codicons": "^0.0.45"
+	},
 	"devDependencies": {
 		"@types/mkdirp": "^0.5.2",
 		"@types/node": "^24.7.2",
@@ -170,7 +173,6 @@
 		"@types/vscode": "^1.82.0",
 		"@typescript-eslint/eslint-plugin": "^4.16.0",
 		"@typescript-eslint/parser": "^4.16.0",
-		"@vscode/codicons": "^0.0.45",
 		"eslint": "^7.21.0",
 		"ftp": "^0.3.10",
 		"get-port": "^5.1.1",
