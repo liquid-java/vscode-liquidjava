@@ -9,7 +9,7 @@ import { registerWebview } from "./services/webview";
 import { registerHover } from "./services/hover";
 import { registerEvents } from "./services/events";
 import { registerAutocomplete } from "./services/autocomplete";
-import { registerCodeLens } from "./services/codelens";
+import { refreshCodeLenses, registerCodeLens } from "./services/codelens";
 import { runLanguageServer, stopLanguageServer } from "./lsp/server";
 import { runClient, stopClient } from "./lsp/client";
 
@@ -39,6 +39,7 @@ export async function deactivate() {
     extension.logger?.client.info("Deactivating LiquidJava extension...");
     await stopClient("Extension was deactivated");
     await stopLanguageServer();
+    resetExtension();
 }
 
 /**
@@ -82,6 +83,7 @@ export async function stopExtension() {
         return;
     }
     extension.logger?.client.info("Stopping LiquidJava...");
+    resetExtension();
     await stopClient("Extension stop command");
     await stopLanguageServer();
 }
@@ -102,4 +104,17 @@ export async function restartExtension(context: vscode.ExtensionContext) {
     
     // start again
     await startExtension(context);
+}
+
+export function isExtensionRunning(): boolean {
+    return extension.status !== "stopped" && Boolean(extension.client);
+}
+
+export function resetExtension() {
+    extension.diagnostics = [];
+    extension.errorAtCursor = undefined;
+    refreshCodeLenses();
+    extension.webview?.sendMessage({ type: "diagnostics", diagnostics: [] });
+    if (extension.context)
+        extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }

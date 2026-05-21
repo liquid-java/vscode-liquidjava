@@ -4,6 +4,7 @@ import type { LJVariable, LJContext, LJGhost, LJAlias } from "../types/context";
 import { getSimpleName } from "../utils/utils";
 import { LIQUIDJAVA_ANNOTATION_START, LJAnnotation } from "../utils/constants";
 import { filterDuplicateVariables, filterInstanceVariables } from "./context";
+import { isExtensionRunning } from "../extension";
 
 type CompletionItemOptions = {
     name: string;
@@ -25,6 +26,8 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider("java", {
             provideCompletionItems(document, position, _token, completionContext) {
+                if (!isExtensionRunning()) return null;
+
                 const annotation = getActiveLiquidJavaAnnotation(document, position);
                 if (!annotation || !extension.context) return null;
 
