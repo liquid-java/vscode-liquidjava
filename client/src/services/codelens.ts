@@ -3,6 +3,7 @@ import { extension } from "../state";
 import type { LJDiagnostic } from "../types/diagnostics";
 import { getDiagnosticRevealTarget } from "../webview/diagnostic-reveal";
 import { normalizeFilePath } from "../utils/utils";
+import { isExtensionRunning } from "../extension";
 
 const codeLensEmitter = new vscode.EventEmitter<void>();
 
@@ -11,6 +12,8 @@ export function registerCodeLens(context: vscode.ExtensionContext) {
         vscode.languages.registerCodeLensProvider("java", {
             onDidChangeCodeLenses: codeLensEmitter.event,
             provideCodeLenses(document) {
+                if (!isExtensionRunning()) return [];
+
                 const file = normalizeFilePath(document.uri.fsPath);
                 return (extension.diagnostics || [])
                     .map(diagnostic => createDiagnosticCodeLens(diagnostic, file))

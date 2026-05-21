@@ -4,6 +4,7 @@ import type { LJMethod, LJVariable } from '../types/context';
 import { getSelectionContextVariables } from './context';
 import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
 import { definitionMatchesClass, getDefinitions } from './definition';
+import { isExtensionRunning } from '../extension';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -11,6 +12,8 @@ import { definitionMatchesClass, getDefinitions } from './definition';
 export function registerHover() {
     vscode.languages.registerHoverProvider('java', {
         async provideHover(document, position) {
+            if (!isExtensionRunning()) return null;
+
             const hoverContent = new vscode.MarkdownString();
             hoverContent.isTrusted = true;
 
