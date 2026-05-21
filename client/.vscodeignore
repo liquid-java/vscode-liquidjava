@@ -15,9 +15,6 @@ package-lock.json
 # Build artifacts
 out/**
 node_modules/**
-node_modules/@vscode/codicons/**
-!node_modules/@vscode/codicons/dist/codicon.css
-!node_modules/@vscode/codicons/dist/codicon.ttf
 *.vsix
 dist/**/*.map
 media/**/*.map

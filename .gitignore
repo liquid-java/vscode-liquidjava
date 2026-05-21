@@ -92,6 +92,7 @@ spooned/
 
 # Build and distribution
 dist/
+client/media/codicons/
 coverage/
 .env
 .env.local

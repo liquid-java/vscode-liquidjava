@@ -16,6 +16,20 @@ const createTsRule = () => ({
   ]
 });
 
+const copyCodiconsAssets = () => {
+  const codiconsDist = path.resolve(__dirname, 'node_modules', '@vscode', 'codicons', 'dist');
+  const codiconsDest = path.resolve(__dirname, 'media', 'codicons');
+  const assets = ['codicon.css', 'codicon.ttf'];
+
+  if (!fs.existsSync(codiconsDest)) {
+    fs.mkdirSync(codiconsDest, { recursive: true });
+  }
+
+  for (const asset of assets) {
+    fs.copyFileSync(path.resolve(codiconsDist, asset), path.resolve(codiconsDest, asset));
+  }
+};
+
 /** @type {import('webpack').Configuration} */
 const extensionConfig = {
   target: 'node',
@@ -45,6 +59,11 @@ const extensionConfig = {
     rules: [createTsRule()]
   },
   plugins: [
+    {
+      apply: (compiler) => {
+        compiler.hooks.afterEmit.tap('CopyCodiconsAssets', copyCodiconsAssets);
+      }
+    },
     // Copy server JAR to dist folder after build
     {
       apply: (compiler) => {

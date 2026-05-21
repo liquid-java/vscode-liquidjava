@@ -13,7 +13,7 @@ export function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
     const nonce = Date.now().toString();
     const cspSource = webview.cspSource;
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "media", "webview.js"));
-    const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "node_modules", "@vscode", "codicons", "dist", "codicon.css"));
+    const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "media", "codicons", "codicon.css"));
     return /*html*/ `
         <!DOCTYPE html>
         <html lang="en">
