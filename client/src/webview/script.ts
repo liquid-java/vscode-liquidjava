@@ -90,8 +90,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
-        // location link or variable click
-        const locationTarget = target.closest?.('.location-link, .node-var');
+        // location link click
+        const locationTarget = target.closest?.('.location-link');
         if (locationTarget) {
             e.preventDefault();
             e.stopPropagation();

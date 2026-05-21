@@ -32,21 +32,14 @@ function renderJsonTree(
     const hasOrigin = Boolean("origin" in node && node.origin);
     const isExpanded = expandedPaths.has(path);
     if (hasOrigin && isExpanded && "origin" in node) {
-        return renderJsonTree(error, node.origin, errorId, path, expandedPaths);
+        return renderJsonTree(error, node.origin, errorId, `${path}.origin`, expandedPaths);
     }
     
     // VarDerivationNode
     if ("var" in node) {
-        const placement = error.translationTable?.[node.var];
-        if (!placement) return `<span class="node-var">${renderHighlightedInlineExpression(node.var)}</span>`;
-        
-        const filePath = (placement as any)?.file ?? error.file;
-        const filename = filePath.split("/").pop() ?? "";
-        const tooltipData = `${filename}:${(placement.position?.lineStart ?? 0) + 1}`;
-        const classes = `node-var tooltip clickable ${hasOrigin ? "derivable-node" : ""}`.trim();
+        const classes = `node-var ${hasOrigin ? "derivable-node clickable" : ""}`.trim();
         const attrs = hasOrigin ? ` data-node-path="${path}" data-error-id="${errorId}"` : "";
-        const fileAttr = ` data-file="${filePath}" data-line="${placement.position?.lineStart ?? 0}" data-column="${placement.position?.colStart ?? 0}"`;
-        return `<span class="${classes}" data-tooltip="${escapeHtml(tooltipData)}"${fileAttr}${attrs}>${renderHighlightedInlineExpression(node.var)}</span>`;
+        return `<span class="${classes}"${attrs}>${renderHighlightedInlineExpression(node.var)}</span>`;
     }
 
     // ValDerivationNode
