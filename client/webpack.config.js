@@ -33,13 +33,7 @@ const extensionConfig = {
     vscode: 'commonjs vscode'
   },
   resolve: {
-    extensions: ['.ts', '.js'],
-    alias: {
-      'vscode-languageserver-types$': path.resolve(
-        __dirname,
-        'node_modules/vscode-languageserver-types/lib/esm/main.js'
-      )
-    }
+    extensions: ['.ts', '.js']
   },
   module: {
     rules: [createTsRule()]

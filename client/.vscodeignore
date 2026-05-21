@@ -1,16 +1,12 @@
 # Development files
 .vscode/**
 .vscode-test/**
-.idea/**
 src/**
 .eslintrc.json
-.eslintrc.js
-.eslintignore
 .gitignore
 tsconfig.json
 webpack.config.js
 vsc-extension-quickstart.md
-package-lock.json
 
 # Build artifacts
 out/**
@@ -22,8 +18,6 @@ node_modules/**
 !node_modules/@vscode/codicons/dist/codicon.css
 !node_modules/@vscode/codicons/dist/codicon.ttf
 *.vsix
-dist/**/*.map
-media/**/*.map
 
 # Test files
 test/**
@@ -47,6 +41,4 @@ server/**
 
 # Misc
 .DS_Store
-**/.DS_Store
 *.log
-npm-debug.log*
