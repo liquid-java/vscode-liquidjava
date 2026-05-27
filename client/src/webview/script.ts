@@ -362,7 +362,6 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             filePath: target.file,
             line: target.position.lineEnd,
             character: target.position.colEnd,
-            highlightRange: target.position,
         });
         updateView();
     }
