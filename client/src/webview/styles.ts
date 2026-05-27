@@ -161,7 +161,7 @@ export function getStyles(): string {
         }
         .diagnostic-item {
             background-color: var(--vscode-textCodeBlock-background);
-            padding: 0.5rem 3rem 0.5rem 1rem;
+            padding: 0.5rem 5rem 0.5rem 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
             position: relative;
@@ -176,10 +176,10 @@ export function getStyles(): string {
             line-height: 1;
             pointer-events: none;
         }
-        .copy-diagnostic-btn {
+        .copy-diagnostic-btn,
+        .diagnostic-context-btn {
             position: absolute;
             top: 0.5rem;
-            right: 0.5rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -193,12 +193,20 @@ export function getStyles(): string {
             opacity: 0.65;
             transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
-        .copy-diagnostic-btn:hover {
+        .copy-diagnostic-btn {
+            right: 0.5rem;
+        }
+        .diagnostic-context-btn {
+            right: 2.5rem;
+        }
+        .copy-diagnostic-btn:hover,
+        .diagnostic-context-btn:hover {
             background: var(--vscode-editor-background);
             border-color: var(--vscode-widget-border);
             opacity: 1;
         }
-        .copy-diagnostic-btn:disabled {
+        .copy-diagnostic-btn:disabled,
+        .diagnostic-context-btn:disabled {
             opacity: 0.8;
             cursor: default;
         }
@@ -370,20 +378,6 @@ export function getStyles(): string {
         button:hover {
             background-color: var(--vscode-button-hoverBackground);
         }
-        .show-more-button {
-            display: block;
-            width: 100%;
-            margin: 0.5rem auto;
-            padding: 0.5rem;
-            background-color: transparent;
-            border: none;
-            color: var(--vscode-foreground);
-            opacity: 0.7;
-            font-size: 1rem;
-        }
-        .show-more-button:hover {
-            background-color: var(--vscode-editor-background);
-        }
         .underline-button {
             color: var(--vscode-foreground);
             text-align: center;
@@ -399,9 +393,6 @@ export function getStyles(): string {
         }
         .underline-button:hover {
             background: none;
-        }
-        .extra-content {
-            margin-top: 1rem;
         }
         .tooltip:hover::after {
             content: attr(data-tooltip);
@@ -548,8 +539,10 @@ export function getStyles(): string {
             word-break: normal;
         }
 
-        .context-variables-table th:first-child,
-        .translation-table th:first-child {
+        .context-variable-relevant td:first-child {
+            border-left: 2px solid var(--vscode-errorForeground);
+        }
+        .context-variables-table th:first-child {
             padding-left: calc(0.75rem + 0.8rem);
         }
         .context-aliases-table td:last-child,
