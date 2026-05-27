@@ -318,10 +318,6 @@ export function getStyles(): string {
             color: var(--lj-token-punctuation);
             opacity: 0.8;
         }
-        .node-expand-indicator {
-            opacity: 0.5;
-            font-style: italic;
-        }
         .clickable {
             cursor: pointer;
             text-decoration: underline;
@@ -533,6 +529,23 @@ export function getStyles(): string {
         .context-variables-table th:first-child,
         .context-section table td:first-child {
             text-align: left;
+        }
+
+        .context-variables-table td:first-child {
+            overflow: hidden;
+        }
+
+        .context-variables-table td:first-child .highlight-var-btn {
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .context-variables-table td:first-child .highlight-var-btn code {
+            display: block;
+            overflow: hidden;
+            white-space: normal;
+            overflow-wrap: normal;
+            word-break: normal;
         }
 
         .context-variables-table th:first-child,

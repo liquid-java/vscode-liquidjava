@@ -130,7 +130,6 @@ export function renderDerivationNode(
         <div class="container derivation-container" data-error-id="${errorId}">
             <div style="flex: 1;">
                 ${renderJsonTree(error, node, errorId, "root", expansions)}
-                ${expansions.size === 0 ? '<span class="node-expand-indicator">&nbsp;(click to expand)</span>' : ''}
             </div>
             <button class="reset-btn derivation-reset-btn" data-error-id="${errorId}" title="Reset derivation" aria-label="Reset derivation" ${expansions.size === 0 ? "disabled" : ""}>${renderCodicon("refresh")}</button>
         </div>
