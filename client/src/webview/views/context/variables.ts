@@ -1,7 +1,7 @@
 import { LJVariable } from "../../../types/context";
 import { RefinementMismatchError } from "../../../types/diagnostics";
 import { renderHighlightedInlineExpression } from "../../highlighting";
-import { escapeHtml } from "../../utils";
+import { escapeHtml, getSimpleName } from "../../utils";
 import { renderToggleSection, renderHighlightButton, renderDiagnosticRevealButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
@@ -25,10 +25,11 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                         </thead>
                         <tbody>
                             ${variables.map(variable => {
+                                const displayName = getSimpleName(variable.name);
                                 const isRelevant = relevantNames.has(variable.name);
                                 return /*html*/`
                                 <tr class="${isRelevant ? 'context-variable-relevant' : ''}">
-                                    <td>${renderHighlightButton(variable.position!, variable.name)}</td>
+                                    <td>${renderHighlightButton(variable.position!, displayName)}</td>
                                     <td><code>${renderHighlightedInlineExpression(variable.refinement)}</code></td>
                                 </tr>
                             `}).join('')}
