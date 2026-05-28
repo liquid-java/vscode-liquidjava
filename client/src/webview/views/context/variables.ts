@@ -6,6 +6,7 @@ import { renderToggleSection, renderHighlightButton, renderDiagnosticRevealButto
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
     const expected = errorAtCursor ? errorAtCursor.expected.value : undefined;
+    const relevantNames = new Set(Object.keys(errorAtCursor?.translationTable || {}));
     return /*html*/`
         <div class="context-section">
             ${renderToggleSection('Variables', 'context-vars', isExpanded)}
@@ -23,12 +24,15 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                             </tr>
                         </thead>
                         <tbody>
-                            ${variables.map(variable => /*html*/`
-                                <tr>
-                                    <td>${renderHighlightButton(variable.position!, getSimpleName(variable.name))}</td>
+                            ${variables.map(variable => {
+                                const displayName = getSimpleName(variable.name);
+                                const isRelevant = relevantNames.has(variable.name);
+                                return /*html*/`
+                                <tr class="${isRelevant ? 'context-variable-relevant' : ''}">
+                                    <td>${renderHighlightButton(variable.position!, displayName)}</td>
                                     <td><code>${renderHighlightedInlineExpression(variable.refinement)}</code></td>
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                             ${errorAtCursor ? renderFailingRefinement(errorAtCursor, expected!) : ''}
                         </tbody>
                     </table>

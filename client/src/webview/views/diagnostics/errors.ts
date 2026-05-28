@@ -1,4 +1,4 @@
-import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderSection, renderCustomSection, renderTranslationTable, renderLocation,  } from "../sections";
+import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderCustomSection, renderLocation, renderDiagnosticContextButton } from "../sections";
 import { renderDerivationNode } from "./derivation-nodes";
 import type {
     ArgumentMismatchError,
@@ -11,19 +11,18 @@ import type {
     StateConflictError,
     StateRefinementError,
     SyntaxError,
-    TranslationTable,
 } from "../../../types/diagnostics";
 import { renderCopyDiagnosticButton } from "./diagnostics";
 
-export function renderErrors(errors: LJError[], expandedErrors: Set<number>): string {
+export function renderErrors(errors: LJError[]): string {
     return /*html*/`
         <ul>
             ${errors.map((error, index) => {
-                const isExpanded = expandedErrors.has(index);
                 return /*html*/`
                 <li class="diagnostic-item error-item" ${renderDiagnosticDataAttributes(error)}>
+                    ${renderDiagnosticContextAction(error)}
                     ${renderCopyDiagnosticButton('error', index)}
-                    ${renderError(error, index, isExpanded)}
+                    ${renderError(error)}
                 </li>
             `;
             }).join("")}
@@ -62,25 +61,15 @@ const errorContentRenderers: ErrorRendererMap = {
     'custom-error': (_: CustomError) => "",
 };
 
-export function renderError(error: LJError, errorIndex: number, isExpanded: boolean): string {
+export function renderError(error: LJError): string {
     const message = error.type === 'refinement-error' || error.type === 'state-refinement-error' ? error.customMessage : error.message;
     const header = renderDiagnosticHeader(error.title, message || '');
     const content = (errorContentRenderers[error.type] as (error: LJError) => string)?.(error) || '';
     const location = renderLocation(error);
-    const extra = renderExtra(error, errorIndex, isExpanded);
-    return /*html*/`${header}${content}${location}${extra}`;
+    return /*html*/`${header}${content}${location}`;
 }
 
-function renderExtra(error: LJError, errorIndex: number, isExpanded: boolean): string {
-    const button = /*html*/`
-        <button class="show-more-button" data-error-index="${errorIndex}" title="Toggle show extra information about the diagnostic">
-            ${isExpanded ? '↑' : '↓'}
-        </button>
-    `;
-    
-    let extra = "";
-    if (Object.prototype.hasOwnProperty.call(error, 'translationTable')) {
-        extra += renderTranslationTable((error as any).translationTable as TranslationTable);
-    }
-    return extra ? isExpanded ? /*html*/`${button}<div class="extra-content">${extra}</div>` : button : "";
+function renderDiagnosticContextAction(error: LJError): string {
+    if (error.type !== 'refinement-error' && error.type !== 'state-refinement-error') return "";
+    return renderDiagnosticContextButton(error.position);
 }

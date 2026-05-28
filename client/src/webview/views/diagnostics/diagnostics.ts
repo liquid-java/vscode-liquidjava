@@ -9,7 +9,6 @@ export function renderDiagnosticsView(
     diagnostics: LJDiagnostic[],
     showAll: boolean,
     currentFile: string | undefined,
-    expandedErrors: Set<number>,
 ): string {
     const fileDiagnostics = diagnostics.filter(diagnostic => diagnostic.file?.toLowerCase() === currentFile?.toLowerCase() || !diagnostic.file);
     const displayDiagnostics = showAll ? diagnostics : fileDiagnostics;
@@ -35,7 +34,7 @@ export function renderDiagnosticsView(
                 `
             }
             <div class="content">
-                ${renderErrors(errors, expandedErrors)}
+                ${renderErrors(errors)}
                 ${renderWarnings(warnings)}
                 ${displayDiagnostics.length > 0 && hiddenErrors > 0 ? /*html*/`
                     <p class="more-indicator">(+${hiddenErrors} error${hiddenErrors !== 1 ? 's' : ''})</p>

@@ -30,7 +30,6 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let diagnostics: LJDiagnostic[] | undefined;
     let showAllDiagnostics = false;
     let currentFile: string;
-    const expandedErrors = new Set<number>();
     let stateMachine: LJStateMachine;
     let context: LJContext;
     let errorAtCursor: RefinementMismatchError;
@@ -121,6 +120,17 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
+        const diagnosticContextButton = target.closest?.('.diagnostic-context-btn');
+        if (diagnosticContextButton) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const revealTarget = getDiagnosticRevealTargetFromKey(diagnosticContextButton.getAttribute('data-diagnostic-target'));
+            if (!revealTarget) return;
+            revealContextForDiagnostic(revealTarget);
+            return;
+        }
+
         // derivation expansion click
         const derivableNode = target.closest?.('.derivable-node');
         if (derivableNode) {
@@ -195,21 +205,6 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             e.stopPropagation();
             if (!currentDiagram) return
             copyDiagramToClipboard(copyDiagramButton, currentDiagram);
-            return;
-        }
-
-        // toggle show more/less for errors
-        if (target.classList.contains('show-more-button')) {
-            e.stopPropagation();
-            const errorIndex = parseInt(target.getAttribute('data-error-index') || '-1', 10);
-            if (errorIndex >= 0) {
-                if (expandedErrors.has(errorIndex)) {
-                    expandedErrors.delete(errorIndex);
-                } else {
-                    expandedErrors.add(errorIndex);
-                }
-                updateView();
-            }
             return;
         }
 
@@ -318,7 +313,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         switch (selectedTab) {
             case 'diagnostics':
                 root.innerHTML = diagnostics
-                    ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, expandedErrors)
+                    ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile)
                     : renderLoading();
                 break;
             case 'fsm': {
@@ -358,6 +353,17 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             element.classList.remove('revealed');
             revealTimeout = undefined;
         }, 1800);
+    }
+
+    function revealContextForDiagnostic(target: DiagnosticRevealTarget) {
+        selectedTab = 'context';
+        vscode.postMessage({
+            type: 'openFile',
+            filePath: target.file,
+            line: target.position.lineEnd,
+            character: target.position.colEnd,
+        });
+        updateView();
     }
 
 }

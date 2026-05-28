@@ -1,8 +1,8 @@
-import type { LJDiagnostic, PlacementInCode, SourcePosition, TranslationTable } from "../../types/diagnostics";
+import type { LJDiagnostic, SourcePosition } from "../../types/diagnostics";
 import { escapeHtml } from "../utils";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
-import { renderCodicon } from "../icons";
+import { renderCodicon, renderCodiconButton } from "../icons";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
     <div class="header">
@@ -40,36 +40,6 @@ export const renderLocation = (diagnostic: LJDiagnostic): string => {
     return renderCustomSection("Location", /*html*/`<pre>${renderLocationLink(diagnostic.position)}</pre>`);
 };
 
-export function renderTranslationTable(translationTable: TranslationTable): string {  
-    const entries = Object.entries(translationTable).sort((a, b) => a[0].localeCompare(b[0])); // sort by variable name
-    if (entries.length === 0) return '';
-    
-    return /*html*/`
-        <div class="translation-table">
-            <h3>Context Variables</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Source</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${entries.map(([variable, placement]: [string, PlacementInCode]) => {
-                        if (!placement.position) return ''
-                        return /*html*/`
-                            <tr>
-                                <td>${renderHighlightButton(placement.position, variable)}</td>
-                                <td><code>${renderHighlightedInlineExpression(placement.text)}</code></td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
-
 export function renderHighlightButton(position: SourcePosition, content: string, error: boolean = false): string {
     return /*html*/`
         <button
@@ -83,6 +53,15 @@ export function renderHighlightButton(position: SourcePosition, content: string,
             <code>${renderHighlightedInlineExpression(content)}</code>
         </button>
     `;
+}
+
+export function renderDiagnosticContextButton(position?: SourcePosition | null): string {
+    if (!position?.file) return "";
+    return renderCodiconButton("symbol-variable", {
+        className: "diagnostic-context-btn",
+        title: "View related context",
+        attributes: `data-diagnostic-target="${getDiagnosticRevealTargetKey({ file: position.file, position })}"`,
+    });
 }
 
 export function renderDiagnosticRevealButton(position: SourcePosition, content: string): string {
