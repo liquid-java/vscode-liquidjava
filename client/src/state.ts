@@ -8,7 +8,7 @@ import type { LJDiagnostic, RefinementMismatchError } from "./types/diagnostics"
 import type { LJStateMachine } from "./types/fsm";
 import { LJContext, Range } from "./types/context";
 
-export type ExtensionStatus = "loading" | "stopped" | "passed" | "failed";
+export type ExtensionStatus = "loading" | "stopped" | "passed" | "failed" | "crashed";
 
 export class ExtensionState {
     // server/client state

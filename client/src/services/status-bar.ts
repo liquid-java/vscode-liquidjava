@@ -1,13 +1,12 @@
 import * as vscode from "vscode";
 import { ExtensionStatus, extension } from "../state";
 
-export type StatusBarState = ExtensionStatus;
-
- const icons = {
+const icons = {
     loading: "$(sync~spin)",
     stopped: "$(circle-slash)",
     passed: "$(check)",
     failed: "$(x)",
+    crashed: "$(x)",
 };
 
 const statusText = {
@@ -15,6 +14,7 @@ const statusText = {
     stopped: "Stopped",
     passed: "Verification passed",
     failed: "Verification failed",
+    crashed: "Crashed",
 };
 
 /**
@@ -31,15 +31,15 @@ export function registerStatusBar(context: vscode.ExtensionContext) {
 
 /**
  * Updates the status bar with the current state
- * @param status The current status ("loading", "stopped", "passed", "failed")
+ * @param status The current status ("loading", "stopped", "passed", "failed", "crashed")
  * @param notifyWebview Whether the webview should reflect this status update.
  */
-export function updateStatusBar(status: StatusBarState, notifyWebview = status !== "loading") {
+export function updateStatusBar(status: ExtensionStatus, notifyWebview = status !== "loading") {
     if (notifyWebview) {
         extension.status = status;
         extension.webview?.sendMessage({ type: "status", status });
     }
-    const color = status === "stopped" ? "errorForeground" : "statusBar.foreground";
+    const color = status === "stopped" || status === "crashed" ? "errorForeground" : "statusBar.foreground";
     if (!extension.statusBar) return;
     extension.statusBar.color = new vscode.ThemeColor(color);
     extension.statusBar.text = icons[status] + " LiquidJava";

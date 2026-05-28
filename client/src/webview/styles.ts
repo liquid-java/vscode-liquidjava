@@ -428,6 +428,7 @@ export function getStyles(): string {
         }
         .stopped-view {
             display: flex;
+            position: relative;
             min-height: calc(100vh - 2rem);
             flex-direction: column;
             align-items: center;

@@ -3,7 +3,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-lan
 import { connectToPort } from '../utils/utils';
 import { extension } from '../state';
 import { updateStatusBar } from '../services/status-bar';
-import { handleLJDiagnostics } from '../services/diagnostics';
+import { handleLJDiagnostics, handleLJFailure } from '../services/diagnostics';
 import { onActiveFileChange } from '../services/events';
 import type { LJDiagnostic } from "../types/diagnostics";
 import { LJContext } from '../types/context';
@@ -40,6 +40,10 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
         
         extension.client.onNotification("liquidjava/diagnostics", (diagnostics: LJDiagnostic[]) => {
             handleLJDiagnostics(diagnostics);
+        });
+
+        extension.client.onNotification("liquidjava/failure", () => {
+            handleLJFailure();
         });
 
         extension.client.onNotification("liquidjava/context", (context: LJContext) => {

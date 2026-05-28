@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { extension } from "../state";
+import { extension, ExtensionStatus } from "../state";
 import { LJDiagnostic } from "../types/diagnostics";
-import { StatusBarState, updateStatusBar } from "./status-bar";
+import { updateStatusBar } from "./status-bar";
 import { updateErrorAtCursor } from "./context";
 import { refreshCodeLenses } from "./codelens";
 
@@ -11,7 +11,7 @@ import { refreshCodeLenses } from "./codelens";
  */
 export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     const containsError = diagnostics.some(d => d.category === "error");
-    const statusBarState: StatusBarState = containsError ? "failed" : "passed";
+    const statusBarState: ExtensionStatus = containsError ? "failed" : "passed";
     updateStatusBar(statusBarState);
     extension.diagnostics = diagnostics;
     refreshCodeLenses();
@@ -19,6 +19,19 @@ export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     extension.webview?.sendMessage({ type: "diagnostics", diagnostics });
     if (extension.context)
         extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
+}
+
+/**
+ * Handles LiquidJava verifier crashes received from the language server
+ */
+export function handleLJFailure() {
+    extension.diagnostics = [];
+    extension.errorAtCursor = undefined;
+    refreshCodeLenses();
+    extension.webview?.sendMessage({ type: "diagnostics", diagnostics: [] });
+    if (extension.context)
+        extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
+    updateStatusBar("crashed");
 }
 
 /**
