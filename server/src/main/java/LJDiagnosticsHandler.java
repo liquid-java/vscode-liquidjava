@@ -14,7 +14,6 @@ import org.eclipse.lsp4j.Range;
 import liquidjava.api.CommandLineLauncher;
 import liquidjava.diagnostics.Diagnostics;
 import liquidjava.diagnostics.LJDiagnostic;
-import liquidjava.diagnostics.errors.CustomError;
 import liquidjava.diagnostics.errors.LJError;
 import liquidjava.diagnostics.warnings.LJWarning;
 import spoon.reflect.cu.SourcePosition;
@@ -29,28 +28,23 @@ public class LJDiagnosticsHandler {
      * @param path the file path
      * @return LJDiagnostics
      */
-    public static LJDiagnostics getLJDiagnostics(String path) {
+    public static LJDiagnostics getLJDiagnostics(String path) throws Exception {
         List<LJError> errors = new ArrayList<>();
         List<LJWarning> warnings = new ArrayList<>();
-        try {
-            CommandLineLauncher.cmdArgs.lspMode = true;
-            CommandLineLauncher.launch(path);
-            Diagnostics diagnostics = Diagnostics.getInstance();
-            if (diagnostics.foundWarning()) {
-                warnings.addAll(diagnostics.getWarnings());
-            }
-            if (diagnostics.foundError()) {
-                System.out.println("Failed verification");
-                errors.addAll(diagnostics.getErrors());
-            } else {
-                System.out.println("Passed verification");
-            }
-            return new LJDiagnostics(errors, warnings);
-        } catch (Exception e) {
-            e.printStackTrace();
-            errors.add(new CustomError("LiquidJava verification failed, check for Java errors"));
-            return new LJDiagnostics(errors, warnings);
+
+        CommandLineLauncher.cmdArgs.lspMode = true;
+        CommandLineLauncher.launch(path);
+        Diagnostics diagnostics = Diagnostics.getInstance();
+        if (diagnostics.foundWarning()) {
+            warnings.addAll(diagnostics.getWarnings());
         }
+        if (diagnostics.foundError()) {
+            System.out.println("Failed verification");
+            errors.addAll(diagnostics.getErrors());
+        } else {
+            System.out.println("Passed verification");
+        }
+        return new LJDiagnostics(errors, warnings);
     }
 
     /**

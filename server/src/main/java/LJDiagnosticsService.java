@@ -1,6 +1,8 @@
 import java.io.File;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,6 +29,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     private LJLanguageClient client;
     private String workspaceRoot;
+    private final Set<String> publishedDiagnosticUris = new HashSet<>();
     private final ExecutorService diagnosticsExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "liquidjava-diagnostics");
         thread.setDaemon(true);
@@ -61,14 +64,26 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      */
     public void generateDiagnostics(String uri) {
         String path = PathUtils.extractBasePath(uri);
-        LJDiagnostics ljDiagnostics = LJDiagnosticsHandler.getLJDiagnostics(path);
-        List<PublishDiagnosticsParams> nativeDiagnostics = LJDiagnosticsHandler.getNativeDiagnostics(ljDiagnostics, uri);
-        nativeDiagnostics.forEach(params -> {
-            this.client.publishDiagnostics(params);
-        });
-        List<LJDiagnostic> diagnostics = Stream.concat(ljDiagnostics.errors().stream(), ljDiagnostics.warnings().stream()).collect(Collectors.toList());
-        sendDiagnosticsNotification(diagnostics);
-        this.client.sendContext(ContextHistoryConverter.convertToDTO(ContextHistory.getInstance()));
+        clearPublishedDiagnostics(uri);
+
+        try {
+            LJDiagnostics ljDiagnostics = LJDiagnosticsHandler.getLJDiagnostics(path);
+            List<PublishDiagnosticsParams> nativeDiagnostics = LJDiagnosticsHandler.getNativeDiagnostics(ljDiagnostics, uri);
+            nativeDiagnostics.forEach(params -> {
+                this.client.publishDiagnostics(params);
+                if (!params.getDiagnostics().isEmpty()) {
+                    publishedDiagnosticUris.add(params.getUri());
+                }
+            });
+            List<LJDiagnostic> diagnostics = Stream.concat(ljDiagnostics.errors().stream(), ljDiagnostics.warnings().stream()).collect(Collectors.toList());
+            sendDiagnosticsNotification(diagnostics);
+            this.client.sendContext(ContextHistoryConverter.convertToDTO(ContextHistory.getInstance()));
+        } catch (Exception e) {
+            System.err.println("LiquidJava verification crashed while checking: " + path);
+            e.printStackTrace(System.err);
+            clearPublishedDiagnostics(uri);
+            this.client.sendFailure();
+        }
     }
 
     /**
@@ -93,8 +108,16 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      */
     public void clearDiagnostic(String uri) {
         this.client.publishDiagnostics(LJDiagnosticsHandler.getEmptyDiagnostics(uri));
+        publishedDiagnosticUris.remove(uri);
         // TODO: fix consistency between native and custom diagnostics
         // sendDiagnosticsNotification(List.of());
+    }
+
+    private void clearPublishedDiagnostics(String uri) {
+        Set<String> urisToClear = new HashSet<>(publishedDiagnosticUris);
+        urisToClear.add(uri);
+        urisToClear.forEach(clearUri -> this.client.publishDiagnostics(LJDiagnosticsHandler.getEmptyDiagnostics(clearUri)));
+        publishedDiagnosticUris.clear();
     }
 
     /**

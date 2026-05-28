@@ -19,6 +19,12 @@ public interface LJLanguageClient extends LanguageClient {
     void sendDiagnostics(List<Object> diagnostics);
 
     /**
+     * Sends a verifier failure notification to the client
+     */
+    @JsonNotification("liquidjava/failure")
+    void sendFailure();
+
+    /**
      * Sends the context history to the client
      * @param contextHistory the context history to send
      */

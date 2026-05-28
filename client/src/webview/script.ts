@@ -304,9 +304,9 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
      * Updates the webview content based on the current state
      */
     function updateView() {
-        if (status === 'stopped') {
+        if (status === 'stopped' || status === 'crashed') {
             currentDiagram = '';
-            root.innerHTML = renderStopped();
+            root.innerHTML = renderStopped(status);
             return;
         }
         if (status === 'loading') {
