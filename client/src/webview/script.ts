@@ -213,7 +213,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (highlightButton) {
             e.stopPropagation();
 
-            const previousSelected = root.querySelector('.highlight-var-btn.selected');        
+            const previousSelected = root.querySelector<HTMLElement>('.highlight-var-btn.selected');
             if (previousSelected) {
                 // unselect previous
                 previousSelected.classList.remove('selected');
@@ -224,13 +224,15 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 }
             }
             highlightButton.classList.add('selected');
+            (highlightButton as HTMLElement).focus();
+            highlightButton.scrollIntoView({ block: 'nearest' });
 
             const file = highlightButton.getAttribute('data-file');
             const lineStart = parseInt(highlightButton.getAttribute('data-start-line') || '', 10);
             const colStart = parseInt(highlightButton.getAttribute('data-start-column') || '', 10);
             const lineEnd = parseInt(highlightButton.getAttribute('data-end-line') || '', 10);
             const colEnd = parseInt(highlightButton.getAttribute('data-end-column') || '', 10);
-            if ([lineStart, colStart, lineEnd, colEnd].some(Number.isNaN)) return;
+            if (!file || [lineStart, colStart, lineEnd, colEnd].some(Number.isNaN)) return;
 
             const range: Range = { lineStart, colStart, lineEnd, colEnd };
             if (file !== currentFile) {
@@ -262,7 +264,48 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
     });
-    
+
+    // navigate context variables with the keyboard
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (selectedTab !== 'context' || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+
+        const buttons = Array.from(root.querySelectorAll<HTMLElement>('#context-vars:not(.collapsed) .highlight-var-btn'));
+        if (buttons.length === 0) return;
+
+        const selected = root.querySelector<HTMLElement>('.highlight-var-btn.selected');
+        const active = document.activeElement instanceof HTMLElement ? document.activeElement.closest<HTMLElement>('.highlight-var-btn') : null;
+        const current = selected || active;
+        const currentIndex = current ? buttons.indexOf(current) : -1;
+        const fallbackIndex = e.key === 'ArrowDown' ? 0 : buttons.length - 1;
+        const nextIndex = currentIndex === -1
+            ? fallbackIndex
+            : Math.max(0, Math.min(buttons.length - 1, currentIndex + (e.key === 'ArrowDown' ? 1 : -1)));
+
+        e.preventDefault();
+        e.stopPropagation();
+        const highlightButton = buttons[nextIndex];
+        const previousSelected = root.querySelector<HTMLElement>('.highlight-var-btn.selected');
+        if (previousSelected) previousSelected.classList.remove('selected');
+
+        highlightButton.classList.add('selected');
+        highlightButton.focus();
+        highlightButton.scrollIntoView({ block: 'nearest' });
+
+        const file = highlightButton.getAttribute('data-file');
+        const lineStart = parseInt(highlightButton.getAttribute('data-start-line') || '', 10);
+        const colStart = parseInt(highlightButton.getAttribute('data-start-column') || '', 10);
+        const lineEnd = parseInt(highlightButton.getAttribute('data-end-line') || '', 10);
+        const colEnd = parseInt(highlightButton.getAttribute('data-end-column') || '', 10);
+        if (!file || [lineStart, colStart, lineEnd, colEnd].some(Number.isNaN)) return;
+
+        const range: Range = { lineStart, colStart, lineEnd, colEnd };
+        if (file !== currentFile) {
+            vscode.postMessage({ type: 'openFile', filePath: file, line: lineStart, character: colStart, highlightRange: range });
+        } else {
+            vscode.postMessage({ type: 'highlight', range })
+        }
+    });
+
     // message event listener from extension
     window.addEventListener('message', event => {
         const msg = event.data;
