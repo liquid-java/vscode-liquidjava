@@ -79,8 +79,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
             sendDiagnosticsNotification(diagnostics);
             this.client.sendContext(ContextHistoryConverter.convertToDTO(ContextHistory.getInstance()));
         } catch (Exception e) {
-            System.err.println("LiquidJava verification crashed while checking: " + path);
-            e.printStackTrace(System.err);
+            System.err.println("LiquidJava internal error: " + e.getMessage());
             clearPublishedDiagnostics(uri);
             this.client.sendFailure();
         }
