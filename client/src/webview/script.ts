@@ -1,4 +1,4 @@
-import { handleDerivableNodeClick, handleDerivationResetClick } from "./views/diagnostics/derivation-nodes";
+import { handleVCImplicationStepClick } from "./views/diagnostics/vc-implications";
 import { renderLoading } from "./views/loading";
 import { renderStopped } from "./views/stopped";
 import { renderStateMachineView } from "./views/fsm/fsm";
@@ -131,21 +131,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
-        // derivation expansion click
-        const derivableNode = target.closest?.('.derivable-node');
-        if (derivableNode) {
+        // VC implication simplification step buttons
+        const vcImplicationStepButton = target.closest?.('.vc-step-btn');
+        if (vcImplicationStepButton) {
             e.stopPropagation();
-            if (handleDerivableNodeClick(derivableNode)) {
-                updateView();
-            }
-            return;
-        }
-
-        // derivation reset button
-        const derivationResetButton = target.closest?.('.derivation-reset-btn');
-        if (derivationResetButton) {
-            e.stopPropagation();
-            if (handleDerivationResetClick(derivationResetButton)) {
+            if (handleVCImplicationStepClick(vcImplicationStepButton)) {
                 updateView();
             }
             return;

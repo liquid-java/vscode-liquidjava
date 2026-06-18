@@ -1,4 +1,5 @@
 import { LJDiagnostic, LJError, LJWarning } from "../../../types/diagnostics";
+import type { VCImplication, VCSimplificationResult } from "../../../types/vc-implications";
 import { copyToClipboard } from "../../clipboard";
 import { renderCodiconButton } from "../../icons";
 import { renderErrors } from "./errors";
@@ -106,11 +107,33 @@ function formatClipboardValue(value: unknown): string {
         return values.some(v => v.includes('\n')) ? `\n${values.join('\n')}` : values.join(', ');
     }
 
-    if (typeof value === 'object' && 'value' in value) {
-        return formatClipboardValue((value as { value: unknown }).value);
-    }
+    if (isVCSimplificationResult(value)) return formatVCImplication(value.implication);
+    if (isVCImplication(value)) return formatVCImplication(value);
 
     return JSON.stringify(value);
+}
+
+function isVCSimplificationResult(value: unknown): value is VCSimplificationResult {
+    return typeof value === 'object'
+        && value !== null
+        && 'implication' in value
+        && 'origin' in value;
+}
+
+function isVCImplication(value: unknown): value is VCImplication {
+    return typeof value === 'object'
+        && value !== null
+        && 'predicate' in value
+        && 'next' in value;
+}
+
+function formatVCImplication(node: VCImplication | null): string {
+    if (!node) return '';
+
+    const binder = node.name !== null && node.type !== null ? `∀${node.name}:${node.type}, ` : '';
+    const current = `${binder}${node.predicate}`;
+    const next = formatVCImplication(node.next);
+    return next ? `${current}\n=> ${next}` : current;
 }
 
 function formatDiagnosticLocation(diagnostic: LJDiagnostic): string {

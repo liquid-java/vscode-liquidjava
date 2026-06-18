@@ -1,5 +1,5 @@
-import type { ValDerivationNode } from './derivation-nodes';
 import type { Range } from './context';
+import type { VCSimplificationResult } from './vc-implications';
 
 // Type definitions used for LiquidJava diagnostics
 
@@ -58,8 +58,8 @@ export type RefinementError = BaseDiagnostic & {
     category: 'error';
     type: 'refinement-error';
     translationTable: TranslationTable;
-    expected: ValDerivationNode;
-    found: ValDerivationNode;
+    expected: string;
+    found: VCSimplificationResult;
     customMessage: string;
     counterexample: string;
 }
@@ -75,8 +75,8 @@ export type StateRefinementError = BaseDiagnostic & {
     category: 'error';
     type: 'state-refinement-error';
     translationTable: TranslationTable;
-    expected: ValDerivationNode;
-    found: ValDerivationNode;
+    expected: string;
+    found: VCSimplificationResult;
     customMessage: string;
 }
 
