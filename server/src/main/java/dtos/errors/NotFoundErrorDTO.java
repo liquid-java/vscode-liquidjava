@@ -1,17 +1,22 @@
 package dtos.errors;
 
-import dtos.diagnostics.SourcePositionDTO;
-import dtos.diagnostics.TranslationTableDTO;
 import liquidjava.diagnostics.errors.NotFoundError;
 
 /**
  * DTO for serializing NotFoundError instances to JSON
  */
-public record NotFoundErrorDTO(String category, String type, String title, String message, String file, SourcePositionDTO position,
-        TranslationTableDTO translationTable, String name, String kind) {
+public class NotFoundErrorDTO extends LJErrorDTO {
+
+    public final String name;
+    public final String kind;
+
+    public NotFoundErrorDTO(NotFoundError error) {
+        super("not-found-error", error);
+        this.name = error.getName();
+        this.kind = error.getKind();
+    }
 
     public static NotFoundErrorDTO from(NotFoundError error) {
-        return new NotFoundErrorDTO("error", "not-found-error", error.getTitle(), error.getMessage(), error.getFile(),
-                SourcePositionDTO.from(error.getPosition()), TranslationTableDTO.from(error.getTranslationTable()), error.getName(), error.getKind());
+        return new NotFoundErrorDTO(error);
     }
 }

@@ -1,17 +1,20 @@
 package dtos.errors;
 
-import dtos.diagnostics.SourcePositionDTO;
-import dtos.diagnostics.TranslationTableDTO;
 import liquidjava.diagnostics.errors.StateConflictError;
 
 /**
  * DTO for serializing StateConflictError instances to JSON
  */
-public record StateConflictErrorDTO(String category, String type, String title, String message, String file, SourcePositionDTO position,
-        TranslationTableDTO translationTable, String state) {
+public class StateConflictErrorDTO extends LJErrorDTO {
+
+    public final String state;
+
+    public StateConflictErrorDTO(StateConflictError error) {
+        super("state-conflict-error", error);
+        this.state = error.getState();
+    }
 
     public static StateConflictErrorDTO from(StateConflictError error) {
-        return new StateConflictErrorDTO("error", "state-conflict-error", error.getTitle(), error.getMessage(), error.getFile(),
-                SourcePositionDTO.from(error.getPosition()), TranslationTableDTO.from(error.getTranslationTable()), error.getState());
+        return new StateConflictErrorDTO(error);
     }
 }

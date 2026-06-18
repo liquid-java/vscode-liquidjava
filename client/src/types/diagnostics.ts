@@ -25,6 +25,7 @@ export type LJWarning = CustomWarning | ExternalClassNotFoundWarning | ExternalM
 type BaseDiagnostic = {
     title: string;
     message: string;
+    details: string;
     file: string;
     position: SourcePosition | null;
 }
