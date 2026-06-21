@@ -1,16 +1,20 @@
 package dtos.warnings;
 
-import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.diagnostics.warnings.ExternalClassNotFoundWarning;
 
 /**
  * DTO for serializing ExternalClassNotFoundWarning instances to JSON
  */
-public record ExternalClassNotFoundWarningDTO(String category, String type, String title, String message, String file,
-        SourcePositionDTO position, String className) {
+public class ExternalClassNotFoundWarningDTO extends LJWarningDTO {
+
+    public final String className;
+
+    public ExternalClassNotFoundWarningDTO(ExternalClassNotFoundWarning warning) {
+        super("external-class-not-found-warning", warning);
+        this.className = warning.getClassName();
+    }
 
     public static ExternalClassNotFoundWarningDTO from(ExternalClassNotFoundWarning warning) {
-        return new ExternalClassNotFoundWarningDTO("warning", "external-class-not-found-warning", warning.getTitle(), warning.getMessage(), warning.getFile(),
-                SourcePositionDTO.from(warning.getPosition()), warning.getClassName());
+        return new ExternalClassNotFoundWarningDTO(warning);
     }
 }

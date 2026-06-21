@@ -1,17 +1,20 @@
 package dtos.warnings;
 
-import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.diagnostics.warnings.UnsatisfiableRefinementWarning;
 
 /**
  * DTO for serializing UnsatisfiableRefinementWarning instances to JSON
  */
-public record UnsatisfiableRefinementWarningDTO(String category, String type, String title, String message, String file,
-        SourcePositionDTO position, String refinement) {
+public class UnsatisfiableRefinementWarningDTO extends LJWarningDTO {
+
+    public final String refinement;
+
+    public UnsatisfiableRefinementWarningDTO(UnsatisfiableRefinementWarning warning) {
+        super("unsatisfiable-refinement-warning", warning);
+        this.refinement = warning.getRefinement();
+    }
 
     public static UnsatisfiableRefinementWarningDTO from(UnsatisfiableRefinementWarning warning) {
-        return new UnsatisfiableRefinementWarningDTO("warning", "unsatisfiable-refinement-warning", warning.getTitle(),
-                warning.getMessage(), warning.getFile(), SourcePositionDTO.from(warning.getPosition()),
-                warning.getRefinement());
+        return new UnsatisfiableRefinementWarningDTO(warning);
     }
 }
