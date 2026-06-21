@@ -1,5 +1,5 @@
 import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderCustomSection, renderLocation, renderDiagnosticContextButton } from "../sections";
-import { renderDerivationNode } from "./derivation-nodes";
+import { renderVCImplication } from "./vc-implications";
 import type {
     ArgumentMismatchError,
     CustomError,
@@ -34,13 +34,13 @@ type ErrorRendererMap = { [E in LJError as E['type']]: (error: E) => string };
 
 const errorContentRenderers: ErrorRendererMap = {
     'refinement-error': (e: RefinementError) => /*html*/ `
-        ${renderCustomSection('Expected', renderDerivationNode(e, e.expected, 'expected'))}
-        ${renderCustomSection('Found', renderDerivationNode(e, e.found, 'found'))}
+        ${renderExpressionSection('Expected', e.expected)}
+        ${renderCustomSection('Found', renderVCImplication(e, e.found))}
         ${e.counterexample ? renderExpressionSection('Counterexample', e.counterexample) : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/ `
-        ${renderCustomSection('Expected', renderDerivationNode(e, e.expected, 'expected'))}
-        ${renderCustomSection('Found', renderDerivationNode(e, e.found, 'found'))}
+        ${renderExpressionSection('Expected', e.expected)}
+        ${renderCustomSection('Found', renderVCImplication(e, e.found))}
     `,
     'invalid-refinement-error': (e: InvalidRefinementError) => /*html*/ `
         ${renderExpressionSection('Refinement', e.refinement)}

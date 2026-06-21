@@ -226,9 +226,7 @@ public class StateMachineParser {
             return List.of(new TransitionSource(state, null));
         }
 
-        if (expr instanceof GroupExpression group) {
-            return getTransitionSources(group.getExpression(), states, stateOnlyDisjunctions);
-        } else if (expr instanceof BinaryExpression bin) {
+        if (expr instanceof BinaryExpression bin) {
             String op = bin.getOperator();
             if (op.equals("&&")) {
                 return getConjunctionSources(bin, states, stateOnlyDisjunctions);
@@ -369,8 +367,6 @@ public class StateMachineParser {
         String state = getStateName(expr, states);
         if (state != null) {
             stateExpressions.add(state);
-        } else if (expr instanceof GroupExpression group) {
-            stateExpressions.addAll(getStateExpressions(group.getExpression(), states));
         } else if (expr instanceof BinaryExpression bin) {
             stateExpressions.addAll(getStateExpressions(bin.getFirstOperand(), states));
             stateExpressions.addAll(getStateExpressions(bin.getSecondOperand(), states));

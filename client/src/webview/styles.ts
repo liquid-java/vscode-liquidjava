@@ -271,18 +271,6 @@ export function getStyles(): string {
         .link:hover {
             text-decoration: underline;
         }
-        .node-var {
-            color: var(--lj-token-identifier);
-        }
-        .node-value {
-            color: var(--vscode-editor-foreground);
-        }
-        .node-number {
-            color: var(--lj-token-number);
-        }
-        .node-boolean {
-            color: var(--lj-token-boolean);
-        }
         .lj-expression,
         .lj-expression-code {
             font-family: var(--vscode-editor-font-family);
@@ -334,19 +322,59 @@ export function getStyles(): string {
         .clickable:hover {
             font-weight: bold;
         }
-        .derivation-container {
+        .vc-container {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 1rem;
+            margin: 0.5rem 0;
         }
-        .reset-btn {
+        .vc-chain {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 0;
+        }
+        .vc-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            min-width: 0;
+        }
+        .vc-line-content {
+            flex: 0 1 auto;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+        .vc-node {
+            display: inline;
+            padding: 0;
+            border: none;
+            background: none;
+            color: var(--vscode-editor-foreground);
+            font: inherit;
+            text-align: left;
+        }
+        .vc-node:hover {
+            background: none;
+        }
+        .vc-binder {
+            color: var(--vscode-descriptionForeground);
+        }
+        .vc-step-controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+            flex-shrink: 0;
+        }
+        .vc-step-btn {
             margin: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 1.75rem;
-            height: 1.75rem;
+            width: 1.5rem;
+            height: 1.25rem;
             padding: 0;
             background-color: transparent;
             color: var(--vscode-button-foreground);
@@ -357,12 +385,17 @@ export function getStyles(): string {
             flex-shrink: 0;
             opacity: 0.7;
         }
-        .reset-btn:hover {
+        .vc-step-btn .codicon {
+            font-size: 1.5rem;
+        }
+        .vc-step-btn:hover {
             font-weight: bold;
             background-color: transparent;
+            opacity: 1;
         }
-        .reset-btn:disabled {
-            opacity: 0.5;
+        .vc-step-btn:disabled {
+            cursor: default;
+            opacity: 0.35;
         }
         button {
             padding: 0.2rem 0.6rem;
