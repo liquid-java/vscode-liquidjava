@@ -324,13 +324,43 @@ export function getStyles(): string {
         }
         .vc-container {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 1rem;
+            flex-direction: column;
+            gap: 0.375rem;
             margin: 0.5rem 0;
         }
+        .vc-step-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            min-width: 0;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+            font-family: var(--vscode-font-family);
+            font-size: 0.8rem;
+            line-height: 1.25rem;
+        }
+        .vc-step-name {
+            min-width: 0;
+            overflow: hidden;
+            color: var(--vscode-descriptionForeground);
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .vc-step-navigation {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            flex-shrink: 0;
+        }
+        .vc-step-position {
+            min-width: 2.5rem;
+            color: var(--vscode-descriptionForeground);
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
         .vc-chain {
-            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 0.25rem;

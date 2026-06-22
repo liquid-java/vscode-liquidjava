@@ -8,4 +8,5 @@ export type VCImplication = {
 export type VCSimplificationResult = {
     implication: VCImplication;
     origin: VCSimplificationResult | null;
+    simplification: string | null;
 }
