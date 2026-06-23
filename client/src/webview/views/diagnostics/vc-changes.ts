@@ -1,10 +1,10 @@
 import type { VCImplication } from "../../../types/vc-implications";
 import { renderHighlightedInlineExpression } from "../../highlighting";
 
-type DiffKind = "unchanged" | "removed" | "added";
+type ChangeKind = "unchanged" | "removed" | "added";
 
 type DiffOperation<T> = {
-    kind: DiffKind;
+    kind: ChangeKind;
     value: T;
 };
 
@@ -76,26 +76,23 @@ function tokenizeExpression(expression: string): string[] {
     ) || [];
 }
 
-function renderTokenDiff(before: string, after: string): { removed: string; added: string } {
-    const operations = diffSequence(tokenizeExpression(before), tokenizeExpression(after));
-    return {
-        removed: renderDiffSide(operations, "removed"),
-        added: renderDiffSide(operations, "added"),
-    };
+function renderChangedFragment(content: string): string {
+    return `<span class="vc-change-fragment">${renderHighlightedInlineExpression(content)}</span>`;
 }
 
-function renderDiffSide(operations: DiffOperation<string>[], changedKind: "removed" | "added"): string {
+function renderDestinationTokenDiff(before: string, after: string): string {
+    const operations = diffSequence(tokenizeExpression(before), tokenizeExpression(after));
     let html = "";
     let changedContent = "";
 
     const flushChangedContent = () => {
         if (!changedContent) return;
-        html += `<span class="vc-diff-fragment vc-diff-fragment-${changedKind}">${renderHighlightedInlineExpression(changedContent)}</span>`;
+        html += renderChangedFragment(changedContent);
         changedContent = "";
     };
 
     for (const operation of operations) {
-        if (operation.kind === changedKind) {
+        if (operation.kind === "added") {
             changedContent += operation.value;
             continue;
         }
@@ -108,26 +105,23 @@ function renderDiffSide(operations: DiffOperation<string>[], changedKind: "remov
     return html;
 }
 
-function renderChangedLines(removed: string[], added: string[]): string {
-    const removedLines: string[] = [];
-    const addedLines: string[] = [];
+function renderChangedDestinationLines(removed: string[], added: string[]): string {
+    if (added.length === 0) {
+        return `<div class="vc-change-gap" aria-hidden="true"></div>`;
+    }
+
+    const lines: string[] = [];
     const pairedCount = Math.min(removed.length, added.length);
 
     for (let index = 0; index < pairedCount; index += 1) {
-        const diff = renderTokenDiff(removed[index], added[index]);
-        removedLines.push(renderVCLine(diff.removed, "vc-diff-line vc-diff-line-removed"));
-        addedLines.push(renderVCLine(diff.added, "vc-diff-line vc-diff-line-added"));
-    }
-    for (let index = pairedCount; index < removed.length; index += 1) {
-        const content = `<span class="vc-diff-fragment vc-diff-fragment-removed">${renderHighlightedInlineExpression(removed[index])}</span>`;
-        removedLines.push(renderVCLine(content, "vc-diff-line vc-diff-line-removed"));
+        const content = renderDestinationTokenDiff(removed[index], added[index]);
+        lines.push(renderVCLine(content, "vc-change-line"));
     }
     for (let index = pairedCount; index < added.length; index += 1) {
-        const content = `<span class="vc-diff-fragment vc-diff-fragment-added">${renderHighlightedInlineExpression(added[index])}</span>`;
-        addedLines.push(renderVCLine(content, "vc-diff-line vc-diff-line-added"));
+        lines.push(renderVCLine(renderChangedFragment(added[index]), "vc-change-line"));
     }
 
-    return [...removedLines, ...addedLines].join("");
+    return lines.join("");
 }
 
 export function renderImplication(node: VCImplication): string {
@@ -136,7 +130,7 @@ export function renderImplication(node: VCImplication): string {
         .join("");
 }
 
-export function renderImplicationDiff(before: VCImplication, after: VCImplication): string {
+export function renderImplicationChange(before: VCImplication, after: VCImplication): string {
     const operations = diffSequence(getImplicationLines(before), getImplicationLines(after));
     const lines: string[] = [];
     let index = 0;
@@ -157,7 +151,7 @@ export function renderImplicationDiff(before: VCImplication, after: VCImplicatio
             if (changedOperation.kind === "added") added.push(changedOperation.value);
             index += 1;
         }
-        lines.push(renderChangedLines(removed, added));
+        lines.push(renderChangedDestinationLines(removed, added));
     }
 
     return lines.join("");
