@@ -1,4 +1,4 @@
-import { handleVCImplicationStepClick } from "./views/diagnostics/vc-implications";
+import { handleVCDiffToggleClick, handleVCImplicationStepClick } from "./views/diagnostics/vc-implications";
 import { renderLoading } from "./views/loading";
 import { renderStopped } from "./views/stopped";
 import { renderStateMachineView } from "./views/fsm/fsm";
@@ -135,9 +135,14 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         const vcImplicationStepButton = target.closest?.('.vc-step-btn');
         if (vcImplicationStepButton) {
             e.stopPropagation();
-            if (handleVCImplicationStepClick(vcImplicationStepButton)) {
-                updateView();
-            }
+            handleVCImplicationStepClick(vcImplicationStepButton);
+            return;
+        }
+
+        const vcDiffToggleButton = target.closest?.('.vc-diff-toggle-btn');
+        if (vcDiffToggleButton) {
+            e.stopPropagation();
+            handleVCDiffToggleClick(vcDiffToggleButton);
             return;
         }
 
