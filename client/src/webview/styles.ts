@@ -391,7 +391,8 @@ export function getStyles(): string {
         .vc-node:hover {
             background: none;
         }
-        .vc-change-line {
+        .vc-change-line .vc-node {
+            border-radius: 2px;
             animation: vc-change-line-fade 1.8s ease-out;
         }
         .vc-change-fragment {
@@ -415,7 +416,7 @@ export function getStyles(): string {
             }
         }
         @media (prefers-reduced-motion: reduce) {
-            .vc-change-line {
+            .vc-change-line .vc-node {
                 background-color: rgba(255, 255, 0, 0.3);
                 animation: none;
             }
