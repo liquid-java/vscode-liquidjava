@@ -3,11 +3,10 @@ import type { VCSimplificationResult } from "../../../types/vc-implications";
 import { renderHighlightedExpression } from "../../highlighting";
 import { renderCodicon } from "../../icons";
 import { escapeHtml } from "../../utils";
-import { renderImplication, renderImplicationDiff } from "./vc-diff";
+import { renderImplication, renderImplicationChange } from "./vc-changes";
 
 const stepIndexes = new Map<string, number>(); // errorId => step index, preserved across re-renders
 const simplificationSteps = new Map<string, VCSimplificationResult[]>();
-const visibleDiffs = new Set<string>();
 
 function renderStepButton(errorId: string, step: "previous" | "next", disabled: boolean): string {
     const label = `${step === "previous" ? "Previous" : "Next"} simplification`;
@@ -15,17 +14,11 @@ function renderStepButton(errorId: string, step: "previous" | "next", disabled: 
     return `<button class="vc-step-btn vc-step-${step}-btn" data-error-id="${errorId}" data-vc-step="${step}" title="${label}" aria-label="${label}" ${disabled ? "disabled" : ""} type="button">${renderCodicon(icon)}</button>`;
 }
 
-function renderDiffToggleButton(errorId: string, showDiff: boolean): string {
-    const label = showDiff ? "Hide diff" : "Show diff";
-    return `<button class="vc-diff-toggle-btn${showDiff ? " active" : ""}" data-error-id="${errorId}" title="${label}" aria-label="${label}" aria-pressed="${showDiff}" type="button">${renderCodicon("diff-multiple", "multi-diff-editor-label-icon")}</button>`;
-}
-
 function renderStepHeader(
     errorId: string,
     current: VCSimplificationResult,
     index: number,
     stepCount: number,
-    showDiff: boolean,
 ): string {
     const chronologicalStep = stepCount - index;
     const simplification = current.simplification?.trim();
@@ -35,7 +28,6 @@ function renderStepHeader(
         <div class="vc-step-header">
             <span class="vc-step-name" title="${escapeHtml(label)}">${escapeHtml(label)}</span>
             <div class="vc-step-navigation">
-                ${renderDiffToggleButton(errorId, showDiff)}
                 <span class="vc-step-position" aria-label="Simplification step ${chronologicalStep} of ${stepCount}">
                     ${chronologicalStep}/${stepCount}
                 </span>
@@ -58,20 +50,19 @@ function getTargetStepIndex(errorId: string, step: string | null): number | unde
     return targetIndex;
 }
 
-function renderSelectedStep(errorId: string): string {
+function renderSelectedStep(errorId: string, previousIndex?: number): string {
     const steps = simplificationSteps.get(errorId);
     if (!steps) return "";
 
     const index = Math.min(stepIndexes.get(errorId) ?? 0, steps.length - 1);
     const current = steps[index];
-    const showDiff = visibleDiffs.has(errorId);
-    const origin = steps[index + 1];
-    const implication = showDiff && origin
-        ? `<div class="vc-chain vc-diff-chain">${renderImplicationDiff(origin.implication, current.implication)}</div>`
+    const previous = previousIndex === undefined ? undefined : steps[previousIndex];
+    const implication = previous
+        ? `<div class="vc-chain">${renderImplicationChange(previous.implication, current.implication)}</div>`
         : `<div class="vc-chain">${renderImplication(current.implication)}</div>`;
 
     return /*html*/`
-        ${steps.length > 1 ? renderStepHeader(errorId, current, index, steps.length, showDiff) : ""}
+        ${steps.length > 1 ? renderStepHeader(errorId, current, index, steps.length) : ""}
         ${implication}
     `;
 }
@@ -81,24 +72,13 @@ export function handleVCImplicationStepClick(target: Element): boolean {
     const step = target.getAttribute("data-vc-step");
     if (!errorId || (target as HTMLButtonElement).disabled) return false;
 
+    const currentIndex = stepIndexes.get(errorId) ?? 0;
     const targetIndex = getTargetStepIndex(errorId, step);
     const container = target.closest?.(".vc-container");
     if (targetIndex === undefined) return false;
 
     stepIndexes.set(errorId, targetIndex);
-    if (container) container.innerHTML = renderSelectedStep(errorId);
-    return true;
-}
-
-export function handleVCDiffToggleClick(target: Element): boolean {
-    const errorId = target.getAttribute("data-error-id");
-    const container = target.closest(".vc-container");
-    if (!errorId || !container) return false;
-
-    if (visibleDiffs.has(errorId)) visibleDiffs.delete(errorId);
-    else visibleDiffs.add(errorId);
-
-    container.innerHTML = renderSelectedStep(errorId);
+    if (container) container.innerHTML = renderSelectedStep(errorId, currentIndex);
     return true;
 }
 

@@ -391,33 +391,55 @@ export function getStyles(): string {
         .vc-node:hover {
             background: none;
         }
-        .vc-diff-chain {
-            gap: 0.125rem;
+        .vc-change-line {
+            animation: vc-change-line-fade 1.8s ease-out;
         }
-        .vc-diff-line-removed {
-            background-color: var(--vscode-diffEditor-removedLineBackground, #f8514933);
-            background-color: color-mix(in srgb, var(--vscode-diffEditor-removedLineBackground, #f8514933) 75%, transparent);
-        }
-        .vc-diff-line-added {
-            background-color: var(--vscode-diffEditor-insertedLineBackground, #2ea04333);
-            background-color: color-mix(in srgb, var(--vscode-diffEditor-insertedLineBackground, #2ea04333) 75%, transparent);
-        }
-        .vc-diff-fragment {
+        .vc-change-fragment {
             border-radius: 2px;
+            animation: vc-change-fragment-fade 1.8s ease-out;
         }
-        .vc-diff-fragment-removed {
-            background-color: var(--vscode-diffEditor-removedTextBackground, #f8514966);
+        .vc-change-gap {
+            height: 2px;
+            margin: 0.0625rem 0.25rem;
+            border-radius: 2px;
+            animation: vc-change-gap-fade 1.8s ease-out;
         }
-        .vc-diff-fragment-added {
-            background-color: var(--vscode-diffEditor-insertedTextBackground, #2ea04366);
+        @keyframes vc-change-line-fade {
+            from {
+                background-color: rgba(255, 255, 0, 0.3);
+            }
+            to {
+                background-color: transparent;
+            }
         }
-        .vc-diff-fragment-removed,
-        .vc-diff-fragment-removed * {
-            color: var(--vscode-gitDecoration-deletedResourceForeground, #f85149) !important;
+        @keyframes vc-change-fragment-fade {
+            from {
+                background-color: rgba(255, 255, 0, 0.3);
+            }
+            to {
+                background-color: transparent;
+            }
         }
-        .vc-diff-fragment-added,
-        .vc-diff-fragment-added * {
-            color: var(--vscode-gitDecoration-addedResourceForeground, #2ea043) !important;
+        @keyframes vc-change-gap-fade {
+            from {
+                background-color: rgba(255, 255, 0, 0.3);
+                opacity: 1;
+            }
+            to {
+                background-color: transparent;
+                opacity: 0;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .vc-change-line {
+                background-color: rgba(255, 255, 0, 0.3);
+                animation: none;
+            }
+            .vc-change-fragment,
+            .vc-change-gap {
+                background-color: rgba(255, 255, 0, 0.3);
+                animation: none;
+            }
         }
         .vc-binder {
             color: var(--vscode-descriptionForeground);
@@ -428,8 +450,7 @@ export function getStyles(): string {
             gap: 0.125rem;
             flex-shrink: 0;
         }
-        .vc-step-btn,
-        .vc-diff-toggle-btn {
+        .vc-step-btn {
             margin: 0;
             display: inline-flex;
             align-items: center;
@@ -449,24 +470,10 @@ export function getStyles(): string {
         .vc-step-btn .codicon {
             font-size: 1.5rem;
         }
-        .vc-diff-toggle-btn .codicon {
-            font-size: 1rem;
-        }
-        .vc-step-btn:hover,
-        .vc-diff-toggle-btn:hover {
+        .vc-step-btn:hover {
             font-weight: bold;
             opacity: 1;
-        }
-        .vc-step-btn:hover {
             background-color: transparent;
-        }
-        .vc-diff-toggle-btn {
-            width: 1.5rem;
-            margin-right: 0.25rem;
-        }
-        .vc-diff-toggle-btn:hover,
-        .vc-diff-toggle-btn.active {
-            background-color: var(--vscode-toolbar-hoverBackground);
         }
         .vc-step-btn:disabled {
             cursor: default;
