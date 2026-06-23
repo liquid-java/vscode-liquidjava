@@ -163,13 +163,11 @@ function alignChangedLines(removed: string[], added: string[]): Array<[string | 
 }
 
 function renderChangedDestinationLines(removed: string[], added: string[]): string {
-    if (added.length === 0) {
-        return `<div class="vc-change-gap" aria-hidden="true"></div>`;
-    }
+    if (added.length === 0) return "";
 
     return alignChangedLines(removed, added)
         .map(([before, after]) => {
-            if (after === undefined) return `<div class="vc-change-gap" aria-hidden="true"></div>`;
+            if (after === undefined) return "";
             if (before === undefined) return renderVCLine(renderChangedFragment(after));
             const change = renderDestinationTokenDiff(before, after);
             return renderVCLine(change.content, change.hasAddedContent ? "" : "vc-change-line");

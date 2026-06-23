@@ -398,12 +398,6 @@ export function getStyles(): string {
             border-radius: 2px;
             animation: vc-change-fragment-fade 1.8s ease-out;
         }
-        .vc-change-gap {
-            height: 2px;
-            margin: 0.0625rem 0.25rem;
-            border-radius: 2px;
-            animation: vc-change-gap-fade 1.8s ease-out;
-        }
         @keyframes vc-change-line-fade {
             from {
                 background-color: rgba(255, 255, 0, 0.3);
@@ -420,23 +414,12 @@ export function getStyles(): string {
                 background-color: transparent;
             }
         }
-        @keyframes vc-change-gap-fade {
-            from {
-                background-color: rgba(255, 255, 0, 0.3);
-                opacity: 1;
-            }
-            to {
-                background-color: transparent;
-                opacity: 0;
-            }
-        }
         @media (prefers-reduced-motion: reduce) {
             .vc-change-line {
                 background-color: rgba(255, 255, 0, 0.3);
                 animation: none;
             }
-            .vc-change-fragment,
-            .vc-change-gap {
+            .vc-change-fragment {
                 background-color: rgba(255, 255, 0, 0.3);
                 animation: none;
             }
