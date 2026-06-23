@@ -88,23 +88,78 @@ function renderDestinationTokenDiff(before: string, after: string): { content: s
 
     const flushChangedContent = () => {
         if (!changedContent) return;
-        html += renderChangedFragment(changedContent);
+        const trailingWhitespace = changedContent.match(/\s+$/u)?.[0] ?? "";
+        const content = changedContent.slice(0, changedContent.length - trailingWhitespace.length);
+        if (content) html += renderChangedFragment(content);
+        html += trailingWhitespace;
         changedContent = "";
     };
 
-    for (const operation of operations) {
+    operations.forEach((operation, index) => {
         if (operation.kind === "added") {
             changedContent += operation.value;
             hasAddedContent = true;
-            continue;
+            return;
         }
         if (operation.kind === "unchanged") {
+            if (/^\s+$/u.test(operation.value) && changedContent && operations[index + 1]?.kind === "added") {
+                changedContent += operation.value;
+                return;
+            }
             flushChangedContent();
             html += renderHighlightedInlineExpression(operation.value);
         }
-    }
+    });
     flushChangedContent();
     return { content: html, hasAddedContent };
+}
+
+function getLineSimilarity(before: string, after: string): number {
+    const beforeTokens = tokenizeExpression(before).filter(token => !/^\s+$/u.test(token));
+    const afterTokens = tokenizeExpression(after).filter(token => !/^\s+$/u.test(token));
+    const unchangedLength = diffSequence(beforeTokens, afterTokens)
+        .filter(operation => operation.kind === "unchanged")
+        .reduce((length, operation) => length + operation.value.length, 0);
+    const totalLength = Math.max(
+        beforeTokens.join("").length,
+        afterTokens.join("").length,
+    );
+    return totalLength === 0 ? 0 : unchangedLength / totalLength;
+}
+
+function alignChangedLines(removed: string[], added: string[]): Array<[string | undefined, string | undefined]> {
+    const scores = Array.from(
+        { length: removed.length + 1 },
+        () => new Array<number>(added.length + 1).fill(0),
+    );
+
+    for (let i = removed.length - 1; i >= 0; i -= 1) {
+        for (let j = added.length - 1; j >= 0; j -= 1) {
+            const similarity = getLineSimilarity(removed[i], added[j]);
+            scores[i][j] = Math.max(
+                scores[i + 1][j],
+                scores[i][j + 1],
+                similarity >= 0.3 ? similarity + scores[i + 1][j + 1] : 0,
+            );
+        }
+    }
+
+    const lines: Array<[string | undefined, string | undefined]> = [];
+    let i = 0;
+    let j = 0;
+    while (i < removed.length && j < added.length) {
+        const similarity = getLineSimilarity(removed[i], added[j]);
+        if (similarity >= 0.3 && scores[i][j] === similarity + scores[i + 1][j + 1]) {
+            lines.push([removed[i++], added[j++]]);
+        } else if (scores[i][j + 1] >= scores[i + 1][j]) {
+            lines.push([undefined, added[j++]]);
+        } else {
+            lines.push([removed[i++], undefined]);
+        }
+    }
+    while (i < removed.length) lines.push([removed[i++], undefined]);
+    while (j < added.length) lines.push([undefined, added[j++]]);
+    return lines;
 }
 
 function renderChangedDestinationLines(removed: string[], added: string[]): string {
@@ -112,18 +167,14 @@ function renderChangedDestinationLines(removed: string[], added: string[]): stri
         return `<div class="vc-change-gap" aria-hidden="true"></div>`;
     }
 
-    const lines: string[] = [];
-    const pairedCount = Math.min(removed.length, added.length);
-
-    for (let index = 0; index < pairedCount; index += 1) {
-        const change = renderDestinationTokenDiff(removed[index], added[index]);
-        lines.push(renderVCLine(change.content, change.hasAddedContent ? "" : "vc-change-line"));
-    }
-    for (let index = pairedCount; index < added.length; index += 1) {
-        lines.push(renderVCLine(renderChangedFragment(added[index])));
-    }
-
-    return lines.join("");
+    return alignChangedLines(removed, added)
+        .map(([before, after]) => {
+            if (after === undefined) return `<div class="vc-change-gap" aria-hidden="true"></div>`;
+            if (before === undefined) return renderVCLine(renderChangedFragment(after));
+            const change = renderDestinationTokenDiff(before, after);
+            return renderVCLine(change.content, change.hasAddedContent ? "" : "vc-change-line");
+        })
+        .join("");
 }
 
 export function renderImplication(node: VCImplication): string {
