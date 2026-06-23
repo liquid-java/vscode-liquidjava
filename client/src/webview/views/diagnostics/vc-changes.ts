@@ -2,17 +2,19 @@ import type { VCImplication } from "../../../types/vc-implications";
 import { renderHighlightedInlineExpression } from "../../highlighting";
 
 type ChangeKind = "unchanged" | "removed" | "added";
+type DiffOperation<T> = { kind: ChangeKind; value: T };
 
-type DiffOperation<T> = {
-    kind: ChangeKind;
-    value: T;
-};
+const MIN_LINE_SIMILARITY = 0.3;
+const TOKEN_PATTERN = /\s+|-->|&&|\|\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#⁰¹²³⁴⁵⁶⁷⁸⁹]*|\d+(?:\.\d+)?|[^\s]/gu;
+const WHITESPACE_PATTERN = /^\s+$/u;
 
 function getImplicationLines(node: VCImplication): string[] {
     const lines: string[] = [];
     for (let current: VCImplication | null = node; current; current = current.next) {
-        const binder = current.name !== null && current.type !== null;
-        if (!binder && current.next || current.predicate === "true" && current.next !== null) continue;
+        if (
+            current.next
+            && (current.name === null || current.type === null || current.predicate === "true")
+        ) continue;
         lines.push(current.predicate);
     }
     return lines;
@@ -26,11 +28,12 @@ function renderVCLine(content: string, className = ""): string {
     `;
 }
 
+function createMatrix(rows: number, columns: number): number[][] {
+    return Array.from({ length: rows + 1 }, () => new Array<number>(columns + 1).fill(0));
+}
+
 function diffSequence<T>(before: T[], after: T[]): DiffOperation<T>[] {
-    const lengths = Array.from(
-        { length: before.length + 1 },
-        () => new Array<number>(after.length + 1).fill(0),
-    );
+    const lengths = createMatrix(before.length, after.length);
 
     for (let beforeIndex = before.length - 1; beforeIndex >= 0; beforeIndex -= 1) {
         for (let afterIndex = after.length - 1; afterIndex >= 0; afterIndex -= 1) {
@@ -46,33 +49,23 @@ function diffSequence<T>(before: T[], after: T[]): DiffOperation<T>[] {
     while (beforeIndex < before.length && afterIndex < after.length) {
         if (before[beforeIndex] === after[afterIndex]) {
             operations.push({ kind: "unchanged", value: before[beforeIndex] });
-            beforeIndex += 1;
-            afterIndex += 1;
+            beforeIndex++;
+            afterIndex++;
         } else if (lengths[beforeIndex + 1][afterIndex] >= lengths[beforeIndex][afterIndex + 1]) {
-            operations.push({ kind: "removed", value: before[beforeIndex] });
-            beforeIndex += 1;
+            operations.push({ kind: "removed", value: before[beforeIndex++] });
         } else {
-            operations.push({ kind: "added", value: after[afterIndex] });
-            afterIndex += 1;
+            operations.push({ kind: "added", value: after[afterIndex++] });
         }
     }
-
-    while (beforeIndex < before.length) {
-        operations.push({ kind: "removed", value: before[beforeIndex] });
-        beforeIndex += 1;
-    }
-    while (afterIndex < after.length) {
-        operations.push({ kind: "added", value: after[afterIndex] });
-        afterIndex += 1;
-    }
-
+    operations.push(
+        ...before.slice(beforeIndex).map(value => ({ kind: "removed" as const, value })),
+        ...after.slice(afterIndex).map(value => ({ kind: "added" as const, value })),
+    );
     return operations;
 }
 
 function tokenizeExpression(expression: string): string[] {
-    return expression.match(
-        /\s+|-->|&&|\|\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#⁰¹²³⁴⁵⁶⁷⁸⁹]*|\d+(?:\.\d+)?|[^\s]/gu,
-    ) || [];
+    return expression.match(TOKEN_PATTERN) || [];
 }
 
 function renderChangedFragment(content: string): string {
@@ -101,7 +94,7 @@ function renderDestinationTokenDiff(before: string, after: string): { content: s
             return;
         }
         if (operation.kind === "unchanged") {
-            if (/^\s+$/u.test(operation.value) && changedContent && operations[index + 1]?.kind === "added") {
+            if (WHITESPACE_PATTERN.test(operation.value) && changedContent && operations[index + 1]?.kind === "added") {
                 changedContent += operation.value;
                 return;
             }
@@ -114,31 +107,26 @@ function renderDestinationTokenDiff(before: string, after: string): { content: s
 }
 
 function getLineSimilarity(before: string, after: string): number {
-    const beforeTokens = tokenizeExpression(before).filter(token => !/^\s+$/u.test(token));
-    const afterTokens = tokenizeExpression(after).filter(token => !/^\s+$/u.test(token));
+    const beforeTokens = tokenizeExpression(before).filter(token => !WHITESPACE_PATTERN.test(token));
+    const afterTokens = tokenizeExpression(after).filter(token => !WHITESPACE_PATTERN.test(token));
     const unchangedLength = diffSequence(beforeTokens, afterTokens)
         .filter(operation => operation.kind === "unchanged")
         .reduce((length, operation) => length + operation.value.length, 0);
-    const totalLength = Math.max(
-        beforeTokens.join("").length,
-        afterTokens.join("").length,
-    );
+    const totalLength = Math.max(beforeTokens.join("").length, afterTokens.join("").length);
     return totalLength === 0 ? 0 : unchangedLength / totalLength;
 }
 
 function alignChangedLines(removed: string[], added: string[]): Array<[string | undefined, string | undefined]> {
-    const scores = Array.from(
-        { length: removed.length + 1 },
-        () => new Array<number>(added.length + 1).fill(0),
-    );
+    const similarities = removed.map(before => added.map(after => getLineSimilarity(before, after)));
+    const scores = createMatrix(removed.length, added.length);
 
     for (let i = removed.length - 1; i >= 0; i -= 1) {
         for (let j = added.length - 1; j >= 0; j -= 1) {
-            const similarity = getLineSimilarity(removed[i], added[j]);
+            const similarity = similarities[i][j];
             scores[i][j] = Math.max(
                 scores[i + 1][j],
                 scores[i][j + 1],
-                similarity >= 0.3 ? similarity + scores[i + 1][j + 1] : 0,
+                similarity >= MIN_LINE_SIMILARITY ? similarity + scores[i + 1][j + 1] : 0,
             );
         }
     }
@@ -147,8 +135,11 @@ function alignChangedLines(removed: string[], added: string[]): Array<[string | 
     let i = 0;
     let j = 0;
     while (i < removed.length && j < added.length) {
-        const similarity = getLineSimilarity(removed[i], added[j]);
-        if (similarity >= 0.3 && scores[i][j] === similarity + scores[i + 1][j + 1]) {
+        const similarity = similarities[i][j];
+        if (
+            similarity >= MIN_LINE_SIMILARITY
+            && scores[i][j] === similarity + scores[i + 1][j + 1]
+        ) {
             lines.push([removed[i++], added[j++]]);
         } else if (scores[i][j + 1] >= scores[i + 1][j]) {
             lines.push([undefined, added[j++]]);
@@ -182,27 +173,24 @@ export function renderImplication(node: VCImplication): string {
 
 export function renderImplicationChange(before: VCImplication, after: VCImplication): string {
     const operations = diffSequence(getImplicationLines(before), getImplicationLines(after));
-    const lines: string[] = [];
-    let index = 0;
+    let html = "";
+    const changed = { removed: [] as string[], added: [] as string[] };
 
-    while (index < operations.length) {
-        const operation = operations[index];
+    const flushChanges = () => {
+        html += renderChangedDestinationLines(changed.removed, changed.added);
+        changed.removed.length = 0;
+        changed.added.length = 0;
+    };
+
+    for (const operation of operations) {
         if (operation.kind === "unchanged") {
-            lines.push(renderVCLine(renderHighlightedInlineExpression(operation.value)));
-            index += 1;
+            flushChanges();
+            html += renderVCLine(renderHighlightedInlineExpression(operation.value));
             continue;
         }
-
-        const removed: string[] = [];
-        const added: string[] = [];
-        while (index < operations.length && operations[index].kind !== "unchanged") {
-            const changedOperation = operations[index];
-            if (changedOperation.kind === "removed") removed.push(changedOperation.value);
-            if (changedOperation.kind === "added") added.push(changedOperation.value);
-            index += 1;
-        }
-        lines.push(renderChangedDestinationLines(removed, added));
+        changed[operation.kind].push(operation.value);
     }
 
-    return lines.join("");
+    flushChanges();
+    return html;
 }
