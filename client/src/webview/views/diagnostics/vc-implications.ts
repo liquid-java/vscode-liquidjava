@@ -6,7 +6,7 @@ import { escapeHtml } from "../../utils";
 import { renderImplication, renderImplicationChange } from "./vc-changes";
 
 const stepIndexes = new Map<string, number>(); // errorId => step index, preserved across re-renders
-const simplificationSteps = new Map<string, VCSimplificationResult[]>();
+const simplificationSteps = new Map<string, VCSimplificationResult[]>(); // errorId => simplification steps
 
 function renderStepButton(errorId: string, step: "previous" | "next", disabled: boolean): string {
     const label = `${step === "previous" ? "Previous" : "Next"} simplification`;
@@ -20,16 +20,16 @@ function renderStepHeader(
     index: number,
     stepCount: number,
 ): string {
-    const chronologicalStep = stepCount - index;
+    const currStep = stepCount - index;
     const simplification = current.simplification?.trim();
-    const label = simplification || "Original";
+    const label = escapeHtml(simplification || "Original");
 
     return /*html*/`
         <div class="vc-step-header">
-            <span class="vc-step-name" title="${escapeHtml(label)}">${escapeHtml(label)}</span>
+            <span class="vc-step-name" title="${label}">${label}</span>
             <div class="vc-step-navigation">
-                <span class="vc-step-position" aria-label="Simplification step ${chronologicalStep} of ${stepCount}">
-                    ${chronologicalStep}/${stepCount}
+                <span class="vc-step-position" aria-label="Simplification step ${currStep} of ${stepCount}">
+                    ${currStep}/${stepCount}
                 </span>
                 <div class="vc-step-controls">
                     ${renderStepButton(errorId, "previous", index === stepCount - 1)}
@@ -42,11 +42,11 @@ function renderStepHeader(
 
 function getTargetStepIndex(errorId: string, step: string | null): number | undefined {
     const steps = simplificationSteps.get(errorId);
-    if (!steps) return undefined;
+    if (!steps) return;
 
     const index = stepIndexes.get(errorId) ?? 0;
     const targetIndex = step === "previous" ? index + 1 : step === "next" ? index - 1 : -1;
-    if (targetIndex < 0 || targetIndex >= steps.length) return undefined;
+    if (targetIndex < 0 || targetIndex >= steps.length) return;
     return targetIndex;
 }
 

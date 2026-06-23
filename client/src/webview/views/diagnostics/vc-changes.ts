@@ -43,7 +43,6 @@ function diffSequence<T>(before: T[], after: T[]): DiffOperation<T>[] {
     const operations: DiffOperation<T>[] = [];
     let beforeIndex = 0;
     let afterIndex = 0;
-
     while (beforeIndex < before.length && afterIndex < after.length) {
         if (before[beforeIndex] === after[afterIndex]) {
             operations.push({ kind: "unchanged", value: before[beforeIndex] });
