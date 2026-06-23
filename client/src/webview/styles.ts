@@ -393,26 +393,38 @@ export function getStyles(): string {
         }
         .vc-change-line .vc-node {
             border-radius: 2px;
-            animation: vc-change-line-fade 1.8s ease-out;
+            animation: vc-change-line-fade 1.4s ease-out;
         }
         .vc-change-fragment {
             border-radius: 2px;
-            animation: vc-change-fragment-fade 1.8s ease-out;
+            animation: vc-change-fragment-fade 1.4s ease-out;
         }
         @keyframes vc-change-line-fade {
-            from {
-                background-color: rgba(255, 255, 0, 0.3);
+            0% {
+                background-color: rgba(255, 255, 96, 0.68);
+                box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.38);
             }
-            to {
+            18% {
+                background-color: rgba(255, 255, 0, 0.4);
+                box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.2);
+            }
+            100% {
                 background-color: transparent;
+                box-shadow: none;
             }
         }
         @keyframes vc-change-fragment-fade {
-            from {
-                background-color: rgba(255, 255, 0, 0.3);
+            0% {
+                background-color: rgba(255, 255, 96, 0.68);
+                box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.38);
             }
-            to {
+            18% {
+                background-color: rgba(255, 255, 0, 0.4);
+                box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.2);
+            }
+            100% {
                 background-color: transparent;
+                box-shadow: none;
             }
         }
         @media (prefers-reduced-motion: reduce) {
