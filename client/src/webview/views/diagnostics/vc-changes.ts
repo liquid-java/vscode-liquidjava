@@ -80,10 +80,11 @@ function renderChangedFragment(content: string): string {
     return `<span class="vc-change-fragment">${renderHighlightedInlineExpression(content)}</span>`;
 }
 
-function renderDestinationTokenDiff(before: string, after: string): string {
+function renderDestinationTokenDiff(before: string, after: string): { content: string; hasAddedContent: boolean } {
     const operations = diffSequence(tokenizeExpression(before), tokenizeExpression(after));
     let html = "";
     let changedContent = "";
+    let hasAddedContent = false;
 
     const flushChangedContent = () => {
         if (!changedContent) return;
@@ -94,6 +95,7 @@ function renderDestinationTokenDiff(before: string, after: string): string {
     for (const operation of operations) {
         if (operation.kind === "added") {
             changedContent += operation.value;
+            hasAddedContent = true;
             continue;
         }
         if (operation.kind === "unchanged") {
@@ -102,7 +104,7 @@ function renderDestinationTokenDiff(before: string, after: string): string {
         }
     }
     flushChangedContent();
-    return html;
+    return { content: html, hasAddedContent };
 }
 
 function renderChangedDestinationLines(removed: string[], added: string[]): string {
@@ -114,11 +116,11 @@ function renderChangedDestinationLines(removed: string[], added: string[]): stri
     const pairedCount = Math.min(removed.length, added.length);
 
     for (let index = 0; index < pairedCount; index += 1) {
-        const content = renderDestinationTokenDiff(removed[index], added[index]);
-        lines.push(renderVCLine(content, "vc-change-line"));
+        const change = renderDestinationTokenDiff(removed[index], added[index]);
+        lines.push(renderVCLine(change.content, change.hasAddedContent ? "" : "vc-change-line"));
     }
     for (let index = pairedCount; index < added.length; index += 1) {
-        lines.push(renderVCLine(renderChangedFragment(added[index]), "vc-change-line"));
+        lines.push(renderVCLine(renderChangedFragment(added[index])));
     }
 
     return lines.join("");
