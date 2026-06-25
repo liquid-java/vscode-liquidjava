@@ -34,7 +34,7 @@ function getImplicationLines(node: VCImplication): string[] {
     return lines;
 }
 
-function renderVCLine(line: string, className = "", predicateContent?: string): string {
+export function renderVCLine(line: string, className = "", predicateContent?: string): string {
     const { binder, type, predicate } = parseImplicationLine(line);
     return /*html*/`
         <div class="vc-line ${className}">
