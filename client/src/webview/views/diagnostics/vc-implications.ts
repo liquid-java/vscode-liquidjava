@@ -22,7 +22,7 @@ function renderStepHeader(
 ): string {
     const currStep = stepCount - index;
     const simplification = current.simplification?.trim();
-    const label = escapeHtml(simplification || "Original");
+    const label = escapeHtml(index === 0 ? "Simplified" : simplification || "Original");
 
     return /*html*/`
         <div class="vc-step-header">
