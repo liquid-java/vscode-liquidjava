@@ -20,7 +20,7 @@ function getImplicationLines(node: VCImplication): string[] {
     return lines;
 }
 
-function renderVCLine(content: string, className = ""): string {
+export function renderVCLine(content: string, className = ""): string {
     return /*html*/`
         <div class="vc-line ${className}">
             <div class="vc-line-content"><span class="vc-node">${content}</span></div>

@@ -1,4 +1,5 @@
 import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderCustomSection, renderLocation, renderDiagnosticContextButton } from "../sections";
+import { renderCounterexample } from "./counterexample";
 import { renderVCImplication } from "./vc-implications";
 import type {
     ArgumentMismatchError,
@@ -36,7 +37,7 @@ const errorContentRenderers: ErrorRendererMap = {
     'refinement-error': (e: RefinementError) => /*html*/ `
         ${renderExpressionSection('Expected', e.expected)}
         ${renderCustomSection('Found', renderVCImplication(e, e.found))}
-        ${e.counterexample ? renderExpressionSection('Counterexample', e.counterexample) : ''}
+        ${e.counterexample ? renderCustomSection('Counterexample', renderCounterexample(e.counterexample)) : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/ `
         ${renderExpressionSection('Expected', e.expected)}
