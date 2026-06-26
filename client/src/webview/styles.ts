@@ -361,23 +361,32 @@ export function getStyles(): string {
             text-align: right;
         }
         .vc-chain {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
+            display: table;
+            width: 100%;
+            border-spacing: 0 0.25rem;
             min-width: 0;
         }
         .vc-line {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
+            display: table-row;
+        }
+        .vc-binder-cell,
+        .vc-predicate-cell {
+            display: table-cell;
             min-width: 0;
             padding: 0.0625rem 0.25rem;
-            border-radius: 3px;
-        }
-        .vc-line-content {
-            flex: 0 1 auto;
-            min-width: 0;
             overflow-wrap: anywhere;
+            vertical-align: top;
+        }
+        .vc-binder-cell {
+            min-height: 1.2em;
+            padding-right: 0.75rem;
+            color: var(--vscode-descriptionForeground);
+            white-space: nowrap;
+            width: 1%;
+        }
+        .vc-predicate-cell {
+            color: var(--vscode-editor-foreground);
+            width: 99%;
         }
         .vc-node {
             display: inline;
