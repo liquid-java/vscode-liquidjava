@@ -36,11 +36,9 @@ function getImplicationLines(node: VCImplication): string[] {
 
 function renderVCLine(line: string, className = "", predicateContent?: string): string {
     const { binder, type, predicate } = parseImplicationLine(line);
-    const title = binder && type ? ` title="${escapeHtml(`${binder.slice(1)}: ${type}`)}"` : "";
-
     return /*html*/`
         <div class="vc-line ${className}">
-            <div class="vc-binder-cell"${title}><span class="vc-node vc-binder">${escapeHtml(binder)}</span></div>
+            <div class="vc-binder-cell"><span class="vc-node vc-binder" title="${type}">${escapeHtml(binder)}</span></div>
             <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span></div>
         </div>
     `;
