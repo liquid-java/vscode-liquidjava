@@ -1,5 +1,4 @@
 import { renderHighlightedInlineExpression } from "../../highlighting";
-import { renderVCLine } from "./vc-changes";
 
 function getCounterexampleLines(counterexample: string): string[] {
     return counterexample
@@ -15,7 +14,11 @@ export function renderCounterexample(counterexample: string): string {
     return /*html*/`
         <div class="container vc-container counterexample-container">
             <div class="vc-chain">
-                ${lines.map(line => renderVCLine(renderHighlightedInlineExpression(line))).join("")}
+                ${lines.map(line => /*html*/`
+                    <div class="counterexample-line">
+                        <span class="vc-node">${renderHighlightedInlineExpression(line)}</span>
+                    </div>
+                `).join("")}
             </div>
         </div>
     `;

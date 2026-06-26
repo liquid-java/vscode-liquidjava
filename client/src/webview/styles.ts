@@ -366,6 +366,14 @@ export function getStyles(): string {
             border-spacing: 0 0.25rem;
             min-width: 0;
         }
+        .counterexample-container .vc-chain {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .counterexample-line {
+            overflow-wrap: anywhere;
+        }
         .vc-line {
             display: table-row;
         }
