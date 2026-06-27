@@ -9,6 +9,7 @@ import type { DiagnosticRevealTarget } from "../types/diagnostics";
  */
 export function registerWebview(context: vscode.ExtensionContext) {
     extension.webview = new LiquidJavaWebviewProvider(context.extensionUri);
+    let pendingDiagnosticReveal: DiagnosticRevealTarget | undefined;
 
     // webview provider
     context.subscriptions.push(
@@ -17,8 +18,15 @@ export function registerWebview(context: vscode.ExtensionContext) {
     // show view command
     context.subscriptions.push(
         vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget) => {
+            const isVisible = extension.webview?.isVisible();
             await vscode.commands.executeCommand("liquidJavaView.focus");
-            if (diagnostic) extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic });
+            if (!diagnostic) return; 
+            
+            if (isVisible) {
+                extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic });
+            } else {
+                pendingDiagnosticReveal = diagnostic;
+            }
         })
     );
     // listen for messages from the webview
@@ -30,6 +38,10 @@ export function registerWebview(context: vscode.ExtensionContext) {
                 if (extension.context) extension.webview?.sendMessage({ type: "context", context: extension.context , errorAtCursor: extension.errorAtCursor });
                 if (extension.stateMachine) extension.webview?.sendMessage({ type: "fsm", sm: extension.stateMachine });
                 if (extension.status) extension.webview?.sendMessage({ type: "status", status: extension.status });
+                if (pendingDiagnosticReveal) {
+                    extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic: pendingDiagnosticReveal });
+                    pendingDiagnosticReveal = undefined;
+                }
             }
         })
     );
