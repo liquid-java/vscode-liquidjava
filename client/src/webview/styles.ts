@@ -161,7 +161,7 @@ export function getStyles(): string {
         }
         .diagnostic-item {
             background-color: var(--vscode-textCodeBlock-background);
-            padding: 0.5rem 5rem 0.5rem 1rem;
+            padding: 0.5rem 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
             position: relative;
