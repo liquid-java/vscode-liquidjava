@@ -38,7 +38,7 @@ export function renderVCLine(line: string, className = "", predicateContent?: st
     const { binder, type, predicate } = parseImplicationLine(line);
     return /*html*/`
         <div class="vc-line ${className}">
-            <div class="vc-binder-cell"><span class="vc-node vc-binder" title="${type}">${escapeHtml(binder)}</span></div>
+            ${binder ? /*html*/`<div class="vc-binder-cell"><span class="vc-node vc-binder" title="${type}">${escapeHtml(binder)}</span></div>` : ""}
             <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span></div>
         </div>
     `;
