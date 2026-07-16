@@ -29,6 +29,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
     private LJLanguageClient client;
     private String workspaceRoot;
+    private boolean initialVerification;
     private final Set<String> publishedDiagnosticUris = new HashSet<>();
     private final ExecutorService diagnosticsExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "liquidjava-diagnostics");
@@ -120,14 +121,15 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     }
 
     /**
-     * Checks diagnostics when a document is opened
+     * Checks diagnostics when the first document is opened
      * @param params
      */
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
-        if (!PathUtils.isFileInDirectory(uri, workspaceRoot)) return;
-        System.out.println("Document opened — checking diagnostics");
+        if (!PathUtils.isFileInDirectory(uri, workspaceRoot) || initialVerification) return;
+        initialVerification = true;
+        System.out.println("First document opened — checking diagnostics");
         generateDiagnosticsAsync(uri);
     }
 
