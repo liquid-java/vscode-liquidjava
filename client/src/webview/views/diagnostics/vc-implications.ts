@@ -28,6 +28,32 @@ function renderStepButton(errorId: string, step: "previous" | "next", disabled: 
     return `<button class="vc-step-btn vc-step-${step}-btn" data-error-id="${errorId}" data-vc-step="${step}" title="${label}" aria-label="${label}" ${disabled ? "disabled" : ""} type="button">${renderCodicon(icon)}</button>`;
 }
 
+function renderStepHeader(
+    errorId: string,
+    current: VCSimplificationResult,
+    index: number,
+    stepCount: number,
+): string {
+    const chronologicalStep = stepCount - index;
+    const simplification = current.simplification?.trim();
+    const label = simplification || "Original";
+
+    return /*html*/`
+        <div class="vc-step-header">
+            <span class="vc-step-name" title="${escapeHtml(label)}">${escapeHtml(label)}</span>
+            <div class="vc-step-navigation">
+                <span class="vc-step-position" aria-label="Simplification step ${chronologicalStep} of ${stepCount}">
+                    ${chronologicalStep}/${stepCount}
+                </span>
+                <div class="vc-step-controls">
+                    ${renderStepButton(errorId, "previous", index === stepCount - 1)}
+                    ${renderStepButton(errorId, "next", index === 0)}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 export function handleVCImplicationStepClick(target: Element): boolean {
     const errorId = target.getAttribute("data-error-id");
     const step = target.getAttribute("data-vc-step");
@@ -53,21 +79,19 @@ export function renderVCImplication(
         error.title,
         error.message
     ]));
-    const history: VCSimplificationResult[] = [];
+    const steps: VCSimplificationResult[] = [];
     for (let current: VCSimplificationResult | null = result; current; current = current.origin) {
-        history.push(current);
+        steps.push(current);
     }
 
-    const index = Math.min(stepIndexes.get(errorId) ?? 0, history.length - 1);
+    const index = Math.min(stepIndexes.get(errorId) ?? 0, steps.length - 1);
     stepIndexes.set(errorId, index);
+    const current = steps[index];
 
     return /*html*/ `
         <div class="container vc-container" data-error-id="${errorId}">
-            <div class="vc-chain">${renderImplication(history[index].implication)}</div>
-            <div class="vc-step-controls">
-                ${renderStepButton(errorId, "previous", index === history.length - 1)}
-                ${renderStepButton(errorId, "next", index === 0)}
-            </div>
+            ${steps.length > 1 ? renderStepHeader(errorId, current, index, steps.length) : ""}
+            <div class="vc-chain">${renderImplication(current.implication)}</div>
         </div>
     `;
 }
