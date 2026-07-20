@@ -361,9 +361,10 @@ export function getStyles(): string {
             text-align: right;
         }
         .vc-chain {
-            display: table;
+            display: grid;
+            grid-template-columns: max-content minmax(0, 1fr);
+            row-gap: 0.25rem;
             width: 100%;
-            border-spacing: 0 0.25rem;
             min-width: 0;
         }
         .counterexample-container .vc-chain {
@@ -375,26 +376,25 @@ export function getStyles(): string {
             overflow-wrap: anywhere;
         }
         .vc-line {
-            display: table-row;
+            display: contents;
         }
         .vc-binder-cell,
         .vc-predicate-cell {
-            display: table-cell;
             min-width: 0;
             padding: 0.0625rem 0.25rem;
             overflow-wrap: anywhere;
-            vertical-align: top;
         }
         .vc-binder-cell {
             min-height: 1.2em;
             padding-right: 0.75rem;
             color: var(--vscode-descriptionForeground);
             white-space: nowrap;
-            width: 1%;
         }
         .vc-predicate-cell {
             color: var(--vscode-editor-foreground);
-            width: 99%;
+        }
+        .vc-predicate-cell:only-child {
+            grid-column: 1 / -1;
         }
         .vc-node {
             display: inline;
