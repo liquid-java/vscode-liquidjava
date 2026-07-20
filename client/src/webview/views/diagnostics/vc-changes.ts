@@ -1,5 +1,6 @@
 import type { VCImplication } from "../../../types/vc-implications";
 import { renderHighlightedInlineExpression } from "../../highlighting";
+import { escapeHtml } from "../../utils";
 
 type ChangeKind = "unchanged" | "removed" | "added";
 type DiffOperation<T> = { kind: ChangeKind; value: T };
@@ -7,23 +8,38 @@ type DiffOperation<T> = { kind: ChangeKind; value: T };
 const MIN_LINE_SIMILARITY = 0.3;
 const TOKEN_PATTERN = /\s+|-->|&&|\|\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#⁰¹²³⁴⁵⁶⁷⁸⁹]*|\d+(?:\.\d+)?|[^\s]/gu;
 const WHITESPACE_PATTERN = /^\s+$/u;
+const VC_LINE_SEPARATOR = "\t";
+
+function hasBinder(node: VCImplication): boolean {
+    return typeof node.name === "string" && node.name.length > 0;
+}
+
+function formatImplicationLine(node: VCImplication): string {
+    const binder = hasBinder(node) ? `∀${node.name}` : "";
+    const type = typeof node.type === "string" ? node.type : "";
+    return [binder, type, node.predicate].join(VC_LINE_SEPARATOR);
+}
+
+function parseImplicationLine(line: string): { binder: string; type: string; predicate: string } {
+    const [binder = "", type = "", predicate = ""] = line.split(VC_LINE_SEPARATOR);
+    return { binder, type, predicate };
+}
 
 function getImplicationLines(node: VCImplication): string[] {
     const lines: string[] = [];
     for (let current: VCImplication | null = node; current; current = current.next) {
-        if (
-            current.next
-            && (current.name === null || current.type === null || current.predicate === "true")
-        ) continue;
-        lines.push(current.predicate);
+        if (current.next && !hasBinder(current)) continue;
+        lines.push(formatImplicationLine(current));
     }
     return lines;
 }
 
-function renderVCLine(content: string, className = ""): string {
+export function renderVCLine(line: string, className = "", predicateContent?: string): string {
+    const { binder, type, predicate } = parseImplicationLine(line);
     return /*html*/`
         <div class="vc-line ${className}">
-            <div class="vc-line-content"><span class="vc-node">${content}</span></div>
+            ${binder ? /*html*/`<div class="vc-binder-cell"><span class="vc-node vc-binder" title="${type}">${escapeHtml(binder)}</span></div>` : ""}
+            <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span></div>
         </div>
     `;
 }
@@ -158,16 +174,19 @@ function renderChangedDestinationLines(removed: string[], added: string[]): stri
     return alignChangedLines(removed, added)
         .map(([before, after]) => {
             if (after === undefined) return "";
-            if (before === undefined) return renderVCLine(renderChangedFragment(after));
-            const change = renderDestinationTokenDiff(before, after);
-            return renderVCLine(change.content, change.hasAddedContent ? "" : "vc-change-line");
+            if (before === undefined) return renderVCLine(after, "vc-change-line");
+            const change = renderDestinationTokenDiff(
+                parseImplicationLine(before).predicate,
+                parseImplicationLine(after).predicate,
+            );
+            return renderVCLine(after, change.hasAddedContent ? "" : "vc-change-line", change.content);
         })
         .join("");
 }
 
 export function renderImplication(node: VCImplication): string {
     return getImplicationLines(node)
-        .map(predicate => renderVCLine(renderHighlightedInlineExpression(predicate)))
+        .map(line => renderVCLine(line))
         .join("");
 }
 
@@ -185,7 +204,7 @@ export function renderImplicationChange(before: VCImplication, after: VCImplicat
     for (const operation of operations) {
         if (operation.kind === "unchanged") {
             flushChanges();
-            html += renderVCLine(renderHighlightedInlineExpression(operation.value));
+            html += renderVCLine(operation.value);
             continue;
         }
         changed[operation.kind].push(operation.value);

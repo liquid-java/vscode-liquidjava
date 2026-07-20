@@ -161,7 +161,7 @@ export function getStyles(): string {
         }
         .diagnostic-item {
             background-color: var(--vscode-textCodeBlock-background);
-            padding: 0.5rem 5rem 0.5rem 1rem;
+            padding: 0.5rem 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
             position: relative;
@@ -361,23 +361,40 @@ export function getStyles(): string {
             text-align: right;
         }
         .vc-chain {
+            display: grid;
+            grid-template-columns: fit-content(40%) minmax(0, 1fr);
+            row-gap: 0.25rem;
+            width: 100%;
+            min-width: 0;
+        }
+        .counterexample-container .vc-chain {
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
-            min-width: 0;
+        }
+        .counterexample-line {
+            overflow-wrap: anywhere;
         }
         .vc-line {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
+            display: contents;
+        }
+        .vc-binder-cell,
+        .vc-predicate-cell {
             min-width: 0;
             padding: 0.0625rem 0.25rem;
-            border-radius: 3px;
-        }
-        .vc-line-content {
-            flex: 0 1 auto;
-            min-width: 0;
             overflow-wrap: anywhere;
+        }
+        .vc-binder-cell {
+            min-height: 1.2em;
+            padding-right: 0.75rem;
+            color: var(--vscode-descriptionForeground);
+            white-space: normal;
+        }
+        .vc-predicate-cell {
+            color: var(--vscode-editor-foreground);
+        }
+        .vc-predicate-cell:only-child {
+            grid-column: 1 / -1;
         }
         .vc-node {
             display: inline;
