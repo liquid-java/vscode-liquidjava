@@ -135,9 +135,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         const vcImplicationStepButton = target.closest?.('.vc-step-btn');
         if (vcImplicationStepButton) {
             e.stopPropagation();
-            if (handleVCImplicationStepClick(vcImplicationStepButton)) {
-                updateView();
-            }
+            handleVCImplicationStepClick(vcImplicationStepButton);
             return;
         }
 

@@ -1,8 +1,9 @@
 import type { LJDiagnostic, SourcePosition } from "../../types/diagnostics";
-import { escapeHtml } from "../utils";
+import { escapeHtml, getSimpleName } from "../utils";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
 import { renderCodicon, renderCodiconButton } from "../icons";
+import { LJVariable } from "../../types/context";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
     <div class="header">
@@ -40,17 +41,21 @@ export const renderLocation = (diagnostic: LJDiagnostic): string => {
     return renderCustomSection("Location", /*html*/`<pre>${renderLocationLink(diagnostic.position)}</pre>`);
 };
 
-export function renderHighlightButton(position: SourcePosition, content: string, error: boolean = false): string {
+export function renderVariableHighlightButton(variable: LJVariable): string {
+    const displayName = getSimpleName(variable.name);
+    const position = variable.position;
+    if (!position || !position.file) return `<code>${displayName}</code>`;
     return /*html*/`
         <button
-            class="highlight-var-btn ${error ? 'error' : ''}"
+            class="highlight-var-btn"
+            title="${variable.type}"
             data-start-line="${position.lineStart}"
             data-start-column="${position.colStart}"
             data-end-line="${position.lineEnd}"
             data-end-column="${position.colEnd}"
             data-file="${position.file}"
         >
-            <code>${renderHighlightedInlineExpression(content)}</code>
+            <code>${renderHighlightedInlineExpression(displayName)}</code>
         </button>
     `;
 }

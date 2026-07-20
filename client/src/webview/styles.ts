@@ -371,6 +371,8 @@ export function getStyles(): string {
             align-items: flex-start;
             gap: 0.5rem;
             min-width: 0;
+            padding: 0.0625rem 0.25rem;
+            border-radius: 3px;
         }
         .vc-line-content {
             flex: 0 1 auto;
@@ -388,6 +390,52 @@ export function getStyles(): string {
         }
         .vc-node:hover {
             background: none;
+        }
+        .vc-change-line .vc-node {
+            border-radius: 2px;
+            animation: vc-change-line-fade 1.4s ease-out;
+        }
+        .vc-change-fragment {
+            border-radius: 2px;
+            animation: vc-change-fragment-fade 1.4s ease-out;
+        }
+        @keyframes vc-change-line-fade {
+            0% {
+                background-color: rgba(255, 255, 96, 0.68);
+                box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.38);
+            }
+            18% {
+                background-color: rgba(255, 255, 0, 0.4);
+                box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.2);
+            }
+            100% {
+                background-color: transparent;
+                box-shadow: none;
+            }
+        }
+        @keyframes vc-change-fragment-fade {
+            0% {
+                background-color: rgba(255, 255, 96, 0.68);
+                box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.38);
+            }
+            18% {
+                background-color: rgba(255, 255, 0, 0.4);
+                box-shadow: 0 0 0 1px rgba(255, 255, 0, 0.2);
+            }
+            100% {
+                background-color: transparent;
+                box-shadow: none;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .vc-change-line .vc-node {
+                background-color: rgba(255, 255, 0, 0.3);
+                animation: none;
+            }
+            .vc-change-fragment {
+                background-color: rgba(255, 255, 0, 0.3);
+                animation: none;
+            }
         }
         .vc-binder {
             color: var(--vscode-descriptionForeground);
@@ -420,8 +468,8 @@ export function getStyles(): string {
         }
         .vc-step-btn:hover {
             font-weight: bold;
-            background-color: transparent;
             opacity: 1;
+            background-color: transparent;
         }
         .vc-step-btn:disabled {
             cursor: default;
