@@ -362,7 +362,7 @@ export function getStyles(): string {
         }
         .vc-chain {
             display: grid;
-            grid-template-columns: max-content minmax(0, 1fr);
+            grid-template-columns: fit-content(40%) minmax(0, 1fr);
             row-gap: 0.25rem;
             width: 100%;
             min-width: 0;
@@ -388,7 +388,7 @@ export function getStyles(): string {
             min-height: 1.2em;
             padding-right: 0.75rem;
             color: var(--vscode-descriptionForeground);
-            white-space: nowrap;
+            white-space: normal;
         }
         .vc-predicate-cell {
             color: var(--vscode-editor-foreground);
