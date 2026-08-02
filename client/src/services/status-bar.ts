@@ -35,10 +35,10 @@ export function registerStatusBar(context: vscode.ExtensionContext) {
  * @param notifyWebview Whether the webview should reflect this status update.
  */
 export function updateStatusBar(status: ExtensionStatus, notifyWebview = status !== "loading") {
-    if (notifyWebview) {
-        extension.status = status;
+    extension.status = status;
+    if (notifyWebview)
         extension.webview?.sendMessage({ type: "status", status });
-    }
+    
     const color = status === "stopped" || status === "crashed" ? "errorForeground" : "statusBar.foreground";
     if (!extension.statusBar) return;
     extension.statusBar.color = new vscode.ThemeColor(color);
