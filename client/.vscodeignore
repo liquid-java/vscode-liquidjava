@@ -18,6 +18,9 @@ node_modules/**
 *.vsix
 dist/**/*.map
 media/**/*.map
+media/codicons/**
+media/lj-logo.png
+media/webview.js
 
 # Test files
 test/**

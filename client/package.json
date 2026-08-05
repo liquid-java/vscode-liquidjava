@@ -1,8 +1,8 @@
 {
-	"name": "liquid-java",
+	"name": "liquid-java-baseline",
 	"displayName": "LiquidJava",
 	"description": "Extending Java with Liquid Types",
-	"version": "0.0.90",
+	"version": "0.0.1",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
@@ -39,151 +39,28 @@
 		"onLanguage:java"
 	],
 	"main": "./dist/extension.js",
-	"contributes": {
-		"configuration": {
-			"type": "object",
-			"title": "Liquid Java configuration",
-			"properties": {
-				"liquidJavaServer.maxNumberOfProblems": {
-					"type": "number",
-					"default": 100,
-					"description": "Controls the maximum number of problems produced by the server."
-				},
-				"liquidJavaServer.trace.server": {
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
-					],
-					"default": "off",
-					"description": "Traces the communication between VSCode and the liquidJavaServer service."
-				},
-				"liquidjava.applyItalicOverlay": {
-					"type": "boolean",
-					"default": true,
-					"description": "Apply italic style to LiquidJava injected tokens on top of any active theme"
-				}
-			}
-		},
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id": "liquidJavaContainer",
-					"title": "LiquidJava",
-					"icon": "media/java-icon.svg"
-				}
-			]
-		},
-		"views": {
-			"liquidJavaContainer": [
-				{
-					"id": "liquidJavaView",
-					"name": "LiquidJava",
-					"type": "webview",
-					"icon": "media/java-icon.svg"
-				}
-			]
-		},
-		"commands": [
-			{
-				"command": "liquidjava.showCommands",
-				"title": "Show Commands",
-				"category": "LiquidJava"
-			},
-			{
-				"command": "liquidjava.showLogs",
-				"title": "Show Logs",
-				"category": "LiquidJava"
-			},
-			{
-				"command": "liquidjava.showView",
-				"title": "Show View",
-				"category": "LiquidJava",
-				"icon": {
-					"light": "media/java-icon.svg",
-					"dark": "media/java-icon-white.svg"
-				}
-			},
-			{
-				"command": "liquidjava.start",
-				"title": "Start",
-				"category": "LiquidJava"
-			},
-			{
-				"command": "liquidjava.stop",
-				"title": "Stop",
-				"category": "LiquidJava"
-			},
-			{
-				"command": "liquidjava.restart",
-				"title": "Restart",
-				"category": "LiquidJava"
-			},
-			{
-				"command": "liquidjava.verify",
-				"title": "Verify",
-				"category": "LiquidJava"
-			}
-		],
-		"menus": {
-			"editor/title": [
-				{
-					"command": "liquidjava.showView",
-					"group": "navigation",
-					"when": "editorLangId == java"
-				}
-			]
-		},
-		"grammars": [
-			{
-				"path": "./syntaxes/liquidjava.json",
-				"scopeName": "source.liquidjava",
-				"injectTo": [
-					"source.java"
-				]
-			}
-		],
-		"configurationDefaults": {
-			"[java]": {
-				"editor.autoClosingBrackets": "always"
-			}
-		}
-	},
+	"contributes": {},
 	"scripts": {
 		"vscode:prepublish": "npm run package",
 		"compile": "webpack",
 		"watch": "webpack --watch",
 		"package": "webpack --mode production --devtool hidden-source-map",
 		"build:server": "cd ../server && mvn clean package && mkdir -p ../client/server && cp target/language-server-liquidjava.jar ../client/server/",
-		"compile-tests": "tsc -p . --outDir out",
-		"watch-tests": "tsc -p . -w --outDir out",
-		"pretest": "npm run compile-tests && npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js"
+		"test": "npm run test:baseline"
 	},
-	"extensionDependencies": [],
 	"dependencies": {
-		"@vscode/codicons": "^0.0.45"
+		"vscode-languageclient": "^9.0.1"
 	},
 	"devDependencies": {
-		"@types/mkdirp": "^0.5.2",
 		"@types/node": "^24.7.2",
-		"@types/rimraf": "^2.0.2",
 		"@types/vscode": "^1.82.0",
-		"@typescript-eslint/eslint-plugin": "^4.16.0",
-		"@typescript-eslint/parser": "^4.16.0",
-		"eslint": "^7.21.0",
-		"ftp": "^0.3.10",
-		"get-port": "^5.1.1",
-		"jsonc-parser": "^0.4.2",
-		"minimist": "^1.2.7",
-		"mkdirp": "^0.5.1",
-		"rimraf": "^2.6.2",
+		"@typescript-eslint/eslint-plugin": "^6.21.0",
+		"@typescript-eslint/parser": "^6.21.0",
+		"eslint": "^8.57.1",
 		"ts-loader": "^9.5.4",
 		"typescript": "~5.3.0",
 		"vsce": "^2.15.0",
-		"vscode-languageclient": "^9.0.1",
 		"webpack": "^5.102.1",
 		"webpack-cli": "^5.1.4"
 	}

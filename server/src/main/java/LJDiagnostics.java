@@ -1,9 +1,8 @@
 import java.util.List;
 
 import liquidjava.diagnostics.errors.LJError;
-import liquidjava.diagnostics.warnings.LJWarning;
 
 /**
- * Container for LiquidJava diagnostics after verification
+ * Verifier errors produced by a verification run.
  */
-public record LJDiagnostics(List<LJError> errors, List<LJWarning> warnings) {}
+public record LJDiagnostics(List<LJError> errors) {}

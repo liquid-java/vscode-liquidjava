@@ -1,13 +1,10 @@
 import java.io.File;
 import java.net.URI;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -19,10 +16,6 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
-import liquidjava.diagnostics.LJDiagnostic;
-import liquidjava.processor.context.ContextHistory;
-import utils.ContextHistoryConverter;
-import utils.DiagnosticConverter;
 import utils.PathUtils;
 
 public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
@@ -45,18 +38,8 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
         this.workspaceRoot = workspaceRoot;
     }
 
-    /**
-     * Sends diagnostics notification to the client
-     * @param diagnostics the diagnostics to send
-     */
-    public void sendDiagnosticsNotification(List<LJDiagnostic> diagnostics) {
-        if (this.client == null) return;
-            
-        System.out.println("Sending diagnostics notification with " + diagnostics.size() + " diagnostics");
-        List<Object> dtos = diagnostics.stream()
-            .map(DiagnosticConverter::convertToDTO)
-            .collect(Collectors.toList());
-        this.client.sendDiagnostics(dtos);
+    private boolean isInWorkspace(String uri) {
+        return workspaceRoot == null || PathUtils.isFileInDirectory(uri, workspaceRoot);
     }
 
     /**
@@ -69,20 +52,15 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
 
         try {
             LJDiagnostics ljDiagnostics = LJDiagnosticsHandler.getLJDiagnostics(path);
-            List<PublishDiagnosticsParams> nativeDiagnostics = LJDiagnosticsHandler.getNativeDiagnostics(ljDiagnostics, uri);
+            var nativeDiagnostics = LJDiagnosticsHandler.getNativeDiagnostics(ljDiagnostics, uri);
             nativeDiagnostics.forEach(params -> {
                 this.client.publishDiagnostics(params);
                 if (!params.getDiagnostics().isEmpty()) {
                     publishedDiagnosticUris.add(params.getUri());
                 }
             });
-            List<LJDiagnostic> diagnostics = Stream.concat(ljDiagnostics.errors().stream(), ljDiagnostics.warnings().stream()).collect(Collectors.toList());
-            sendDiagnosticsNotification(diagnostics);
-            this.client.sendContext(ContextHistoryConverter.convertToDTO(ContextHistory.getInstance()));
         } catch (Exception e) {
-            System.err.println("LiquidJava internal error: " + e.getMessage());
             clearPublishedDiagnostics(uri);
-            this.client.sendFailure();
         }
     }
 
@@ -109,8 +87,6 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     public void clearDiagnostic(String uri) {
         this.client.publishDiagnostics(LJDiagnosticsHandler.getEmptyDiagnostics(uri));
         publishedDiagnosticUris.remove(uri);
-        // TODO: fix consistency between native and custom diagnostics
-        // sendDiagnosticsNotification(List.of());
     }
 
     private void clearPublishedDiagnostics(String uri) {
@@ -127,9 +103,8 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
-        if (!PathUtils.isFileInDirectory(uri, workspaceRoot) || initialVerification) return;
+        if (!isInWorkspace(uri) || initialVerification) return;
         initialVerification = true;
-        System.out.println("First document opened — checking diagnostics");
         generateDiagnosticsAsync(uri);
     }
 
@@ -140,8 +115,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
-        if (!PathUtils.isFileInDirectory(uri, workspaceRoot)) return;
-        System.out.println("Document saved — checking diagnostics");
+        if (!isInWorkspace(uri)) return;
         clearDiagnostic(uri);
         generateDiagnosticsAsync(uri);
     }
@@ -153,12 +127,11 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
         String uri = params.getTextDocument().getUri();
-        if (!PathUtils.isFileInDirectory(uri, workspaceRoot)) return;
+        if (!isInWorkspace(uri)) return;
         try {
             // check if the file still exists on disk
             File file = new File(new URI(uri));
             if (!file.exists()) {
-                System.out.println("File deleted — clearing diagnostic");
                 clearDiagnostic(uri);
             }
         } catch (Exception e) {}

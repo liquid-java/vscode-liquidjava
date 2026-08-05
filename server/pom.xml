@@ -6,12 +6,6 @@
   <artifactId>vscode-liquid-java-server</artifactId>
   <version>0.0.1-SNAPSHOT</version>
      <build>
-        <testSourceDirectory>src/test/java</testSourceDirectory>
-        <testResources>
-            <testResource>
-                <directory>src/test/resources</directory>
-            </testResource>
-        </testResources>
         <plugins>
 			<!-- <plugin>
 				<groupId>net.revelc.code.formatter</groupId>
@@ -41,16 +35,6 @@
 					<target>20</target>
 				</configuration>
             </plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.2.1</version>
-			</plugin>
-			<plugin>
-				<groupId>org.antlr</groupId>
-				<artifactId>antlr4-maven-plugin</artifactId>
-				<version>4.7.1</version>
-			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -111,7 +95,6 @@
 		<version.liquidjava>1.0</version.liquidjava>
 		<!-- plugin versions -->
 		<pVersion.compiler>3.8.0</pVersion.compiler>
-		<pVersion.surefire>3.1.2</pVersion.surefire>
     </properties>
     
     <repositories>
@@ -172,7 +155,7 @@
 		<dependency>
 			<groupId>io.github.liquid-java</groupId>
 			<artifactId>liquidjava-verifier</artifactId>
-			<version>0.0.28</version>
+			<version>0.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>tools.aqua</groupId>
@@ -195,36 +178,6 @@
             <artifactId>org.eclipse.lsp4j</artifactId>
             <version>${lsp4j.version}</version>
         </dependency>
-		<!-- https://mvnrepository.com/artifact/org.antlr/antlr4 -->
-		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>antlr4</artifactId>
-			<version>4.7.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>antlr4-runtime</artifactId>
-			<version>4.7.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.9.3</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.9.3</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.platform</groupId>
-			<artifactId>junit-platform-launcher</artifactId>
-			<version>1.9.3</version>
-			<scope>test</scope>
-		</dependency>
-
 	</dependencies>
     
   <name>language-server-liquidjava</name>

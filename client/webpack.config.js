@@ -1,108 +1,54 @@
 //@ts-check
 
-'use strict';
+"use strict";
 
-const path = require('path');
-const fs = require('fs');
-
-/** @type {() => import('webpack').RuleSetRule} */
-const createTsRule = () => ({
-  test: /\.ts$/,
-  exclude: /node_modules/,
-  use: [
-    {
-      loader: 'ts-loader'
-    }
-  ]
-});
-
-const copyCodiconsAssets = () => {
-  const codiconsDist = path.resolve(__dirname, 'node_modules', '@vscode', 'codicons', 'dist');
-  const codiconsDest = path.resolve(__dirname, 'media', 'codicons');
-  const assets = ['codicon.css', 'codicon.ttf'];
-
-  if (!fs.existsSync(codiconsDest)) {
-    fs.mkdirSync(codiconsDest, { recursive: true });
-  }
-
-  for (const asset of assets) {
-    fs.copyFileSync(path.resolve(codiconsDist, asset), path.resolve(codiconsDest, asset));
-  }
-};
+const fs = require("fs");
+const path = require("path");
 
 /** @type {import('webpack').Configuration} */
-const extensionConfig = {
-  target: 'node',
-  mode: 'none',
-  entry: './src/extension.ts',
+module.exports = {
+  target: "node",
+  mode: "none",
+  entry: "./src/extension.ts",
   output: {
-    // store bundle in dist folder
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'extension.js',
-    libraryTarget: 'commonjs2',
-    devtoolModuleFilenameTemplate: '../[resource-path]'
+    path: path.resolve(__dirname, "dist"),
+    filename: "extension.js",
+    libraryTarget: "commonjs2",
+    devtoolModuleFilenameTemplate: "../[resource-path]",
   },
-  devtool: 'source-map',
+  devtool: "source-map",
   externals: {
-    vscode: 'commonjs vscode'
+    vscode: "commonjs vscode",
   },
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: [".ts", ".js"],
     alias: {
-      'vscode-languageserver-types$': path.resolve(
+      "vscode-languageserver-types$": path.resolve(
         __dirname,
-        'node_modules/vscode-languageserver-types/lib/esm/main.js'
-      )
-    }
+        "node_modules/vscode-languageserver-types/lib/esm/main.js"
+      ),
+    },
   },
   module: {
-    rules: [createTsRule()]
+    rules: [
+      {
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        use: [{ loader: "ts-loader" }],
+      },
+    ],
   },
   plugins: [
     {
       apply: (compiler) => {
-        compiler.hooks.afterEmit.tap('CopyCodiconsAssets', copyCodiconsAssets);
-      }
-    },
-    // Copy server JAR to dist folder after build
-    {
-      apply: (compiler) => {
-        compiler.hooks.afterEmit.tap('CopyServerJar', () => {
-          const serverDir = path.resolve(__dirname, 'dist', 'server');
-          const jarSource = path.resolve(__dirname, 'server', 'language-server-liquidjava.jar');
-          const jarDest = path.resolve(serverDir, 'language-server-liquidjava.jar');
-          if (!fs.existsSync(serverDir)) {
-            fs.mkdirSync(serverDir, { recursive: true });
-          }
-          if (fs.existsSync(jarSource)) {
-            fs.copyFileSync(jarSource, jarDest);
-            console.log('Copied language-server-liquidjava.jar to dist/server/');
-          } else {
-            console.warn('Warning: language-server-liquidjava.jar not found at', jarSource);
-            console.warn('Run: cd ../server && mvn clean package');
-          }
+        compiler.hooks.afterEmit.tap("CopyServerJar", () => {
+          const serverDir = path.resolve(__dirname, "dist", "server");
+          const jarSource = path.resolve(__dirname, "server", "language-server-liquidjava.jar");
+          const jarDest = path.resolve(serverDir, "language-server-liquidjava.jar");
+          if (!fs.existsSync(serverDir)) fs.mkdirSync(serverDir, { recursive: true });
+          if (fs.existsSync(jarSource)) fs.copyFileSync(jarSource, jarDest);
         });
-      }
-    }
-  ]
+      },
+    },
+  ],
 };
-
-/** @type {import('webpack').Configuration} */
-const webviewConfig = {
-  target: 'web',
-  mode: 'none',
-  entry: './src/webview/main.ts',
-  output: {
-    path: path.resolve(__dirname, 'media'),
-    filename: 'webview.js'
-  },
-  devtool: 'source-map',
-  resolve: {
-    extensions: ['.ts', '.js']
-  },
-  module: {
-    rules: [createTsRule()]
-  }
-};
-
-module.exports = [extensionConfig, webviewConfig];

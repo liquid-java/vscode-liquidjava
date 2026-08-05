@@ -1,120 +1,30 @@
 import * as vscode from "vscode";
-import { registerLogger } from "./services/logger";
-import { applyItalicOverlay } from "./services/decorators";
-import { findJavaExecutable } from "./utils/utils";
-import { extension } from "./state";
-import { registerCommands } from "./services/commands";
-import { registerStatusBar, updateStatusBar } from "./services/status-bar";
-import { registerWebview } from "./services/webview";
-import { registerHover } from "./services/hover";
-import { registerEvents } from "./services/events";
-import { registerAutocomplete } from "./services/autocomplete";
-import { refreshCodeLenses, registerCodeLens } from "./services/codelens";
-import { runLanguageServer, stopLanguageServer } from "./lsp/server";
 import { runClient, stopClient } from "./lsp/client";
+import { runLanguageServer, stopLanguageServer } from "./lsp/server";
+import { findJavaExecutable } from "./utils/utils";
 
 /**
- * Activates the LiquidJava extension
- * @param context The extension context
+ * Starts LiquidJava and reports verifier errors as standard VS Code diagnostics.
  */
 export async function activate(context: vscode.ExtensionContext) {
-    registerLogger(context);
-    extension.logger!.client.info("Activating LiquidJava extension...");
-    
-    registerStatusBar(context);
-    registerCommands(context);
-    registerEvents(context);
-    registerWebview(context);
-    registerAutocomplete(context);
-    registerCodeLens(context);
-    registerHover();
-    await applyItalicOverlay();
-    await startExtension(context);
-}
-
-/**
- * Deactivates the LiquidJava extension
- */
-export async function deactivate() {
-    extension.logger?.client.info("Deactivating LiquidJava extension...");
-    await stopClient("Extension was deactivated");
-    await stopLanguageServer();
-    resetExtension();
-}
-
-/**
- * Starts the LiquidJava language server and client
- * @param context The extension context
- */
-export async function startExtension(context: vscode.ExtensionContext) {
-    // check if already running
-    if (extension.client || extension.serverProcess) {
-        extension.logger!.client.info("LiquidJava is already running");
-        return;
-    }
-    extension.logger!.client.info("Starting LiquidJava...");
-    updateStatusBar("loading");
-
-    // find java executable path
     const javaExecutablePath = findJavaExecutable();
     if (!javaExecutablePath) {
         vscode.window.showErrorMessage("LiquidJava - Java Runtime Not Found in JAVA_HOME or PATH");
-        extension.logger!.client.error("Java Runtime not found in JAVA_HOME or PATH");
-        updateStatusBar("stopped");
         return;
     }
-    extension.logger!.client.info("Using Java at: " + javaExecutablePath);
 
-    // start server
-    extension.logger!.client.info("Starting LiquidJava language server...");
     const port = await runLanguageServer(context, javaExecutablePath);
-
-    // start client
-    extension.logger!.client.info("Starting LiquidJava client...");
-    await runClient(context, port);
+    try {
+        await runClient(context, port);
+    } catch {
+        await stopLanguageServer();
+    }
 }
 
 /**
- * Stops the LiquidJava language server and client
+ * Stops the language client and server.
  */
-export async function stopExtension() {
-    if (!extension.client && !extension.serverProcess) {
-        extension.logger?.client.info("LiquidJava is not running");
-        return;
-    }
-    extension.logger?.client.info("Stopping LiquidJava...");
-    resetExtension();
-    await stopClient("Extension stop command");
+export async function deactivate() {
+    await stopClient();
     await stopLanguageServer();
-}
-
-/**
- * Restarts the LiquidJava language server and client
- * @param context The extension context
- */
-export async function restartExtension(context: vscode.ExtensionContext) {
-    extension.logger?.client.info("Restarting LiquidJava...");
-    
-    // stop if running
-    if (extension.client || extension.serverProcess) {
-        await stopExtension();
-        // ensure clean shutdown
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    
-    // start again
-    await startExtension(context);
-}
-
-export function isExtensionRunning(): boolean {
-    return extension.status !== "stopped" && Boolean(extension.client);
-}
-
-export function resetExtension() {
-    extension.diagnostics = [];
-    extension.errorAtCursor = undefined;
-    refreshCodeLenses();
-    extension.webview?.sendMessage({ type: "diagnostics", diagnostics: [] });
-    if (extension.context)
-        extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
 }

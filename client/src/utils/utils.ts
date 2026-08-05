@@ -2,9 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as net from "net";
 import * as child_process from "child_process";
-import * as vscode from "vscode";
 import { JAVA_BINARY } from "./constants";
-import { Range } from "../types/context";
 
 /**
  * Finds the Java executable in the system, either in JAVA_HOME or in PATH
@@ -100,7 +98,7 @@ export async function connectToPort(
  */
 export async function killProcess(proc?: child_process.ChildProcess) {
     return new Promise<void>((resolve, reject) => {
-        if (!proc || proc.killed || proc.pid === undefined) {
+        if (!proc || proc.killed || proc.exitCode !== null || proc.pid === undefined) {
             // already killed
             resolve();
             return;
@@ -126,28 +124,7 @@ export async function killProcess(proc?: child_process.ChildProcess) {
     });
 }
 
-export function getSimpleName(qualifiedName: string): string {
-    const parts = qualifiedName.split(".");
-    return parts[parts.length - 1] || qualifiedName;
-}
-
-export function getOriginalVariableName(name: string): string {
-    if (name.startsWith("this#")) return name.replace(/^this#/, '');
-    if (name.startsWith("#")) return name.split("_")[0].replace(/^#/, '');
-    return name;
-    
-}
-
 export function normalizeFilePath(fsPath: string): string {
     // uppercase windows drive letter (c:\ -> C:\)
     return path.normalize(fsPath).replace(/^([a-z]):\\/, (_, drive) => drive.toUpperCase() + ':\\');
-}
-
-export function toRange(selection: vscode.Selection | vscode.Range): Range {
-    return {
-        lineStart: selection.start.line,
-        colStart: selection.start.character,
-        lineEnd: selection.end.line,
-        colEnd: selection.end.character
-    };
 }
