@@ -82,7 +82,7 @@ export function renderDiagnosticContextButton(position?: SourcePosition | null):
 export function renderDiagnosticStateMachineButton(errorIndex: number): string {
     return renderCodiconButton("type-hierarchy", {
         className: "diagnostic-state-machine-btn",
-        title: "View related state machine",
+        title: "View state machine",
         attributes: `data-error-index="${errorIndex}"`,
     });
 }
