@@ -45,17 +45,30 @@ export function renderVariableHighlightButton(variable: LJVariable): string {
     const displayName = getSimpleName(variable.name);
     const position = variable.position;
     if (!position || !position.file) return `<code>${displayName}</code>`;
+    return renderSourceHighlightButton(
+        `<code>${renderHighlightedInlineExpression(displayName)}</code>`,
+        variable.type,
+        position,
+    );
+}
+
+export function renderSourceHighlightButton(
+    content: string,
+    title: string,
+    position: SourcePosition & { file: string },
+    className = "",
+): string {
     return /*html*/`
         <button
-            class="highlight-var-btn"
-            title="${variable.type}"
+            class="highlight-var-btn${className ? ` ${className}` : ""}"
+            title="${escapeHtml(title)}"
             data-start-line="${position.lineStart}"
             data-start-column="${position.colStart}"
             data-end-line="${position.lineEnd}"
             data-end-column="${position.colEnd}"
-            data-file="${position.file}"
+            data-file="${escapeHtml(position.file)}"
         >
-            <code>${renderHighlightedInlineExpression(displayName)}</code>
+            ${content}
         </button>
     `;
 }

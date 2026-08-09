@@ -135,7 +135,10 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         const vcImplicationStepButton = target.closest?.('.vc-step-btn');
         if (vcImplicationStepButton) {
             e.stopPropagation();
-            handleVCImplicationStepClick(vcImplicationStepButton);
+            handleVCImplicationStepClick(vcImplicationStepButton, () => {
+                root.querySelector<HTMLElement>('.highlight-var-btn.selected')?.classList.remove('selected');
+                vscode.postMessage({ type: 'highlight', range: null });
+            });
             return;
         }
 
