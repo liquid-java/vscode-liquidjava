@@ -30,7 +30,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let diagnostics: LJDiagnostic[] | undefined;
     let showAllDiagnostics = false;
     let currentFile: string;
-    let stateMachine: LJStateMachine;
+    let stateMachine: LJStateMachine | undefined;
+    let diagnosticStateMachine: LJStateMachine | undefined;
     let context: LJContext;
     let errorAtCursor: RefinementMismatchError;
     let selectedTab: NavTab = 'diagnostics';
@@ -128,6 +129,24 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             const revealTarget = getDiagnosticRevealTargetFromKey(diagnosticContextButton.getAttribute('data-diagnostic-target'));
             if (!revealTarget) return;
             revealContextForDiagnostic(revealTarget);
+            return;
+        }
+
+        const diagnosticStateMachineButton = target.closest?.('.diagnostic-state-machine-btn');
+        if (diagnosticStateMachineButton) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const errorIndex = parseInt(diagnosticStateMachineButton.getAttribute('data-error-index') || '-1', 10);
+            const diagnostic = getDisplayDiagnostics(diagnostics ?? [], showAllDiagnostics, currentFile)
+                .filter(d => d.category === 'error')[errorIndex];
+            if (diagnostic?.type !== 'state-refinement-error' || !diagnostic.stateMachine) return;
+
+            selectedTab = 'fsm';
+            diagnosticStateMachine = diagnostic.stateMachine;
+            showDiagramConditions = false;
+            currentDiagram = '';
+            updateView();
             return;
         }
 
@@ -237,6 +256,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             const tab = target.getAttribute('data-tab') as NavTab;
             if (tab && tab !== selectedTab) {
                 vscode.postMessage({ type: 'highlight', range: null });
+                if (tab === 'fsm') diagnosticStateMachine = undefined;
                 selectedTab = tab;
                 updateView();
             }
@@ -309,11 +329,15 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             case 'file':
                 currentFile = msg.file;
                 if (diagnostics && !showAllDiagnostics && selectedTab === 'diagnostics') updateView();
+                diagnosticStateMachine = undefined;
+                stateMachine = undefined;
+                currentDiagram = '';
+                if (selectedTab === 'fsm') updateView();
                 break;
             case 'fsm':
-                stateMachine = msg.sm as LJStateMachine;
+                stateMachine = (msg.sm as LJStateMachine | null) ?? undefined;
                 showDiagramConditions = false;
-                if (selectedTab === 'fsm') updateView();
+                if (selectedTab === 'fsm' && !diagnosticStateMachine) updateView();
                 break;
             case 'context':
                 context = msg.context as LJContext;
@@ -348,10 +372,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                     : renderLoading();
                 break;
             case 'fsm': {
-                const diagram = createMermaidDiagram(stateMachine, diagramOrientation, showDiagramConditions);
+                const displayedStateMachine = diagnosticStateMachine ?? stateMachine;
+                const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions);
                 currentDiagram = diagram;
-                renderStateMachineView(root, stateMachine, diagram, diagramOrientation, showDiagramConditions);
-                if (stateMachine) renderMermaidDiagram(document, window);
+                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions);
+                if (displayedStateMachine) renderMermaidDiagram(document, window);
                 break;
             }
             case 'context':

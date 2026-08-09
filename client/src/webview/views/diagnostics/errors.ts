@@ -1,4 +1,4 @@
-import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderCustomSection, renderLocation, renderDiagnosticContextButton } from "../sections";
+import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderCustomSection, renderLocation, renderDiagnosticContextButton, renderDiagnosticStateMachineButton } from "../sections";
 import { renderCounterexample } from "./counterexample";
 import { renderVCImplication } from "./vc-implications";
 import type {
@@ -21,8 +21,11 @@ export function renderErrors(errors: LJError[]): string {
             ${errors.map((error, index) => {
                 return /*html*/`
                 <li class="diagnostic-item error-item" ${renderDiagnosticDataAttributes(error)}>
-                    ${renderDiagnosticContextAction(error)}
-                    ${renderCopyDiagnosticButton('error', index)}
+                    <div class="diagnostic-actions">
+                        ${renderDiagnosticStateMachineAction(error, index)}
+                        ${renderDiagnosticContextAction(error)}
+                        ${renderCopyDiagnosticButton('error', index)}
+                    </div>
                     ${renderError(error)}
                 </li>
             `;
@@ -73,4 +76,9 @@ export function renderError(error: LJError): string {
 function renderDiagnosticContextAction(error: LJError): string {
     if (error.type !== 'refinement-error' && error.type !== 'state-refinement-error') return "";
     return renderDiagnosticContextButton(error.position);
+}
+
+function renderDiagnosticStateMachineAction(error: LJError, index: number): string {
+    if (error.type !== 'state-refinement-error' || !error.stateMachine) return "";
+    return renderDiagnosticStateMachineButton(index);
 }

@@ -37,8 +37,18 @@ export function renderDiagnosticDataAttributes(diagnostic: LJDiagnostic): string
 }
 
 export const renderLocation = (diagnostic: LJDiagnostic): string => {
-    if (!diagnostic.position || !diagnostic.file) return "";
-    return renderCustomSection("Location", /*html*/`<pre>${renderLocationLink(diagnostic.position)}</pre>`);
+    const positions: SourcePosition[] = [];
+    if (diagnostic.position && diagnostic.file) positions.push(diagnostic.position);
+
+    const declarationPosition = diagnostic.type === 'refinement-error' || diagnostic.type === 'state-refinement-error'
+        ? diagnostic.declarationPosition
+        : null;
+    if (declarationPosition?.file) positions.push(declarationPosition);
+
+    if (positions.length === 0) return "";
+    const title = positions.length === 1 ? "Location" : "Locations";
+    const links = positions.map(renderLocationLink).join("\n");
+    return renderCustomSection(title, /*html*/`<pre>${links}</pre>`);
 };
 
 export function renderVariableHighlightButton(variable: LJVariable): string {
@@ -66,6 +76,14 @@ export function renderDiagnosticContextButton(position?: SourcePosition | null):
         className: "diagnostic-context-btn",
         title: "View related context",
         attributes: `data-diagnostic-target="${getDiagnosticRevealTargetKey({ file: position.file, position })}"`,
+    });
+}
+
+export function renderDiagnosticStateMachineButton(errorIndex: number): string {
+    return renderCodiconButton("type-hierarchy", {
+        className: "diagnostic-state-machine-btn",
+        title: "View related state machine",
+        attributes: `data-error-index="${errorIndex}"`,
     });
 }
 

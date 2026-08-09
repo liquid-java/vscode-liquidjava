@@ -1,4 +1,5 @@
 import type { Range } from './context';
+import type { LJStateMachine } from './fsm';
 import type { VCSimplificationResult } from './vc-implications';
 
 // Type definitions used for LiquidJava diagnostics
@@ -62,6 +63,7 @@ export type RefinementError = BaseDiagnostic & {
     found: VCSimplificationResult;
     customMessage: string;
     counterexample: string;
+    declarationPosition: SourcePosition | null;
 }
 
 export type StateConflictError = BaseDiagnostic & {
@@ -78,6 +80,8 @@ export type StateRefinementError = BaseDiagnostic & {
     expected: string;
     found: VCSimplificationResult;
     customMessage: string;
+    declarationPosition: SourcePosition | null;
+    stateMachine: LJStateMachine | null;
 }
 
 export type ArgumentMismatchError = BaseDiagnostic & {

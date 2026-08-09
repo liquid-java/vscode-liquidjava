@@ -36,7 +36,7 @@ export function registerWebview(context: vscode.ExtensionContext) {
                 if (extension.file) extension.webview?.sendMessage({ type: "file", file: extension.file });
                 if (extension.diagnostics) extension.webview?.sendMessage({ type: "diagnostics", diagnostics: extension.diagnostics });
                 if (extension.context) extension.webview?.sendMessage({ type: "context", context: extension.context , errorAtCursor: extension.errorAtCursor });
-                if (extension.stateMachine) extension.webview?.sendMessage({ type: "fsm", sm: extension.stateMachine });
+                if (extension.stateMachine !== undefined) extension.webview?.sendMessage({ type: "fsm", sm: extension.stateMachine });
                 if (extension.status) extension.webview?.sendMessage({ type: "status", status: extension.status });
                 if (pendingDiagnosticReveal) {
                     extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic: pendingDiagnosticReveal });

@@ -176,10 +176,16 @@ export function getStyles(): string {
             line-height: 1;
             pointer-events: none;
         }
-        .copy-diagnostic-btn,
-        .diagnostic-context-btn {
+        .diagnostic-actions {
             position: absolute;
             top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.25rem;
+        }
+        .copy-diagnostic-btn,
+        .diagnostic-context-btn,
+        .diagnostic-state-machine-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -193,20 +199,16 @@ export function getStyles(): string {
             opacity: 0.65;
             transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
-        .copy-diagnostic-btn {
-            right: 0.5rem;
-        }
-        .diagnostic-context-btn {
-            right: 2.5rem;
-        }
         .copy-diagnostic-btn:hover,
-        .diagnostic-context-btn:hover {
+        .diagnostic-context-btn:hover,
+        .diagnostic-state-machine-btn:hover {
             background: var(--vscode-editor-background);
             border-color: var(--vscode-widget-border);
             opacity: 1;
         }
         .copy-diagnostic-btn:disabled,
-        .diagnostic-context-btn:disabled {
+        .diagnostic-context-btn:disabled,
+        .diagnostic-state-machine-btn:disabled {
             opacity: 0.8;
             cursor: default;
         }
