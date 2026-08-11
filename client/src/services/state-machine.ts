@@ -1,16 +1,17 @@
 import * as vscode from "vscode";
 import { extension } from "../state";
 import { LJStateMachine } from "../types/fsm";
+import { normalizeFilePath } from "../utils/utils";
 
 /**
  * Requests the state machine for the given document from the language server
  * @param document The text document
  */
 export async function updateStateMachine(document: vscode.TextDocument) {
-    const sm = await extension.client?.sendRequest<LJStateMachine>("liquidjava/fsm", { uri: document.uri.toString() });
+    const file = normalizeFilePath(document.uri.fsPath);
+    const sm = await extension.client?.sendRequest<LJStateMachine | null>("liquidjava/fsm", { uri: document.uri.toString() });
+    if (file !== extension.file) return;
 
-    // dont update diagram if it hasnt changed to a new one
-    if (!sm || JSON.stringify(sm) === JSON.stringify(extension.stateMachine)) return;
     extension.stateMachine = sm;
     extension.webview?.sendMessage({ type: "fsm", sm });
 }

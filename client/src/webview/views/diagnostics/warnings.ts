@@ -7,7 +7,9 @@ export function renderWarnings(warnings: LJWarning[]): string {
         <ul>
                 ${warnings.map((warning, index) => /*html*/`
                 <li class="diagnostic-item warning-item" ${renderDiagnosticDataAttributes(warning)}>
-                    ${renderCopyDiagnosticButton('warning', index)}
+                    <div class="diagnostic-actions">
+                        ${renderCopyDiagnosticButton('warning', index)}
+                    </div>
                     ${renderWarning(warning)}
                 </li>
             `).join("")}

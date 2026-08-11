@@ -1,5 +1,6 @@
 package dtos.errors;
 
+import dtos.diagnostics.SourcePositionDTO;
 import dtos.diagnostics.VCSimplificationResultDTO;
 import liquidjava.diagnostics.errors.RefinementError;
 import liquidjava.rj_language.ast.formatter.ExpressionFormatter;
@@ -13,6 +14,7 @@ public class RefinementErrorDTO extends LJErrorDTO {
     public final VCSimplificationResultDTO found;
     public final String customMessage;
     public final String counterexample;
+    public final SourcePositionDTO declarationPosition;
 
     public RefinementErrorDTO(RefinementError error) {
         super("refinement-error", error);
@@ -20,6 +22,7 @@ public class RefinementErrorDTO extends LJErrorDTO {
         this.found = VCSimplificationResultDTO.from(error.getFound());
         this.customMessage = error.getCustomMessage();
         this.counterexample = error.getCounterExampleString();
+        this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
     }
 
     public static RefinementErrorDTO from(RefinementError error) {

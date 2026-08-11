@@ -38,6 +38,7 @@ export function registerEvents(context: vscode.ExtensionContext) {
  */
 export async function onActiveFileChange(editor: vscode.TextEditor) {
     extension.file = normalizeFilePath(editor.document.uri.fsPath);
+    extension.stateMachine = undefined;
     extension.webview?.sendMessage({ type: "file", file: extension.file });
     await updateStateMachine(editor.document);
     handleContextUpdate(editor.selection);

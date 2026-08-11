@@ -25,7 +25,7 @@ export class ExtensionState {
     // application state
     file?: string;
     diagnostics?: LJDiagnostic[];
-    stateMachine?: LJStateMachine;
+    stateMachine?: LJStateMachine | null;
     context?: LJContext;
     currentSelection?: Range;
     errorAtCursor?: RefinementMismatchError;
