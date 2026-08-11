@@ -1,6 +1,8 @@
 import type { VCImplication } from "../../../types/vc-implications";
+import type { TranslationTable } from "../../../types/diagnostics";
 import { renderHighlightedInlineExpression } from "../../highlighting";
 import { escapeHtml } from "../../utils";
+import { renderSourceHighlightButton } from "../sections";
 
 type ChangeKind = "unchanged" | "removed" | "added";
 type DiffOperation<T> = { kind: ChangeKind; value: T };
@@ -34,11 +36,29 @@ function getImplicationLines(node: VCImplication): string[] {
     return lines;
 }
 
-export function renderVCLine(line: string, className = "", predicateContent?: string): string {
+function renderBinder(binder: string, type: string, translationTable?: TranslationTable): string {
+    const placement = translationTable?.[binder.slice(1)];
+    if (!placement?.position?.file) {
+        return `<span class="vc-node vc-binder" title="${escapeHtml(type)}">${escapeHtml(binder)}</span>`;
+    }
+    return renderSourceHighlightButton(
+        escapeHtml(binder),
+        type,
+        placement.position,
+        "vc-node vc-binder",
+    );
+}
+
+export function renderVCLine(
+    line: string,
+    className = "",
+    predicateContent?: string,
+    translationTable?: TranslationTable,
+): string {
     const { binder, type, predicate } = parseImplicationLine(line);
     return /*html*/`
         <div class="vc-line ${className}">
-            ${binder ? /*html*/`<div class="vc-binder-cell"><span class="vc-node vc-binder" title="${type}">${escapeHtml(binder)}</span></div>` : ""}
+            ${binder ? /*html*/`<div class="vc-binder-cell">${renderBinder(binder, type, translationTable)}</div>` : ""}
             <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span></div>
         </div>
     `;
@@ -168,35 +188,48 @@ function alignChangedLines(removed: string[], added: string[]): Array<[string | 
     return lines;
 }
 
-function renderChangedDestinationLines(removed: string[], added: string[]): string {
+function renderChangedDestinationLines(
+    removed: string[],
+    added: string[],
+    translationTable?: TranslationTable,
+): string {
     if (added.length === 0) return "";
 
     return alignChangedLines(removed, added)
         .map(([before, after]) => {
             if (after === undefined) return "";
-            if (before === undefined) return renderVCLine(after, "vc-change-line");
+            if (before === undefined) return renderVCLine(after, "vc-change-line", undefined, translationTable);
             const change = renderDestinationTokenDiff(
                 parseImplicationLine(before).predicate,
                 parseImplicationLine(after).predicate,
             );
-            return renderVCLine(after, change.hasAddedContent ? "" : "vc-change-line", change.content);
+            return renderVCLine(
+                after,
+                change.hasAddedContent ? "" : "vc-change-line",
+                change.content,
+                translationTable,
+            );
         })
         .join("");
 }
 
-export function renderImplication(node: VCImplication): string {
+export function renderImplication(node: VCImplication, translationTable?: TranslationTable): string {
     return getImplicationLines(node)
-        .map(line => renderVCLine(line))
+        .map(line => renderVCLine(line, "", undefined, translationTable))
         .join("");
 }
 
-export function renderImplicationChange(before: VCImplication, after: VCImplication): string {
+export function renderImplicationChange(
+    before: VCImplication,
+    after: VCImplication,
+    translationTable?: TranslationTable,
+): string {
     const operations = diffSequence(getImplicationLines(before), getImplicationLines(after));
     let html = "";
     const changed = { removed: [] as string[], added: [] as string[] };
 
     const flushChanges = () => {
-        html += renderChangedDestinationLines(changed.removed, changed.added);
+        html += renderChangedDestinationLines(changed.removed, changed.added, translationTable);
         changed.removed.length = 0;
         changed.added.length = 0;
     };
@@ -204,7 +237,7 @@ export function renderImplicationChange(before: VCImplication, after: VCImplicat
     for (const operation of operations) {
         if (operation.kind === "unchanged") {
             flushChanges();
-            html += renderVCLine(operation.value);
+            html += renderVCLine(operation.value, "", undefined, translationTable);
             continue;
         }
         changed[operation.kind].push(operation.value);

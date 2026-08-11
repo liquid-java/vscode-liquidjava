@@ -728,6 +728,13 @@ export function getStyles(): string {
         .highlight-var-btn.selected {
             background-color: var(--vscode-button-background);
         }
+        .vc-binder.highlight-var-btn {
+            margin: 0;
+            padding: 0 0.15rem;
+        }
+        .vc-binder.highlight-var-btn.selected {
+            color: var(--lj-token-identifier);
+        }
         .highlight-var-btn.error,
         .diagnostic-reveal-btn.error {
             background-color: color-mix(in srgb, var(--vscode-errorForeground) 80%, transparent);

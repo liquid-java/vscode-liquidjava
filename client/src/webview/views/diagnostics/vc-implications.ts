@@ -1,12 +1,18 @@
-import type { RefinementMismatchError } from "../../../types/diagnostics";
+import type { RefinementMismatchError, TranslationTable } from "../../../types/diagnostics";
 import type { VCSimplificationResult } from "../../../types/vc-implications";
 import { renderHighlightedExpression } from "../../highlighting";
 import { renderCodicon } from "../../icons";
 import { escapeHtml } from "../../utils";
 import { renderImplication, renderImplicationChange } from "./vc-changes";
 
-const stepIndexes = new Map<string, number>(); // errorId => step index, preserved across re-renders
-const simplificationSteps = new Map<string, VCSimplificationResult[]>(); // errorId => simplification steps
+// state to preserve across re-renders
+type VCState = {
+    steps: VCSimplificationResult[];
+    translationTable: TranslationTable;
+    stepIndex: number;
+};
+
+const vcStates = new Map<string, VCState>(); // errorId => VCState
 
 function renderStepButton(errorId: string, step: "previous" | "next", disabled: boolean): string {
     const label = `${step === "previous" ? "Previous" : "Next"} simplification`;
@@ -40,45 +46,49 @@ function renderStepHeader(
     `;
 }
 
-function getTargetStepIndex(errorId: string, step: string | null): number | undefined {
-    const steps = simplificationSteps.get(errorId);
-    if (!steps) return;
-
-    const index = stepIndexes.get(errorId) ?? 0;
-    const targetIndex = step === "previous" ? index + 1 : step === "next" ? index - 1 : -1;
-    if (targetIndex < 0 || targetIndex >= steps.length) return;
+function getTargetStepIndex(state: VCState, step: string | null): number | undefined {
+    const targetIndex = step === "previous"
+        ? state.stepIndex + 1
+        : step === "next"
+            ? state.stepIndex - 1
+            : -1;
+    if (targetIndex < 0 || targetIndex >= state.steps.length) return;
     return targetIndex;
 }
 
 function renderSelectedStep(errorId: string, previousIndex?: number): string {
-    const steps = simplificationSteps.get(errorId);
-    if (!steps) return "";
+    const state = vcStates.get(errorId);
+    if (!state) return "";
 
-    const index = Math.min(stepIndexes.get(errorId) ?? 0, steps.length - 1);
-    const current = steps[index];
+    const { steps, translationTable, stepIndex } = state;
+    const current = steps[stepIndex];
     const previous = previousIndex === undefined ? undefined : steps[previousIndex];
     const implication = previous
-        ? `<div class="vc-chain">${renderImplicationChange(previous.implication, current.implication)}</div>`
-        : `<div class="vc-chain">${renderImplication(current.implication)}</div>`;
+        ? `<div class="vc-chain">${renderImplicationChange(previous.implication, current.implication, translationTable)}</div>`
+        : `<div class="vc-chain">${renderImplication(current.implication, translationTable)}</div>`;
 
     return /*html*/`
-        ${steps.length > 1 ? renderStepHeader(errorId, current, index, steps.length) : ""}
+        ${steps.length > 1 ? renderStepHeader(errorId, current, stepIndex, steps.length) : ""}
         ${implication}
     `;
 }
 
-export function handleVCImplicationStepClick(target: Element): boolean {
+export function handleVCImplicationStepClick(target: Element, onStepChanged?: () => void): boolean {
     const errorId = target.getAttribute("data-error-id");
     const step = target.getAttribute("data-vc-step");
     if (!errorId || (target as HTMLButtonElement).disabled) return false;
 
-    const currentIndex = stepIndexes.get(errorId) ?? 0;
-    const targetIndex = getTargetStepIndex(errorId, step);
+    const state = vcStates.get(errorId);
+    if (!state) return false;
+
+    const currentIndex = state.stepIndex;
+    const targetIndex = getTargetStepIndex(state, step);
     const container = target.closest?.(".vc-container");
     if (targetIndex === undefined) return false;
 
-    stepIndexes.set(errorId, targetIndex);
+    state.stepIndex = targetIndex;
     if (container) container.innerHTML = renderSelectedStep(errorId, currentIndex);
+    onStepChanged?.();
     return true;
 }
 
@@ -98,10 +108,8 @@ export function renderVCImplication(
     for (let current: VCSimplificationResult | null = result; current; current = current.origin) {
         steps.push(current);
     }
-    simplificationSteps.set(errorId, steps);
-
-    const index = Math.min(stepIndexes.get(errorId) ?? 0, steps.length - 1);
-    stepIndexes.set(errorId, index);
+    const stepIndex = Math.min(vcStates.get(errorId)?.stepIndex ?? 0, steps.length - 1);
+    vcStates.set(errorId, { steps, translationTable: error.translationTable, stepIndex });
 
     return /*html*/ `
         <div class="container vc-container" data-error-id="${errorId}">
