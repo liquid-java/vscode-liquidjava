@@ -474,7 +474,7 @@ export function getStyles(): string {
             height: 1.25rem;
             padding: 0;
             background-color: transparent;
-            color: var(--vscode-button-foreground);
+            color: var(--vscode-foreground);
             border: none;
             border-radius: 4px;
             cursor: pointer;
