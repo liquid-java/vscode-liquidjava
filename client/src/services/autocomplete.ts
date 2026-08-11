@@ -2,9 +2,10 @@ import * as vscode from "vscode";
 import { extension } from "../state";
 import type { LJVariable, LJContext, LJGhost, LJAlias } from "../types/context";
 import { getSimpleName } from "../utils/utils";
-import { LIQUIDJAVA_ANNOTATION_START, LJAnnotation } from "../utils/constants";
+import { LJAnnotation } from "../utils/constants";
 import { filterDuplicateVariables, filterInstanceVariables } from "./context";
 import { isExtensionRunning } from "../extension";
+import { getActiveLiquidJavaAnnotation } from "./annotation";
 
 type CompletionItemOptions = {
     name: string;
@@ -43,7 +44,22 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
                 });
                 return Array.from(uniqueItems.values());
             },
-        }, '.', '"')
+        }, '.', '"'),
+        vscode.workspace.onDidChangeTextDocument(event => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor || editor.document.uri.toString() !== event.document.uri.toString()) return;
+            if (event.document.languageId !== "java" || event.contentChanges.length === 0) return;
+
+            // VS Code does not reliably invoke completion providers while editing string literals
+            // wait for selection to catch up with the document change and then retrigger completion
+            setTimeout(() => {
+                const activeEditor = vscode.window.activeTextEditor;
+                if (!activeEditor || activeEditor.document.uri.toString() !== event.document.uri.toString()) return;
+                if (!isExtensionRunning()) return;
+                if (!getActiveLiquidJavaAnnotation(activeEditor.document, activeEditor.selection.active)) return;
+                void vscode.commands.executeCommand("editor.action.triggerSuggest");
+            }, 0);
+        })
     );
 }
 
@@ -210,35 +226,6 @@ function createCompletionItem({ name, kind, labelDetail, description, detail, do
     item.documentation = documentation;
     
     return item;
-}
-
-function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, position: vscode.Position): LJAnnotation | null {
-    const textUntilCursor = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
-    LIQUIDJAVA_ANNOTATION_START.lastIndex = 0;
-    let match: RegExpExecArray | null = null;
-    let lastAnnotationStart = -1;
-    let lastAnnotationName: LJAnnotation | null = null;
-    while ((match = LIQUIDJAVA_ANNOTATION_START.exec(textUntilCursor)) !== null) {
-        lastAnnotationStart = match.index;
-        lastAnnotationName = match[2] ? match[2] as LJAnnotation : null;
-    }
-    if (lastAnnotationStart === -1 || !lastAnnotationName) return null;
-
-    const fromLastAnnotation = textUntilCursor.slice(lastAnnotationStart);
-    let parenthesisDepth = 0;
-    let isInsideString = false;
-    for (let i = 0; i < fromLastAnnotation.length; i++) {
-        const char = fromLastAnnotation[i];
-        const previousChar = i > 0 ? fromLastAnnotation[i - 1] : "";
-        if (char === '"' && previousChar !== "\\") {
-            isInsideString = !isInsideString;
-            continue;
-        }
-        if (isInsideString) continue;
-        if (char === "(") parenthesisDepth++;
-        if (char === ")") parenthesisDepth--;
-    }
-    return parenthesisDepth > 0 ? lastAnnotationName : null;
 }
 
 function getReceiverBeforeDot(document: vscode.TextDocument, position: vscode.Position): string | null {
