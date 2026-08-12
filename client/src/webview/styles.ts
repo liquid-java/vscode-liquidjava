@@ -891,5 +891,18 @@ export function getStyles(): string {
             fill: var(--vscode-foreground) !important;
             stroke: var(--vscode-foreground) !important;
         }
+        .diagram-container .mermaid svg .ljStateErrorActual .label-container {
+            stroke: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid .edgeLabel .lj-state-error-method {
+            color: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid svg path.lj-state-error-transition {
+            stroke: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid svg marker.lj-state-error-marker path {
+            fill: var(--vscode-errorForeground) !important;
+            stroke: var(--vscode-errorForeground) !important;
+        }
     `;
 }

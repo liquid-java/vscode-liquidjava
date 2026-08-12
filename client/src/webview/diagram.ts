@@ -21,7 +21,11 @@ let startY = 0;
  * @param sm 
  * @returns Mermaid diagram string
  */
-export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation: "LR" | "TB", showConditions = false): string {
+export function createMermaidDiagram(
+    sm: LJStateMachine | undefined,
+    orientation: "LR" | "TB",
+    showConditions = false,
+): string {
     if (!sm) return '';
     
     const lines: string[] = [];
@@ -41,8 +45,16 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
     
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
+    const expectedStates = new Set(sm.errorContext?.expectedStates ?? []);
     sm.transitions.forEach(transition => {
-        const label = getTransitionLabel(transition.label, transition.preCond, transition.postCond, showConditions);
+        const isFailedMethod = transition.label === sm.errorContext?.calledMethod && expectedStates.has(transition.from);
+        const label = getTransitionLabel(
+            transition.label,
+            transition.preCond,
+            transition.postCond,
+            showConditions,
+            isFailedMethod,
+        );
         const key = `${transition.from}|${transition.to}`;
         if (!transitionMap.has(key)) transitionMap.set(key, []);
         transitionMap.get(key)?.push(label);
@@ -54,15 +66,35 @@ export function createMermaidDiagram(sm: LJStateMachine | undefined, orientation
         const mergedLabel = labels.join('<br/>');
         lines.push(`    ${from} --> ${to} : ${mergedLabel}`);
     });
+
+    const highlightedStates = sm.states.filter(state => sm.errorContext?.actualStates.includes(state));
+    if (highlightedStates.length > 0) {
+        lines.push(`    class ${highlightedStates.join(',')} ljStateErrorActual`);
+    }
+
+    const highlightedExpectedStates = sm.states.filter(state => expectedStates.has(state));
+    if (highlightedExpectedStates.length > 0) {
+        lines.push(`    class ${highlightedExpectedStates.join(',')} ljStateErrorExpected`);
+    }
     
     return lines.join('\n');
 }
 
-function getTransitionLabel(label: string, preCond?: string | null, postCond?: string | null, showConditions = false): string {
-    if (!showConditions) return escapeMermaidLabel(label);
+function getTransitionLabel(
+    label: string,
+    preCond?: string | null,
+    postCond?: string | null,
+    showConditions = false,
+    isFailedMethod = false,
+): string {
+    const escapedLabel = escapeMermaidLabel(label);
+    const methodLabel = isFailedMethod
+        ? `<span class="lj-state-error-method">${escapedLabel}</span>`
+        : escapedLabel;
+    if (!showConditions) return methodLabel;
     return [
         getConditionLabel('pre', preCond),
-        escapeMermaidLabel(label),
+        methodLabel,
         getConditionLabel('post', postCond)
     ].filter(Boolean).join('<br/>');
 }
@@ -95,6 +127,7 @@ export async function renderMermaidDiagram(document: any, window: any) {
 
     try { 
         await mermaid.run({ nodes: mermaidElements });
+        highlightErrorTransitions(document);
         applyTransform(document);
         registerPanListeners(document);
         const diagramContainer = document.querySelector('.diagram-container') as HTMLElement | null;
@@ -102,6 +135,36 @@ export async function renderMermaidDiagram(document: any, window: any) {
     } catch (e) {
         console.error('Failed to render Mermaid diagram:', e);
     }
+}
+
+function highlightErrorTransitions(document: any) {
+    document.querySelectorAll('.lj-state-error-method').forEach((methodLabel: any) => {
+        const label = methodLabel.closest('g.label[data-id]');
+        const edgeId = label?.getAttribute('data-id');
+        const svg = label?.ownerSVGElement;
+        if (!edgeId || !svg) return;
+
+        const transition = svg.querySelector(`path.transition[data-id="${edgeId}"]`);
+        if (!transition || transition.classList.contains('lj-state-error-transition')) return;
+        transition.classList.add('lj-state-error-transition');
+        highlightTransitionMarker(svg, transition, edgeId);
+    });
+}
+
+function highlightTransitionMarker(svg: any, transition: any, edgeId: string) {
+    const markerReference = transition.getAttribute('marker-end');
+    const markerId = markerReference?.match(/^url\(#(.+)\)$/)?.[1];
+    if (!markerId) return;
+
+    const marker = svg.querySelector(`#${markerId}`);
+    if (!marker?.parentNode) return;
+
+    const highlightedMarker = marker.cloneNode(true);
+    const highlightedMarkerId = `${markerId}-lj-error-${edgeId}`;
+    highlightedMarker.setAttribute('id', highlightedMarkerId);
+    highlightedMarker.classList.add('lj-state-error-marker');
+    marker.parentNode.appendChild(highlightedMarker);
+    transition.setAttribute('marker-end', `url(#${highlightedMarkerId})`);
 }
 
 /**

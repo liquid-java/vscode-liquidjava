@@ -27,7 +27,11 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
         this.customMessage = error.getCustomMessage();
         this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
         this.stateMachine = declarationPosition == null || declarationPosition.file() == null ? null
-                : StateMachineParser.parse(new File(declarationPosition.file()).toURI().toString());
+                : StateMachineParser.parseWithErrorContext(
+                        new File(declarationPosition.file()).toURI().toString(),
+                        error.getDeclarationPosition(),
+                        error.getExpected() == null ? null : error.getExpected().getExpression(),
+                        error.getFound());
     }
 
     public static StateRefinementErrorDTO from(StateRefinementError error) {
