@@ -45,15 +45,14 @@ export function createMermaidDiagram(
     
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, string[]>();
-    const expectedStates = new Set(sm.errorContext?.expectedStates ?? []);
     sm.transitions.forEach(transition => {
-        const isFailedMethod = transition.label === sm.errorContext?.calledMethod && expectedStates.has(transition.from);
+        const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
         const label = getTransitionLabel(
             transition.label,
             transition.preCond,
             transition.postCond,
             showConditions,
-            isFailedMethod,
+            isCalledMethod,
         );
         const key = `${transition.from}|${transition.to}`;
         if (!transitionMap.has(key)) transitionMap.set(key, []);
@@ -72,11 +71,6 @@ export function createMermaidDiagram(
         lines.push(`    class ${highlightedStates.join(',')} ljStateErrorActual`);
     }
 
-    const highlightedExpectedStates = sm.states.filter(state => expectedStates.has(state));
-    if (highlightedExpectedStates.length > 0) {
-        lines.push(`    class ${highlightedExpectedStates.join(',')} ljStateErrorExpected`);
-    }
-    
     return lines.join('\n');
 }
 
@@ -85,10 +79,10 @@ function getTransitionLabel(
     preCond?: string | null,
     postCond?: string | null,
     showConditions = false,
-    isFailedMethod = false,
+    isCalledMethod = false,
 ): string {
     const escapedLabel = escapeMermaidLabel(label);
-    const methodLabel = isFailedMethod
+    const methodLabel = isCalledMethod
         ? `<span class="lj-state-error-method">${escapedLabel}</span>`
         : escapedLabel;
     if (!showConditions) return methodLabel;

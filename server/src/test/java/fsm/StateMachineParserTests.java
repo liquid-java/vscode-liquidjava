@@ -27,7 +27,7 @@ public class StateMachineParserTests {
     @Test
     public void testStateMachineGroupsErrorContext() {
         StateMachineErrorContext errorContext = new StateMachineErrorContext(
-                "read", List.of("open"), List.of("closed"));
+                "read", List.of("closed"));
         StateMachine sm = new StateMachine("Simple", List.of("open", "closed"), List.of(), List.of(), errorContext);
 
         assertEquals(errorContext, sm.errorContext());

@@ -78,7 +78,6 @@ public class StateMachineParser {
             StateMachineErrorContext errorContext = declarationPosition == null && expectedState == null
                     && foundState == null ? null : new StateMachineErrorContext(
                     calledMethod == null ? null : calledMethod.getSimpleName(),
-                    getExpressionStates(expectedState, states),
                     getActualStates(expectedState, foundState, states));
             return new StateMachine(className, states, transitions, initialTransitions, errorContext);
 
@@ -100,13 +99,6 @@ public class StateMachineParser {
             }
         }
         return states.stream().filter(foundStates::contains).toList();
-    }
-
-    private static List<String> getExpressionStates(Expression expression, List<String> states) {
-        String receiver = getStateReceiver(expression, states);
-        if (receiver == null) return List.of();
-        List<String> expressionStates = getStateExpressions(expression, states, receiver);
-        return states.stream().filter(expressionStates::contains).toList();
     }
 
     private static String getStateReceiver(Expression expr, List<String> states) {

@@ -7,5 +7,4 @@ import java.util.List;
  */
 public record StateMachineErrorContext(
         String calledMethod,
-        List<String> expectedStates,
         List<String> actualStates) {}

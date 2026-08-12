@@ -10,6 +10,5 @@ export type LJStateMachine = {
 
 export type LJStateMachineErrorContext = {
     calledMethod: string | null;
-    expectedStates: string[];
     actualStates: string[];
 };
