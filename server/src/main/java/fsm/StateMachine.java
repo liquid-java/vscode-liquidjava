@@ -9,5 +9,6 @@ public record StateMachine(
     String className,
     List<String> states,
     List<StateMachineTransition> transitions,
-    List<StateMachineInitialTransition> initialTransitions
+    List<StateMachineInitialTransition> initialTransitions,
+    StateMachineErrorContext errorContext
 ) { }

@@ -199,6 +199,28 @@ export function getStyles(): string {
             opacity: 0.65;
             transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
+        .diagnostic-state-machine-btn {
+            position: relative;
+            opacity: 1;
+        }
+        .diagnostic-state-machine-badge {
+            position: absolute;
+            top: -0.25rem;
+            right: -0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 0.75rem;
+            height: 0.75rem;
+            color: var(--vscode-editor-background);
+            background: var(--vscode-errorForeground);
+            border: 1px solid var(--vscode-editor-background);
+            border-radius: 50%;
+            font-size: 0.6rem;
+            font-weight: bold;
+            line-height: 1;
+            pointer-events: none;
+        }
         .copy-diagnostic-btn:hover,
         .diagnostic-context-btn:hover,
         .diagnostic-state-machine-btn:hover {
@@ -890,6 +912,19 @@ export function getStyles(): string {
         .diagram-container .mermaid svg marker path {
             fill: var(--vscode-foreground) !important;
             stroke: var(--vscode-foreground) !important;
+        }
+        .diagram-container .mermaid svg .ljStateErrorActual .label-container {
+            stroke: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid .edgeLabel .lj-state-error-method {
+            color: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid svg path.lj-state-error-transition {
+            stroke: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid svg marker.lj-state-error-marker path {
+            fill: var(--vscode-errorForeground) !important;
+            stroke: var(--vscode-errorForeground) !important;
         }
     `;
 }

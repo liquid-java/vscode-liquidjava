@@ -32,6 +32,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let currentFile: string;
     let stateMachine: LJStateMachine | undefined;
     let diagnosticStateMachine: LJStateMachine | undefined;
+    let diagnosticStateMachineFile: string | undefined;
     let context: LJContext;
     let errorAtCursor: RefinementMismatchError;
     let selectedTab: NavTab = 'diagnostics';
@@ -144,6 +145,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
             selectedTab = 'fsm';
             diagnosticStateMachine = diagnostic.stateMachine;
+            diagnosticStateMachineFile = diagnostic.file;
             showDiagramConditions = false;
             currentDiagram = '';
             updateView();
@@ -259,7 +261,10 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             const tab = target.getAttribute('data-tab') as NavTab;
             if (tab && tab !== selectedTab) {
                 vscode.postMessage({ type: 'highlight', range: null });
-                if (tab === 'fsm') diagnosticStateMachine = undefined;
+                if (tab === 'fsm') {
+                    diagnosticStateMachine = undefined;
+                    diagnosticStateMachineFile = undefined;
+                }
                 selectedTab = tab;
                 updateView();
             }
@@ -325,14 +330,26 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 status = msg.status as ExtensionStatus;
                 updateView();
                 break;
-            case 'diagnostics':
+            case 'diagnostics': {
                 diagnostics = msg.diagnostics as LJDiagnostic[];
-                if (selectedTab === 'diagnostics') updateView();
+                if (diagnosticStateMachine) {
+                    const updatedError = diagnostics.find(diagnostic =>
+                        diagnostic.type === 'state-refinement-error'
+                        && diagnostic.file.toLowerCase() === diagnosticStateMachineFile?.toLowerCase()
+                        && diagnostic.stateMachine?.className === diagnosticStateMachine?.className
+                    );
+                    diagnosticStateMachine = updatedError?.type === 'state-refinement-error'
+                        ? updatedError.stateMachine ?? diagnosticStateMachine
+                        : { ...diagnosticStateMachine, errorContext: null };
+                }
+                if (selectedTab === 'diagnostics' || (selectedTab === 'fsm' && diagnosticStateMachine)) updateView();
                 break;
+            }
             case 'file':
                 currentFile = msg.file;
                 if (diagnostics && !showAllDiagnostics && selectedTab === 'diagnostics') updateView();
                 diagnosticStateMachine = undefined;
+                diagnosticStateMachineFile = undefined;
                 stateMachine = undefined;
                 currentDiagram = '';
                 if (selectedTab === 'fsm') updateView();

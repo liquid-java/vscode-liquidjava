@@ -1,6 +1,7 @@
 package fsm;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
@@ -15,18 +16,28 @@ public class StateMachineParserTests {
     @Test
     public void testSimpleStateMachine() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "Simple.java");
-        StateMachine expectedSm = new StateMachine("Simple", List.of("open", "closed"),
+        StateMachine expectedSm = stateMachine("Simple", List.of("open", "closed"),
                 List.of(new StateMachineTransition("open", "closed", "close"),
                         new StateMachineTransition("open", "open", "read")),
                 List.of(new StateMachineInitialTransition("open")));
         assertStateMachineEquals(expectedSm, sm);
+        assertNull(sm.errorContext(), "Plain state machines should not contain diagnostic context");
+    }
+
+    @Test
+    public void testStateMachineGroupsErrorContext() {
+        StateMachineErrorContext errorContext = new StateMachineErrorContext(
+                "read", List.of("closed"));
+        StateMachine sm = new StateMachine("Simple", List.of("open", "closed"), List.of(), List.of(), errorContext);
+
+        assertEquals(errorContext, sm.errorContext());
     }
 
     @Test
     public void testOrTransition() {
         // state1 || state2 => separate transitions from both state1 and state2
         StateMachine sm = StateMachineParser.parse(BASE_URI + "OrTransition.java");
-        StateMachine expectedSm = new StateMachine("OrTransition", List.of("a", "b", "c"), List
+        StateMachine expectedSm = stateMachine("OrTransition", List.of("a", "b", "c"), List
                 .of(new StateMachineTransition("a", "c", "action"), new StateMachineTransition("b", "c", "action")),
                 List.of(new StateMachineInitialTransition("a")));
         assertStateMachineEquals(expectedSm, sm);
@@ -36,7 +47,7 @@ public class StateMachineParserTests {
     public void testNegationTransition() {
         // !state => all states except state
         StateMachine sm = StateMachineParser.parse(BASE_URI + "NegationTransition.java");
-        StateMachine expectedSm = new StateMachine("NegationTransition", List.of("open", "closed", "locked"),
+        StateMachine expectedSm = stateMachine("NegationTransition", List.of("open", "closed", "locked"),
                 List.of(new StateMachineTransition("open", "locked", "lock"),
                         new StateMachineTransition("closed", "locked", "lock")),
                 List.of(new StateMachineInitialTransition("open")));
@@ -47,7 +58,7 @@ public class StateMachineParserTests {
     public void testSelfLoop() {
         // from=state, to=state or from=state => self-loop
         StateMachine sm = StateMachineParser.parse(BASE_URI + "SelfLoop.java");
-        StateMachine expectedSm = new StateMachine("SelfLoop", List.of("idle", "running"),
+        StateMachine expectedSm = stateMachine("SelfLoop", List.of("idle", "running"),
                 List.of(new StateMachineTransition("idle", "idle", "noop"),
                         new StateMachineTransition("idle", "running", "start"),
                         new StateMachineTransition("running", "running", "tick")),
@@ -59,7 +70,7 @@ public class StateMachineParserTests {
     public void testToOnlyTransition() {
         // no from => all states contain a transition to state
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ToOnlyTransition.java");
-        StateMachine expectedSm = new StateMachine("ToOnlyTransition", List.of("a", "b", "c"),
+        StateMachine expectedSm = stateMachine("ToOnlyTransition", List.of("a", "b", "c"),
                 List.of(new StateMachineTransition("a", "c", "action"), new StateMachineTransition("b", "c", "action"),
                         new StateMachineTransition("c", "c", "action")),
                 List.of(new StateMachineInitialTransition("a")));
@@ -70,7 +81,7 @@ public class StateMachineParserTests {
     public void testMultipleInitialStates() {
         // overloading constructors with different initial states
         StateMachine sm = StateMachineParser.parse(BASE_URI + "MultipleInitialStates.java");
-        StateMachine expectedSm = new StateMachine("MultipleInitialStates", List.of("initialized", "uninitialized", "error"),
+        StateMachine expectedSm = stateMachine("MultipleInitialStates", List.of("initialized", "uninitialized", "error"),
                 List.of(new StateMachineTransition("uninitialized", "initialized", "init")),
                 List.of(new StateMachineInitialTransition("uninitialized"),
                         new StateMachineInitialTransition("initialized")));
@@ -81,7 +92,7 @@ public class StateMachineParserTests {
     public void testExternalRefinementsInterface() {
         // class name from @ExternalStateRefinements
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ExternalRefinements.java");
-        StateMachine expectedSm = new StateMachine("Connection", List.of("connected", "disconnected"),
+        StateMachine expectedSm = stateMachine("Connection", List.of("connected", "disconnected"),
                 List.of(new StateMachineTransition("disconnected", "connected", "connect")),
                 List.of(new StateMachineInitialTransition("disconnected")));
         assertStateMachineEquals(expectedSm, sm);
@@ -91,7 +102,7 @@ public class StateMachineParserTests {
     public void testConditionalTransition() {
         // transitions for both branches of condition
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ConditionalTransition.java");
-        StateMachine expectedSm = new StateMachine("ConditionalTransition", List.of("on", "off"),
+        StateMachine expectedSm = stateMachine("ConditionalTransition", List.of("on", "off"),
                 List.of(new StateMachineTransition("on", "off", "turnOff"),
                         new StateMachineTransition("off", "on", "turnOn")),
                 List.of(new StateMachineInitialTransition("on", "flag"),
@@ -102,7 +113,7 @@ public class StateMachineParserTests {
     @Test
     public void testConjunctionInitialTransition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ConjunctionInitialTransition.java");
-        StateMachine expectedSm = new StateMachine("ConjunctionInitialTransition", List.of("on", "off"),
+        StateMachine expectedSm = stateMachine("ConjunctionInitialTransition", List.of("on", "off"),
                 List.of(new StateMachineTransition("on", "off", "turnOff")),
                 List.of(new StateMachineInitialTransition("on", "flag")));
         assertStateMachineEquals(expectedSm, sm);
@@ -111,7 +122,7 @@ public class StateMachineParserTests {
     @Test
     public void testConjunctionPrecondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ConjunctionPrecondition.java");
-        StateMachine expectedSm = new StateMachine("ConjunctionPrecondition", List.of("open", "closed"),
+        StateMachine expectedSm = stateMachine("ConjunctionPrecondition", List.of("open", "closed"),
                 List.of(new StateMachineTransition("open", "closed", "close", "flag", null)),
                 List.of(new StateMachineInitialTransition("open")));
         assertStateMachineEquals(expectedSm, sm);
@@ -120,7 +131,7 @@ public class StateMachineParserTests {
     @Test
     public void testDisjunctionPrecondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "DisjunctionPrecondition.java");
-        StateMachine expectedSm = new StateMachine("DisjunctionPrecondition", List.of("ready", "waiting", "done"),
+        StateMachine expectedSm = stateMachine("DisjunctionPrecondition", List.of("ready", "waiting", "done"),
                 List.of(new StateMachineTransition("waiting", "done", "action", "flag", null),
                         new StateMachineTransition("done", "done", "action", "flag", null),
                         new StateMachineTransition("ready", "done", "action")),
@@ -131,7 +142,7 @@ public class StateMachineParserTests {
     @Test
     public void testConditionalPrecondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ConditionalPrecondition.java");
-        StateMachine expectedSm = new StateMachine("ConditionalPrecondition", List.of("left", "right", "done"),
+        StateMachine expectedSm = stateMachine("ConditionalPrecondition", List.of("left", "right", "done"),
                 List.of(new StateMachineTransition("left", "done", "finish", "flag", null),
                         new StateMachineTransition("right", "done", "finish", "!flag", null)),
                 List.of(new StateMachineInitialTransition("left")));
@@ -141,7 +152,7 @@ public class StateMachineParserTests {
     @Test
     public void testPostConditionFiltering() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "PostConditionFiltering.java");
-        StateMachine expectedSm = new StateMachine("PostConditionFiltering", List.of("ready", "done"),
+        StateMachine expectedSm = stateMachine("PostConditionFiltering", List.of("ready", "done"),
                 List.of(new StateMachineTransition("ready", "done", "finish", null, "flag")),
                 List.of(new StateMachineInitialTransition("ready")));
         assertStateMachineEquals(expectedSm, sm);
@@ -150,7 +161,7 @@ public class StateMachineParserTests {
     @Test
     public void testCombinedPostCondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "CombinedPostCondition.java");
-        StateMachine expectedSm = new StateMachine("CombinedPostCondition", List.of("ready", "done"),
+        StateMachine expectedSm = stateMachine("CombinedPostCondition", List.of("ready", "done"),
                 List.of(new StateMachineTransition("ready", "done", "finish", "x", "flag")),
                 List.of(new StateMachineInitialTransition("ready")));
         assertStateMachineEquals(expectedSm, sm);
@@ -159,7 +170,7 @@ public class StateMachineParserTests {
     @Test
     public void testConditionalPostCondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "ConditionalPostCondition.java");
-        StateMachine expectedSm = new StateMachine("ConditionalPostCondition", List.of("ready", "done", "error"),
+        StateMachine expectedSm = stateMachine("ConditionalPostCondition", List.of("ready", "done", "error"),
                 List.of(new StateMachineTransition("ready", "done", "finish", null, "flag"),
                         new StateMachineTransition("ready", "error", "finish", null, "!flag")),
                 List.of(new StateMachineInitialTransition("ready")));
@@ -169,7 +180,7 @@ public class StateMachineParserTests {
     @Test
     public void testDisjunctionPostCondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "DisjunctionPostCondition.java");
-        StateMachine expectedSm = new StateMachine("DisjunctionPostCondition", List.of("ready", "done"),
+        StateMachine expectedSm = stateMachine("DisjunctionPostCondition", List.of("ready", "done"),
                 List.of(new StateMachineTransition("ready", "done", "finish")),
                 List.of(new StateMachineInitialTransition("ready")));
         assertStateMachineEquals(expectedSm, sm);
@@ -178,7 +189,7 @@ public class StateMachineParserTests {
     @Test
     public void testGuardedSelfLoopDoesNotDuplicateCondition() {
         StateMachine sm = StateMachineParser.parse(BASE_URI + "GuardedSelfLoop.java");
-        StateMachine expectedSm = new StateMachine("GuardedSelfLoop", List.of("ready", "done"),
+        StateMachine expectedSm = stateMachine("GuardedSelfLoop", List.of("ready", "done"),
                 List.of(new StateMachineTransition("ready", "ready", "poll", "flag", null)),
                 List.of(new StateMachineInitialTransition("ready")));
         assertStateMachineEquals(expectedSm, sm);
@@ -190,5 +201,11 @@ public class StateMachineParserTests {
         assertEquals(expected.initialTransitions(), actual.initialTransitions(), "Initial transitions should match");
         assertEquals(expected.states(), actual.states(), "States should match");
         assertEquals(expected.transitions(), actual.transitions(), "State transitions should match");
+        assertEquals(expected.errorContext(), actual.errorContext(), "Error contexts should match");
+    }
+
+    private static StateMachine stateMachine(String className, List<String> states,
+            List<StateMachineTransition> transitions, List<StateMachineInitialTransition> initialTransitions) {
+        return new StateMachine(className, states, transitions, initialTransitions, null);
     }
 }
