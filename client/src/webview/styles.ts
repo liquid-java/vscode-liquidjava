@@ -199,6 +199,28 @@ export function getStyles(): string {
             opacity: 0.65;
             transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
+        .diagnostic-state-machine-btn {
+            position: relative;
+            opacity: 1;
+        }
+        .diagnostic-state-machine-badge {
+            position: absolute;
+            top: -0.25rem;
+            right: -0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 0.75rem;
+            height: 0.75rem;
+            color: var(--vscode-editor-background);
+            background: var(--vscode-errorForeground);
+            border: 1px solid var(--vscode-editor-background);
+            border-radius: 50%;
+            font-size: 0.6rem;
+            font-weight: bold;
+            line-height: 1;
+            pointer-events: none;
+        }
         .copy-diagnostic-btn:hover,
         .diagnostic-context-btn:hover,
         .diagnostic-state-machine-btn:hover {

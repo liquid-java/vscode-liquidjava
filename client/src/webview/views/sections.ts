@@ -93,11 +93,14 @@ export function renderDiagnosticContextButton(position?: SourcePosition | null):
 }
 
 export function renderDiagnosticStateMachineButton(errorIndex: number): string {
-    return renderCodiconButton("type-hierarchy", {
-        className: "diagnostic-state-machine-btn",
-        title: "View state machine",
-        attributes: `data-error-index="${errorIndex}"`,
-    });
+    const label = "View error on state machine";
+    return /*html*/`
+        <button class="icon-button diagnostic-state-machine-btn" title="${label}" aria-label="${label}"
+            data-error-index="${errorIndex}" type="button">
+            ${renderCodicon("type-hierarchy")}
+            <span class="diagnostic-state-machine-badge" aria-hidden="true">!</span>
+        </button>
+    `;
 }
 
 export function renderDiagnosticRevealButton(position: SourcePosition, content: string): string {
