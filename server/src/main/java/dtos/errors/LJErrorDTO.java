@@ -22,9 +22,9 @@ public class LJErrorDTO extends LJDiagnosticDTO {
         this.translationTable = TranslationTableDTO.from(error.getTranslationTable());
     }
 
-    public LJErrorDTO(String category, String type, String title, String message, String details, String file,
+    public LJErrorDTO(String category, String type, String title, String message, String hint, String file,
             SourcePositionDTO position, TranslationTableDTO translationTable) {
-        super(category, type, title, message, details, file, position);
+        super(category, type, title, message, hint, file, position);
         this.translationTable = translationTable;
     }
 

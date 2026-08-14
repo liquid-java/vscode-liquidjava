@@ -11,22 +11,22 @@ public class LJDiagnosticDTO {
     public final String type;
     public final String title;
     public final String message;
-    public final String details;
+    public final String hint;
     public final String file;
     public final SourcePositionDTO position;
 
     public LJDiagnosticDTO(String category, String type, LJDiagnostic diagnostic) {
-        this(category, type, diagnostic.getTitle(), diagnostic.getMessage(), diagnostic.getDetails(),
+        this(category, type, diagnostic.getTitle(), diagnostic.getMessage(), diagnostic.getHint(),
                 diagnostic.getFile(), SourcePositionDTO.from(diagnostic.getPosition()));
     }
 
-    public LJDiagnosticDTO(String category, String type, String title, String message, String details, String file,
+    public LJDiagnosticDTO(String category, String type, String title, String message, String hint, String file,
             SourcePositionDTO position) {
         this.category = category;
         this.type = type;
         this.title = title;
         this.message = message;
-        this.details = details;
+        this.hint = hint;
         this.file = file;
         this.position = position;
     }
