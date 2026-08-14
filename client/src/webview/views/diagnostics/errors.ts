@@ -40,7 +40,9 @@ const errorContentRenderers: ErrorRendererMap = {
     'refinement-error': (e: RefinementError) => /*html*/ `
         ${renderExpressionSection('Expected', e.expected)}
         ${renderCustomSection('Found', renderVCImplication(e, e.found))}
-        ${e.counterexample ? renderCustomSection('Counterexample', renderCounterexample(e.counterexample)) : ''}
+        ${e.counterexample.assignments.length > 0
+            ? renderCustomSection('Counterexample', renderCounterexample(e.counterexample))
+            : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/ `
         ${renderExpressionSection('Expected', e.expected)}

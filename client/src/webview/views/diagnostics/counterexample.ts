@@ -1,22 +1,17 @@
+import type { Counterexample } from "../../../types/diagnostics";
 import { renderHighlightedInlineExpression } from "../../highlighting";
 
-function getCounterexampleLines(counterexample: string): string[] {
-    return counterexample
-        .split("&&")
-        .map(assignment => assignment.trim())
-        .filter(Boolean);
-}
-
-export function renderCounterexample(counterexample: string): string {
-    const lines = getCounterexampleLines(counterexample);
-    if (lines.length === 0) return "";
+export function renderCounterexample(counterexample: Counterexample): string {
+    if (counterexample.assignments.length === 0) return "";
 
     return /*html*/`
         <div class="container vc-container counterexample-container">
             <div class="vc-chain">
-                ${lines.map(line => /*html*/`
+                ${counterexample.assignments.map(assignment => /*html*/`
                     <div class="counterexample-line">
-                        <span class="vc-node">${renderHighlightedInlineExpression(line)}</span>
+                        <span class="vc-node">${renderHighlightedInlineExpression(
+                            `${assignment.variable} == ${assignment.value}`
+                        )}</span>
                     </div>
                 `).join("")}
             </div>

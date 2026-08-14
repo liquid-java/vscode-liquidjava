@@ -62,8 +62,17 @@ export type RefinementError = BaseDiagnostic & {
     expected: string;
     found: VCSimplificationResult;
     customMessage: string;
-    counterexample: string;
+    counterexample: Counterexample;
     declarationPosition: SourcePosition | null;
+}
+
+export type Counterexample = {
+    assignments: CounterexampleAssignment[];
+}
+
+export type CounterexampleAssignment = {
+    variable: string;
+    value: string;
 }
 
 export type StateConflictError = BaseDiagnostic & {
