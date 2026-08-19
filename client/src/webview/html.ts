@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import { getStyles } from "./styles";
 
-const MERMAID_CDN = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+const MERMAID_CDN = "https://cdn.jsdelivr.net/npm/mermaid@11.16.1/dist/mermaid.esm.min.mjs";
+const MERMAID_ELK_CDN = "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.2/dist/mermaid-layout-elk.esm.min.mjs";
 
 /**
  * Generates the HTML content for the webview
@@ -31,8 +32,11 @@ export function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
             <div id="root"></div>
             <script nonce="${nonce}" type="module">
                 import mermaid from '${MERMAID_CDN}';
+                import elkLayouts from '${MERMAID_ELK_CDN}';
+                mermaid.registerLayoutLoaders(elkLayouts);
                 mermaid.initialize({
                     startOnLoad: false,
+                    layout: 'elk',
                     theme: document.body.classList.contains('vscode-light') ? 'default' : 'dark',
                     securityLevel: 'loose',
                     flowchart: {
