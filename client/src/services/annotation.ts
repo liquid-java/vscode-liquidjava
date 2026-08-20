@@ -32,12 +32,3 @@ export function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, pos
     }
     return parenthesisDepth > 0 ? lastAnnotationName : null;
 }
-
-/**
- * Checks whether any cursor in the active editor is inside a LiquidJava annotation
- */
-export function isCursorInsideLiquidJavaAnnotation(document: vscode.TextDocument): boolean {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.uri.toString() !== document.uri.toString()) return false;
-    return editor.selections.some(selection => Boolean(getActiveLiquidJavaAnnotation(document, selection.active)));
-}

@@ -4,7 +4,6 @@ import { updateStateMachine } from './state-machine';
 import { SELECTION_DEBOUNCE_MS } from '../utils/constants';
 import { getSelectionContextVariables, normalizeRange, updateErrorAtCursor } from './context';
 import { normalizeFilePath, toRange } from '../utils/utils';
-import { isCursorInsideLiquidJavaAnnotation } from './annotation';
 
 let selectionTimeout: NodeJS.Timeout | null = null;
 
@@ -21,7 +20,6 @@ export function registerEvents(context: vscode.ExtensionContext) {
         }),
         vscode.workspace.onDidSaveTextDocument(async document => {
             if (document.uri.scheme !== 'file' || document.languageId !== "java") return;
-            if (isCursorInsideLiquidJavaAnnotation(document)) return;
             await updateStateMachine(document)
         }),
         vscode.window.onDidChangeTextEditorSelection(event => {
