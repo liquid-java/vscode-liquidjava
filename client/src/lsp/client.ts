@@ -8,7 +8,6 @@ import { onActiveFileChange } from '../services/events';
 import type { LJDiagnostic } from "../types/diagnostics";
 import { LJContext } from '../types/context';
 import { handleContext } from '../services/context';
-import { isCursorInsideLiquidJavaAnnotation } from '../services/annotation';
 
 /**
  * Starts the client and connects it to the language server
@@ -30,13 +29,6 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
     };
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
-        middleware: {
-            didSave: async (document, next) => {
-                // skip verification if the cursor is inside a LiquidJava annotation
-                if (isCursorInsideLiquidJavaAnnotation(document)) return;
-                await next(document);
-            },
-        },
     };
     extension.client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
     
@@ -70,10 +62,8 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
 
     // update status bar on file save
     context.subscriptions.push(
-        vscode.workspace.onDidSaveTextDocument(document => {
-            if (extension.client && !isCursorInsideLiquidJavaAnnotation(document)) {
-                updateStatusBar("loading");
-            }
+        vscode.workspace.onDidSaveTextDocument(() => {
+            if (extension.client) updateStatusBar("loading");
         })
     );
 }
