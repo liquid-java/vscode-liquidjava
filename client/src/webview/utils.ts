@@ -4,6 +4,10 @@ export function getSimpleName(qualifiedName: string): string {
     return parts[parts.length - 1];
 }
 
+export function getFileName(file: string): string {
+    return file.split(/[\\/]/).pop()?.trim() || file;
+}
+
 export function getOriginalVariableName(name: string): string {
     return name.split("_")[0].replace(/^#/, '');
 }

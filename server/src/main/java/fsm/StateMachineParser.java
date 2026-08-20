@@ -1,6 +1,7 @@
 package fsm;
 
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,7 +44,7 @@ public class StateMachineParser {
     private static StateMachine parse(String uri, SourcePosition declarationPosition,
             Expression expectedState, VCImplication foundState) {
         try {
-            String filePath = new URI(uri).getPath();
+            String filePath = Paths.get(new URI(uri)).toString();
             Launcher launcher = new Launcher();
             launcher.getEnvironment().setNoClasspath(true);
             launcher.getEnvironment().setAutoImports(true);

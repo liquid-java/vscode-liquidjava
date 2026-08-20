@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { extension } from "../state";
 import type { LJVariable, LJContext, LJGhost, LJAlias } from "../types/context";
-import { getSimpleName } from "../utils/utils";
+import { getSimpleName, normalizeFilePath } from "../utils/utils";
 import { LJAnnotation } from "../utils/constants";
 import { filterDuplicateVariables, filterInstanceVariables } from "./context";
 import { isExtensionRunning } from "../extension";
@@ -34,7 +34,7 @@ export function registerAutocomplete(context: vscode.ExtensionContext) {
 
                 const isDotTrigger =  completionContext.triggerKind === vscode.CompletionTriggerKind.TriggerCharacter && completionContext.triggerCharacter === ".";
                 const receiver = isDotTrigger ? getReceiverBeforeDot(document, position) : null; 
-                const file = document.uri.toString().replace("file://", "");
+                const file = normalizeFilePath(document.uri.fsPath);
                 const nextChar = document.getText(new vscode.Range(position, position.translate(0, 1)));
                 const items = getContextCompletionItems(extension.context, file, annotation, nextChar, isDotTrigger, receiver);
                 const uniqueItems = new Map<string, vscode.CompletionItem>();
