@@ -1,5 +1,5 @@
 import type { LJDiagnostic, SourcePosition } from "../../types/diagnostics";
-import { escapeHtml, getSimpleName } from "../utils";
+import { escapeHtml, getFileName, getSimpleName } from "../utils";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
 import { renderCodicon, renderCodiconButton } from "../icons";
@@ -127,7 +127,7 @@ export function renderLocationLink(position?: SourcePosition): string {
 }
 
 function getFile(position: SourcePosition): string {
-    return `${position.file?.split('/').pop()?.trim() || position.file}:${position.lineStart + 1}`;
+    return `${position.file ? getFileName(position.file) : position.file}:${position.lineStart + 1}`;
 }
 
 export type NavTab = 'diagnostics' | 'fsm' | 'context';

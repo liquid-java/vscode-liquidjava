@@ -2,6 +2,7 @@ import { LJDiagnostic, LJError, LJWarning } from "../../../types/diagnostics";
 import type { VCImplication, VCSimplificationResult } from "../../../types/vc-implications";
 import { copyToClipboard } from "../../clipboard";
 import { renderCodiconButton } from "../../icons";
+import { getFileName } from "../../utils";
 import { renderErrors } from "./errors";
 import { renderMainHeader } from "../sections";
 import { renderWarnings } from "./warnings";
@@ -139,6 +140,5 @@ function formatVCImplication(node: VCImplication | null): string {
 function formatDiagnosticLocation(diagnostic: LJDiagnostic): string {
     if (!diagnostic.file || !diagnostic.position) return '';
 
-    const filename = diagnostic.file.split('/').pop()?.trim() || diagnostic.file;
-    return `${filename}:${diagnostic.position.lineStart + 1}`;
+    return `${getFileName(diagnostic.file)}:${diagnostic.position.lineStart + 1}`;
 }
