@@ -97,7 +97,7 @@ public class StateMachineParserTests {
     public void testExternalRefinementsInterface() {
         // class name from @ExternalStateRefinements
         StateMachine sm = StateMachineParser.parse(uri("ExternalRefinements.java"));
-        StateMachine expectedSm = stateMachine("Connection", List.of("connected", "disconnected"),
+        StateMachine expectedSm = stateMachine("com.example.Connection", List.of("connected", "disconnected"),
                 List.of(new StateMachineTransition("disconnected", "connected", "connect")),
                 List.of(new StateMachineInitialTransition("disconnected")));
         assertStateMachineEquals(expectedSm, sm);
@@ -211,6 +211,7 @@ public class StateMachineParserTests {
 
     private static StateMachine stateMachine(String className, List<String> states,
             List<StateMachineTransition> transitions, List<StateMachineInitialTransition> initialTransitions) {
-        return new StateMachine(className, states, transitions, initialTransitions, null);
+        String qualifiedName = className.contains(".") ? className : "fsm." + className;
+        return new StateMachine(qualifiedName, states, transitions, initialTransitions, null);
     }
 }

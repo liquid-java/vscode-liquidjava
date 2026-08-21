@@ -772,18 +772,19 @@ export function getStyles(): string {
         .diagnostic-reveal-btn.error:hover {
             background-color: var(--vscode-errorForeground);
         }
-        .diagram-section {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--vscode-panel-border);
-        }
-        .diagram-section h2 {
-            margin-bottom: 0.5rem;
+        .diagram-title {
+            min-width: 0;
+            margin: 0;
+            overflow: hidden;
+            font-size: 1rem;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .diagram-container {
             background-color: var(--vscode-editor-background);
             border-radius: 4px;
-            padding: 1rem;
+            padding: 3.75rem 1rem 1rem;
             overflow: hidden;
             position: relative;
             cursor: grab;
@@ -810,13 +811,21 @@ export function getStyles(): string {
             max-width: 100%;
             height: auto;
         }
-        .diagram-controls {
+        .diagram-header {
             position: absolute;
             top: 1rem;
+            left: 1rem;
             right: 1rem;
             display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 0.5rem;
             z-index: 10;
+        }
+        .diagram-controls {
+            display: flex;
+            flex-shrink: 0;
+            gap: 0.5rem;
         }
         .diagram-condition-legend {
             position: absolute;

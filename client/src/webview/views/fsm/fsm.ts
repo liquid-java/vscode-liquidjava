@@ -1,5 +1,6 @@
 import type { LJStateMachine } from "../../../types/fsm";
 import { renderCodiconButton } from "../../icons";
+import { escapeHtml } from "../../utils";
 import { renderMainHeader } from "../sections";
 
 export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean) {
@@ -9,7 +10,6 @@ export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | u
 }
 
 function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, diagramHeight?: number): string {
-    const initialStateNames = sm ? [...new Set(sm.initialTransitions.map(transition => transition.to))] : [];
     const hasConditionExpansions = sm
         ? sm.initialTransitions.some(transition => !!transition.postCond)
             || sm.transitions.some(transition => !!transition.preCond || !!transition.postCond)
@@ -22,13 +22,16 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
             ${sm ? /*html*/`
                 <div class="diagram-section">
                     <div class="diagram-container"${diagramHeight ? ` style="min-height: ${diagramHeight}px"` : ''}>
-                        <div class="diagram-controls">
-                            ${renderCodiconButton("zoom-in", { id: "zoom-in-btn", className: "diagram-control-btn", title: "Zoom In" })}
-                            ${renderCodiconButton("zoom-out", { id: "zoom-out-btn", className: "diagram-control-btn", title: "Zoom Out" })}
-                            ${renderCodiconButton("screen-normal", { id: "zoom-reset-btn", className: "diagram-control-btn", title: "Reset Zoom" })}
-                            ${renderCodiconButton(orientation === "TB" ? "arrow-down" : "arrow-right", { id: "diagram-orientation-btn", className: "diagram-control-btn", title: "Toggle Orientation" })}
-                            ${renderCodiconButton(showConditions ? "collapse-all" : "expand-all", { id: "diagram-conditions-btn", className: `diagram-control-btn${showConditions ? ' active' : ''}`, title: conditionToggleLabel, attributes: `aria-pressed="${showConditions ? 'true' : 'false'}"`, disabled: !hasConditionExpansions })}
-                            ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
+                        <div class="diagram-header">
+                            <h2 class="diagram-title">${escapeHtml(sm.className)}</h2>
+                            <div class="diagram-controls">
+                                ${renderCodiconButton("zoom-in", { id: "zoom-in-btn", className: "diagram-control-btn", title: "Zoom In" })}
+                                ${renderCodiconButton("zoom-out", { id: "zoom-out-btn", className: "diagram-control-btn", title: "Zoom Out" })}
+                                ${renderCodiconButton("screen-normal", { id: "zoom-reset-btn", className: "diagram-control-btn", title: "Reset Zoom" })}
+                                ${renderCodiconButton(orientation === "TB" ? "arrow-down" : "arrow-right", { id: "diagram-orientation-btn", className: "diagram-control-btn", title: "Toggle Orientation" })}
+                                ${renderCodiconButton(showConditions ? "collapse-all" : "expand-all", { id: "diagram-conditions-btn", className: `diagram-control-btn${showConditions ? ' active' : ''}`, title: conditionToggleLabel, attributes: `aria-pressed="${showConditions ? 'true' : 'false'}"`, disabled: !hasConditionExpansions })}
+                                ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
+                            </div>
                         </div>
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
@@ -39,12 +42,6 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                         <div id="diagram-wrapper" class="diagram-wrapper">
                             <pre class="mermaid">${diagram}</pre>
                         </div>
-                    </div>
-                    <div>
-                        <p><strong>States:</strong> ${sm.states.join(', ')}</p>
-                        <p><strong>Initial state${initialStateNames.length > 1 ? 's' : ''}:</strong> ${initialStateNames.join(', ')}</p>
-                        <p><strong>Number of states:</strong> ${sm.states.length}</p>
-                        <p><strong>Number of transitions:</strong> ${sm.transitions.length + sm.initialTransitions.length}</p>
                     </div>
                 </div>`
             : 'No state machine available for the current file'}
