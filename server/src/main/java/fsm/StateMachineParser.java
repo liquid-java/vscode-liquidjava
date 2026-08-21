@@ -62,13 +62,14 @@ public class StateMachineParser {
             if (states == null || states.isEmpty())
                 return null; // no states found
             String className = getClassName(ctType);
+            String simpleClassName = Utils.getSimpleName(className);
 
             // get initial transitions and method transitions
-            List<StateMachineInitialTransition> initialTransitions = getInitialTransitions(ctType, className, states);
+            List<StateMachineInitialTransition> initialTransitions = getInitialTransitions(ctType, simpleClassName, states);
             if (initialTransitions.isEmpty()) {
                 initialTransitions = List.of(new StateMachineInitialTransition(states.get(0)));
             }
-            List<StateMachineTransition> transitions = getTransitions(ctType, className, states);
+            List<StateMachineTransition> transitions = getTransitions(ctType, simpleClassName, states);
             if (transitions.isEmpty())
                 return null; // no transitions found
 
@@ -131,7 +132,7 @@ public class StateMachineParser {
     }
 
     /**
-     * Gets the simple name from a class or interface
+     * Gets the qualified name from a class or interface
      * Uses name from ExternalRefinementsFor if present, otherwise uses class or interface name
      * @param ctType the CtType (class or interface)
      * @return class name
@@ -140,10 +141,10 @@ public class StateMachineParser {
         for (CtAnnotation<?> annotation : ctType.getAnnotations()) {
             if (annotation.getAnnotationType().getSimpleName().equals(EXTERNAL_REFINEMENTS_FOR_ANNOTATION)) {
                 String qualifiedName = (String) annotation.getValueAsObject("value");
-                return Utils.getSimpleName(qualifiedName);
+                return qualifiedName;
             }
         }
-        return ctType.getSimpleName();
+        return ctType.getQualifiedName();
     }
 
     /**

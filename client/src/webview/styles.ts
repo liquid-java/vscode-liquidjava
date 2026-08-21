@@ -772,13 +772,10 @@ export function getStyles(): string {
         .diagnostic-reveal-btn.error:hover {
             background-color: var(--vscode-errorForeground);
         }
-        .diagram-section {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--vscode-panel-border);
-        }
-        .diagram-section h2 {
-            margin-bottom: 0.5rem;
+        .diagram-title {
+            margin: 0 0 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
         }
         .diagram-container {
             background-color: var(--vscode-editor-background);

@@ -30,10 +30,6 @@ export function createMermaidDiagram(
     
     const lines: string[] = [];
 
-    // header
-    lines.push('---');
-    lines.push(`title: ${sm.className}`);
-    lines.push('---');
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
     
