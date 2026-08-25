@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { LIQUIDJAVA_ANNOTATION_START, LJAnnotation } from "../utils/constants";
 
 /**
- * Returns the LiquidJava annotation containing the given position
+ * Returns the LiquidJava annotation whose refinement string contains the given position
  */
 export function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, position: vscode.Position): LJAnnotation | null {
     const textUntilCursor = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
@@ -19,10 +19,12 @@ export function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, pos
     const fromLastAnnotation = textUntilCursor.slice(lastAnnotationStart);
     let parenthesisDepth = 0;
     let isInsideString = false;
+    let stringStart = -1;
     for (let i = 0; i < fromLastAnnotation.length; i++) {
         const char = fromLastAnnotation[i];
         const previousChar = i > 0 ? fromLastAnnotation[i - 1] : "";
         if (char === '"' && previousChar !== "\\") {
+            stringStart = isInsideString ? -1 : i;
             isInsideString = !isInsideString;
             continue;
         }
@@ -33,5 +35,8 @@ export function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, pos
             if (parenthesisDepth === 0) return null;
         }
     }
-    return parenthesisDepth > 0 ? lastAnnotationName : null;
+    if (parenthesisDepth === 0 || !isInsideString) return null;
+
+    const beforeString = fromLastAnnotation.slice(0, stringStart);
+    return /\bmsg\s*=\s*$/.test(beforeString) ? null : lastAnnotationName;
 }
