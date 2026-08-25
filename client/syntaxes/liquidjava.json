@@ -6,6 +6,9 @@
   "patterns": [
     {
       "begin": "@(liquidjava\\.specification\\.)?(Refinement|RefinementMultiple|RefinementAlias|RefinementAliasMultiple|RefinementPredicate|RefinementPredicateMultiple|StateSet|StateSets|Ghost)\\s*\\(",
+      "beginCaptures": {
+        "2": { "name": "storage.type.annotation.java" }
+      },
       "end": "\\)",
       "name": "meta.annotation.refinement.liquidjava",
       "patterns": [
@@ -38,6 +41,9 @@
     },
     {
       "begin": "@(liquidjava\\.specification\\.)?(StateRefinement|StateRefinementMultiple)\\s*\\(",
+      "beginCaptures": {
+        "2": { "name": "storage.type.annotation.java" }
+      },
       "end": "\\)",
       "name": "meta.annotation.refinement.liquidjava",
       "patterns": [
