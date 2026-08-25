@@ -28,7 +28,10 @@ export function getActiveLiquidJavaAnnotation(document: vscode.TextDocument, pos
         }
         if (isInsideString) continue;
         if (char === "(") parenthesisDepth++;
-        if (char === ")") parenthesisDepth--;
+        if (char === ")") {
+            parenthesisDepth--;
+            if (parenthesisDepth === 0) return null;
+        }
     }
     return parenthesisDepth > 0 ? lastAnnotationName : null;
 }

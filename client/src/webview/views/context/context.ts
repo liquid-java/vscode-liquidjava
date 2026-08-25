@@ -20,7 +20,7 @@ export function renderContextView(context: LJContext | undefined, currentFile: s
         <div>
             ${renderMainHeader("", 'context')}
             ${total === 0
-                ? '<p>No context information available at the cursor position</p>'
+                ? 'No context information available at the cursor position'
                 : `${renderContextAliases(aliases, sectionState.aliases)}
                    ${renderContextGhosts(ghosts, sectionState.ghosts)}
                    ${renderContextVariables(allVars, sectionState.vars, errorAtCursor)}
