@@ -100,7 +100,11 @@ function formatRefinement(refinement: string): string {
 }
 
 function formatStateRefinement(from: string | null, to: string | null): string {
-    return `@StateRefinement(${[from && `from="${from}"`, to && `to="${to}"`].filter(Boolean).join(', ')})`;
+    return `@StateRefinement(${[formatArgument('from', from), formatArgument('to', to)].filter(Boolean).join(', ')})`;
+}
+
+function formatArgument(name: string, value: string | null): string | null {
+    return value && value !== 'true' ? `${name}="${value}"` : null;
 }
 
 function formatMethodHover(method: LJMethod): string {
