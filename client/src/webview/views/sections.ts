@@ -21,6 +21,9 @@ export const renderSection = (title: string, body: string): string => /*html*/
 export const renderExpressionSection = (title: string, expression: string): string => /*html*/
     renderCustomSection(title, renderHighlightedExpression(expression));
 
+export const renderHint = (hint: string | null): string =>
+    hint?.trim() ? renderCustomSection('Hint', `<pre>${escapeHtml(hint.trim())}</pre>`) : '';
+
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
     <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
         ${renderCodicon(isExpanded ? "triangle-down" : "triangle-right", "context-toggle-icon")}

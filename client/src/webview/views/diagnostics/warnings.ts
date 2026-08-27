@@ -1,5 +1,5 @@
 import type { CustomWarning, ExternalClassNotFoundWarning, ExternalMethodNotFoundWarning, LJWarning, UnsatisfiableRefinementWarning } from "../../../types/diagnostics";
-import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderLocation } from "../sections";
+import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderHint, renderLocation } from "../sections";
 import { renderCopyDiagnosticButton } from "./diagnostics";
 
 export function renderWarnings(warnings: LJWarning[]): string {
@@ -36,6 +36,7 @@ const warningContentRenderers: WarningContentRenderers = {
 export function renderWarning(warning: LJWarning): string {
     const header = renderDiagnosticHeader(warning.title, warning.message);
     const content = (warningContentRenderers[warning.type] as (warning: LJWarning) => string)?.(warning) || '';
+    const hint = renderHint(warning.hint);
     const location = renderLocation(warning);
-    return /*html*/`${header}${content}${location}`;
+    return /*html*/`${header}${content}${hint}${location}`;
 }
