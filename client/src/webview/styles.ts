@@ -196,14 +196,12 @@ export function getStyles(): string {
             background: transparent;
             border: 1px solid transparent;
             border-radius: 4px;
-            opacity: 0.65;
             transition: background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
         }
-        .diagnostic-state-machine-btn {
+        .icon-button.icon-button-badged {
             position: relative;
-            opacity: 1;
         }
-        .diagnostic-state-machine-badge {
+        .icon-button-badge {
             position: absolute;
             top: -0.25rem;
             right: -0.25rem;
@@ -855,13 +853,9 @@ export function getStyles(): string {
             color: var(--vscode-foreground);
             background: none;
             border: none;
-            opacity: 0.7;
         }
         .diagram-control-btn:hover {
             background: none;
-            opacity: 1;
-        }
-        .diagram-control-btn.active {
             opacity: 1;
         }
         .diagram-control-btn:disabled {

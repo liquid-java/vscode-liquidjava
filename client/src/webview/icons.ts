@@ -10,14 +10,16 @@ type CodiconButtonOptions = {
     ariaLabel?: string;
     attributes?: string;
     disabled?: boolean;
+    errorBadge?: boolean;
 };
 
 export function renderCodiconButton(iconName: string, options: CodiconButtonOptions): string {
-    const classes = ["icon-button", options.className].filter(Boolean).join(" ");
+    const classes = ["icon-button", options.className, options.errorBadge ? "icon-button-badged" : ""].filter(Boolean).join(" ");
     const id = options.id ? ` id="${options.id}"` : "";
     const ariaLabel = ` aria-label="${options.ariaLabel ?? options.title}"`;
     const attributes = options.attributes ? ` ${options.attributes}` : "";
     const disabled = options.disabled ? " disabled" : "";
 
-    return `<button${id} class="${classes}" title="${options.title}"${ariaLabel}${attributes}${disabled} type="button">${renderCodicon(iconName)}</button>`;
+    const badge = options.errorBadge ? '<span class="icon-button-badge" aria-hidden="true">!</span>' : "";
+    return `<button${id} class="${classes}" title="${options.title}"${ariaLabel}${attributes}${disabled} type="button">${renderCodicon(iconName)}${badge}</button>`;
 }
