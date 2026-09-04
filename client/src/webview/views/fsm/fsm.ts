@@ -14,7 +14,9 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
         ? sm.initialTransitions.some(transition => !!transition.postCond)
             || sm.transitions.some(transition => !!transition.preCond || !!transition.postCond)
         : false;
-    const conditionToggleLabel = showConditions ? 'Collapse Conditions' : 'Expand Conditions';
+    const conditionToggleLabel = !hasConditionExpansions
+        ? 'No additional conditions to expand'
+        : showConditions ? 'Collapse Conditions' : 'Expand Conditions';
 
     return /*html*/`
         <div>
