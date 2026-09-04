@@ -14,7 +14,9 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
         ? sm.initialTransitions.some(transition => !!transition.postCond)
             || sm.transitions.some(transition => !!transition.preCond || !!transition.postCond)
         : false;
-    const conditionToggleLabel = showConditions ? 'Collapse Conditions' : 'Expand Conditions';
+    const conditionToggleLabel = !hasConditionExpansions
+        ? 'No additional conditions to expand'
+        : showConditions ? 'Collapse Conditions' : 'Expand Conditions';
 
     return /*html*/`
         <div>
@@ -29,7 +31,7 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                                 ${renderCodiconButton("zoom-out", { id: "zoom-out-btn", className: "diagram-control-btn", title: "Zoom Out" })}
                                 ${renderCodiconButton("screen-normal", { id: "zoom-reset-btn", className: "diagram-control-btn", title: "Reset Zoom" })}
                                 ${renderCodiconButton(orientation === "TB" ? "arrow-down" : "arrow-right", { id: "diagram-orientation-btn", className: "diagram-control-btn", title: "Toggle Orientation" })}
-                                ${renderCodiconButton(showConditions ? "collapse-all" : "expand-all", { id: "diagram-conditions-btn", className: `diagram-control-btn${showConditions ? ' active' : ''}`, title: conditionToggleLabel, attributes: `aria-pressed="${showConditions ? 'true' : 'false'}"`, disabled: !hasConditionExpansions })}
+                                ${renderCodiconButton(showConditions ? "collapse-all" : "expand-all", { id: "diagram-conditions-btn", className: `diagram-control-btn${showConditions ? ' active' : ''}`, title: conditionToggleLabel, attributes: `aria-pressed="${showConditions ? 'true' : 'false'}"`, disabled: !hasConditionExpansions, errorBadge: hasConditionExpansions && !showConditions })}
                                 ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
                             </div>
                         </div>
