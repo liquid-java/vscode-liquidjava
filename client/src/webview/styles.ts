@@ -856,10 +856,18 @@ export function getStyles(): string {
         }
         .diagram-control-btn:hover {
             background: none;
+        }
+        .diagram-control-btn > .codicon {
+            opacity: 0.7;
+            transition: opacity 0.16s ease;
+        }
+        .diagram-control-btn:hover:not(:disabled) > .codicon {
             opacity: 1;
         }
         .diagram-control-btn:disabled {
             cursor: default;
+        }
+        .diagram-control-btn:disabled > .codicon {
             opacity: 0.35;
         }
         .mermaid .statediagramTitleText {
