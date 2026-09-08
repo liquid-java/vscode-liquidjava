@@ -11,8 +11,8 @@ export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | u
 
 function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, diagramHeight?: number): string {
     const hasConditionExpansions = sm
-        ? sm.initialTransitions.some(transition => !!transition.postCond)
-            || sm.transitions.some(transition => !!transition.preCond || !!transition.postCond)
+        ? sm.initialTransitions.some(transition => !!transition.toCondition)
+            || sm.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition)
         : false;
     const conditionToggleLabel = !hasConditionExpansions
         ? 'No additional conditions to expand'

@@ -175,6 +175,11 @@
 			<version>0.0.32</version>
 		</dependency>
 		<dependency>
+		  <groupId>io.github.liquid-java</groupId>
+		  <artifactId>liquidjava-fsm</artifactId>
+		  <version>0.1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>tools.aqua</groupId>
 			<artifactId>z3-turnkey</artifactId>
 			<version>${version.z3}</version>

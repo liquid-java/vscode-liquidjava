@@ -35,7 +35,7 @@ export function createMermaidDiagram(
     
     // initial transitions
     sm.initialTransitions.forEach(transition => {
-        const label = getInitialTransitionLabel(transition.postCond, showConditions);
+        const label = getInitialTransitionLabel(transition.toCondition, showConditions);
         lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
     });
     
@@ -45,8 +45,8 @@ export function createMermaidDiagram(
         const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
         const label = getTransitionLabel(
             transition.label,
-            transition.preCond,
-            transition.postCond,
+            transition.fromCondition,
+            transition.toCondition,
             showConditions,
             isCalledMethod,
         );
@@ -72,8 +72,8 @@ export function createMermaidDiagram(
 
 function getTransitionLabel(
     label: string,
-    preCond?: string | null,
-    postCond?: string | null,
+    fromCondition?: string | null,
+    toCondition?: string | null,
     showConditions = false,
     isCalledMethod = false,
 ): string {
@@ -83,14 +83,14 @@ function getTransitionLabel(
         : escapedLabel;
     if (!showConditions) return methodLabel;
     return [
-        getConditionLabel('pre', preCond),
+        getConditionLabel('pre', fromCondition),
         methodLabel,
-        getConditionLabel('post', postCond)
+        getConditionLabel('post', toCondition)
     ].filter(Boolean).join('<br/>');
 }
 
-function getInitialTransitionLabel(postCond?: string | null, showConditions = false): string {
-    return showConditions ? getConditionLabel('post', postCond) : '';
+function getInitialTransitionLabel(toCondition?: string | null, showConditions = false): string {
+    return showConditions ? getConditionLabel('post', toCondition) : '';
 }
 
 function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
