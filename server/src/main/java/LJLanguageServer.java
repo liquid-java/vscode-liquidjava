@@ -15,8 +15,8 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
 import dtos.uri.Uri;
-import fsm.StateMachine;
-import fsm.StateMachineParser;
+import liquidjava.fsm.StateMachine;
+import liquidjava.fsm.StateMachineParser;
 
 public class LJLanguageServer implements LanguageServer {
 

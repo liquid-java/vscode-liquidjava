@@ -4,8 +4,8 @@ import java.io.File;
 
 import dtos.diagnostics.SourcePositionDTO;
 import dtos.diagnostics.VCSimplificationResultDTO;
-import fsm.StateMachine;
-import fsm.StateMachineParser;
+import liquidjava.fsm.StateMachine;
+import liquidjava.fsm.StateMachineParser;
 import liquidjava.diagnostics.errors.StateRefinementError;
 import liquidjava.rj_language.ast.formatter.ExpressionFormatter;
 
