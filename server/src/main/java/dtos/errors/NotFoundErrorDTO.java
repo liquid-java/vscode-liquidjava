@@ -13,7 +13,7 @@ public class NotFoundErrorDTO extends LJErrorDTO {
     public NotFoundErrorDTO(NotFoundError error) {
         super("not-found-error", error);
         this.name = error.getName();
-        this.kind = error.getKind();
+        this.kind = error.getKind().toString();
     }
 
     public static NotFoundErrorDTO from(NotFoundError error) {
