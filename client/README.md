@@ -21,7 +21,7 @@ To try out the extension, install it from the [VS Code Marketplace](https://mark
 <dependency>
     <groupId>io.github.liquid-java</groupId>
     <artifactId>liquidjava-api</artifactId>
-    <version>0.0.5</version>
+    <version>0.0.7</version>
 </dependency>
 ```
 
@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.liquid-java:liquidjava-api:0.0.5'
+    implementation 'io.github.liquid-java:liquidjava-api:0.0.7'
 }
 ```
 
@@ -138,3 +138,4 @@ For more information, check the following repositories:
 - [vscode-liquidjava](https://github.com/liquid-java/vscode-liquidjava): Source code of this VS Code extension
 - [liquidjava-examples](https://github.com/liquid-java/liquidjava-examples): Examples of how to use LiquidJava
 - [liquid-java-external-libs](https://github.com/liquid-java/liquid-java-external-libs): Examples of how to use LiquidJava to refine external libraries
+- [liquidjava-fsm](https://github.com/liquid-java/liquidjava-fsm): State machine parser used by the VS Code language server
