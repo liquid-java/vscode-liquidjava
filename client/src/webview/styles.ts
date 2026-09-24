@@ -754,6 +754,10 @@ export function getStyles(): string {
             margin: 0;
             padding: 0 0.15rem;
         }
+        .vc-binder.highlight-var-btn.clickable {
+            text-decoration-color: var(--vscode-textLink-foreground);
+            text-underline-offset: 0.15em;
+        }
         .vc-binder.highlight-var-btn.selected {
             color: var(--lj-token-identifier);
         }

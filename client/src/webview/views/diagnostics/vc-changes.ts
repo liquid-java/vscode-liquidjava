@@ -43,9 +43,9 @@ function renderBinder(binder: string, type: string, translationTable?: Translati
     }
     return renderSourceHighlightButton(
         escapeHtml(binder),
-        type,
+        type ? `Go to source (${type})` : "Go to source",
         placement.position,
-        "vc-node vc-binder",
+        "vc-node vc-binder clickable",
     );
 }
 
