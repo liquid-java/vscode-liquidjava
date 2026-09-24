@@ -17,17 +17,21 @@ export function renderDiagnosticsView(
     const errors = displayDiagnostics.filter(d => d.category === 'error') as LJError[];
     const warnings = displayDiagnostics.filter(d => d.category === 'warning') as LJWarning[];
     const totalErrors = diagnostics.filter(d => d.category === 'error').length;
+    const fileErrors = currentFile
+        ? diagnostics.filter(d => d.category === 'error' && d.file?.toLowerCase() === currentFile.toLowerCase()).length
+        : 0;
     const hasErrors = totalErrors > 0;
     const hiddenErrors = totalErrors - errors.length;
-    const titleMessage = hasErrors ? "Failed Verification" : "Passed Verification";
-    const infoMessage = hasErrors ? 
-        `${totalErrors} error${totalErrors !== 1 ? 's were' : ' was'} found by the LiquidJava verifier` :
-        "No errors were found by the LiquidJava verifier.";
+    const titleMessage = hasErrors
+        ? currentFile
+            ? `${fileErrors} error${fileErrors !== 1 ? 's' : ''} in this file · ${totalErrors} in workspace`
+            : `${totalErrors} error${totalErrors !== 1 ? 's' : ''} in workspace`
+        : "Passed Verification";
     
     return /*html*/`
         <div>
             ${renderMainHeader(titleMessage, 'diagnostics')}
-            <p class="info">${infoMessage}</p>
+            ${!hasErrors ? '<p class="info">No errors were found by the LiquidJava verifier.</p>' : ''}
             ${
                 diagnostics.length === 0 ? '' : /*html*/`
                     <button id="show-all-button" class="underline-button">
