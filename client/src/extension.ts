@@ -12,6 +12,7 @@ import { registerAutocomplete } from "./services/autocomplete";
 import { refreshCodeLenses, registerCodeLens } from "./services/codelens";
 import { runLanguageServer, stopLanguageServer } from "./lsp/server";
 import { runClient, stopClient } from "./lsp/client";
+import { buildExplanationPrompt } from "./ai/prompt";
 
 /**
  * Activates the LiquidJava extension
@@ -30,6 +31,12 @@ export async function activate(context: vscode.ExtensionContext) {
     registerHover();
     await applyItalicOverlay();
     await startExtension(context);
+
+    // used by the evaluation harness (liquidjava-dev) to build explanation prompts from real diagnostics
+    return {
+        getDiagnostics: () => extension.diagnostics ?? [],
+        buildExplanationPrompt,
+    };
 }
 
 /**
