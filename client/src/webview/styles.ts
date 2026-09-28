@@ -689,6 +689,9 @@ export function getStyles(): string {
             overflow-wrap: normal;
             word-break: normal;
         }
+        .context-variables-table td:first-child .highlight-var-btn.clickable code {
+            padding-bottom: 0.3em;
+        }
 
         .context-variable-relevant td:first-child {
             border-left: 2px solid var(--vscode-errorForeground);
@@ -754,15 +757,20 @@ export function getStyles(): string {
             margin: 0;
             padding: 0 0.15rem;
         }
-        .vc-binder.highlight-var-btn.clickable {
-            color: var(--vscode-textLink-foreground);
+        .highlight-var-btn.clickable {
             text-decoration-color: var(--vscode-textLink-foreground);
             text-decoration-thickness: 1.5px;
             text-underline-offset: 0.2em;
         }
+        .highlight-var-btn.clickable:hover {
+            font-weight: inherit;
+            text-decoration-style: solid;
+        }
+        .vc-binder.highlight-var-btn.clickable {
+            color: var(--vscode-textLink-foreground);
+        }
         .vc-binder.highlight-var-btn.clickable:hover {
             color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
-            text-decoration-style: solid;
         }
         .vc-binder.highlight-var-btn.selected {
             color: var(--lj-token-identifier);

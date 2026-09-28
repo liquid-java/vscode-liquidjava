@@ -60,8 +60,9 @@ export function renderVariableHighlightButton(variable: LJVariable): string {
     if (!position || !position.file) return `<code>${displayName}</code>`;
     return renderSourceHighlightButton(
         `<code>${renderHighlightedInlineExpression(displayName)}</code>`,
-        variable.type,
+        variable.type ? `Go to source (${variable.type})` : "Go to source",
         position,
+        "clickable",
     );
 }
 
