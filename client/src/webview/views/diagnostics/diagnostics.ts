@@ -22,10 +22,10 @@ export function renderDiagnosticsView(
         : 0;
     const hasErrors = totalErrors > 0;
     const hiddenErrors = totalErrors - errors.length;
-    const fileLabel = `${fileErrors} error${fileErrors !== 1 ? 's' : ''} in this file`;
+    const fileLabel = `${renderScopeCount(fileErrors)} error${fileErrors !== 1 ? 's' : ''} in this file`;
     const workspaceLabel = currentFile
-        ? `${totalErrors} in workspace`
-        : `${totalErrors} error${totalErrors !== 1 ? 's' : ''} in workspace`;
+        ? `${renderScopeCount(totalErrors)} in workspace`
+        : `${renderScopeCount(totalErrors)} error${totalErrors !== 1 ? 's' : ''} in workspace`;
     const titleMessage = hasErrors
         ? currentFile
             ? `${renderScopeButton('file', fileLabel, !showAll)} · ${renderScopeButton('workspace', workspaceLabel, showAll)}`
@@ -52,6 +52,10 @@ export function renderDiagnosticsView(
             </div>
         </div>
     `;
+}
+
+function renderScopeCount(count: number): string {
+    return /*html*/`<span class="diagnostics-scope-count">${count}</span>`;
 }
 
 function renderScopeButton(scope: 'file' | 'workspace', label: string, selected: boolean): string {

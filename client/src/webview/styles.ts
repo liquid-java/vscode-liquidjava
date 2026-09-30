@@ -578,7 +578,8 @@ export function getStyles(): string {
         }
         .diagnostics-view .header h2 {
             font-size: 0.9rem;
-            font-weight: 600;
+            font-weight: normal;
+            margin-bottom: 0.75rem;
         }
         .diagnostics-scope-button {
             padding: 0;
@@ -588,9 +589,12 @@ export function getStyles(): string {
             font: inherit;
             opacity: 0.6;
             cursor: pointer;
-            text-decoration: underline;
+            text-decoration: underline dashed;
             text-decoration-thickness: 1px;
-            text-underline-offset: 3px;
+            text-underline-offset: 4px;
+        }
+        .diagnostics-scope-count {
+            font-weight: bold;
         }
         .diagnostics-scope-button:hover {
             background: none;
@@ -598,7 +602,6 @@ export function getStyles(): string {
         }
         .diagnostics-scope-button.selected {
             opacity: 1;
-            text-decoration-thickness: 2px;
         }
         .stopped-view {
             display: flex;
