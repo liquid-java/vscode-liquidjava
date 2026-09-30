@@ -18,7 +18,7 @@ export function renderDiagnosticsView(
     const warnings = displayDiagnostics.filter(d => d.category === 'warning') as LJWarning[];
     const totalErrors = diagnostics.filter(d => d.category === 'error').length;
     const fileErrors = currentFile
-        ? diagnostics.filter(d => d.category === 'error' && d.file?.toLowerCase() === currentFile.toLowerCase()).length
+        ? fileDiagnostics.filter(d => d.category === 'error').length
         : 0;
     const hasErrors = totalErrors > 0;
     const hiddenErrors = totalErrors - errors.length;
