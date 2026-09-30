@@ -580,6 +580,26 @@ export function getStyles(): string {
             font-size: 0.9rem;
             font-weight: 600;
         }
+        .diagnostics-scope-button {
+            padding: 0;
+            border: none;
+            background: none;
+            color: var(--vscode-foreground);
+            font: inherit;
+            opacity: 0.6;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 3px;
+        }
+        .diagnostics-scope-button:hover {
+            background: none;
+            opacity: 0.85;
+        }
+        .diagnostics-scope-button.selected {
+            opacity: 1;
+            text-decoration-thickness: 2px;
+        }
         .stopped-view {
             display: flex;
             position: relative;

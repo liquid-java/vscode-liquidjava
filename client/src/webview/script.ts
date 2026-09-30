@@ -171,6 +171,15 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
+        // switch between file and workspace diagnostics
+        const scopeButton = target.closest?.('[data-diagnostics-scope]') as HTMLElement | null;
+        if (scopeButton) {
+            e.stopPropagation();
+            showAllDiagnostics = scopeButton.dataset.diagnosticsScope === 'workspace';
+            updateView();
+            return;
+        }
+
         // toggle diagram orientation
         if (target.closest?.('#diagram-orientation-btn')) {
             e.stopPropagation();

@@ -22,10 +22,14 @@ export function renderDiagnosticsView(
         : 0;
     const hasErrors = totalErrors > 0;
     const hiddenErrors = totalErrors - errors.length;
+    const fileLabel = `${fileErrors} error${fileErrors !== 1 ? 's' : ''} in this file`;
+    const workspaceLabel = currentFile
+        ? `${totalErrors} in workspace`
+        : `${totalErrors} error${totalErrors !== 1 ? 's' : ''} in workspace`;
     const titleMessage = hasErrors
         ? currentFile
-            ? `${fileErrors} error${fileErrors !== 1 ? 's' : ''} in this file · ${totalErrors} in workspace`
-            : `${totalErrors} error${totalErrors !== 1 ? 's' : ''} in workspace`
+            ? `${renderScopeButton('file', fileLabel, !showAll)} · ${renderScopeButton('workspace', workspaceLabel, showAll)}`
+            : renderScopeButton('workspace', workspaceLabel, showAll)
         : "Passed Verification";
     
     return /*html*/`
@@ -33,7 +37,7 @@ export function renderDiagnosticsView(
             ${renderMainHeader(titleMessage, 'diagnostics')}
             ${!hasErrors ? '<p class="info">No errors were found by the LiquidJava verifier.</p>' : ''}
             ${
-                diagnostics.length === 0 ? '' : /*html*/`
+                hasErrors || diagnostics.length === 0 ? '' : /*html*/`
                     <button id="show-all-button" class="underline-button">
                         ${showAll ? `Show file diagnostics` : `Show all diagnostics`}
                     </button>
@@ -48,6 +52,10 @@ export function renderDiagnosticsView(
             </div>
         </div>
     `;
+}
+
+function renderScopeButton(scope: 'file' | 'workspace', label: string, selected: boolean): string {
+    return /*html*/`<button class="diagnostics-scope-button${selected ? ' selected' : ''}" data-diagnostics-scope="${scope}">${label}</button>`;
 }
 
 export function getDisplayDiagnostics(diagnostics: LJDiagnostic[], showAll: boolean, currentFile: string | undefined): LJDiagnostic[] {
