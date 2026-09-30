@@ -576,6 +576,10 @@ export function getStyles(): string {
         .info {
             margin: 1rem 0;
         }
+        .diagnostics-view .header h2 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
         .stopped-view {
             display: flex;
             position: relative;

@@ -29,7 +29,7 @@ export function renderDiagnosticsView(
         : "Passed Verification";
     
     return /*html*/`
-        <div>
+        <div class="diagnostics-view">
             ${renderMainHeader(titleMessage, 'diagnostics')}
             ${!hasErrors ? '<p class="info">No errors were found by the LiquidJava verifier.</p>' : ''}
             ${
