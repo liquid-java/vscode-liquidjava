@@ -581,27 +581,59 @@ export function getStyles(): string {
             font-weight: normal;
             margin-bottom: 0.75rem;
         }
+        .diagnostics-scopes {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 1rem;
+        }
         .diagnostics-scope-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 0;
             border: none;
             background: none;
             color: var(--vscode-foreground);
             font: inherit;
-            opacity: 0.6;
             cursor: pointer;
-            text-decoration: underline dashed;
-            text-decoration-thickness: 1px;
-            text-underline-offset: 4px;
+        }
+        .diagnostics-scope-button:hover {
+            background: none;
+        }
+        .diagnostics-scope-button:hover > span:not(.diagnostics-scope-icon) {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .diagnostics-scope-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            width: 1rem;
+            height: 1rem;
+            border: 1.5px solid var(--vscode-foreground);
+            border-radius: 50%;
+            font-size: 0.65rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .diagnostics-scope-button.selected .diagnostics-scope-icon {
+            color: var(--vscode-editor-background);
+            background: var(--vscode-errorForeground);
+            border-color: var(--vscode-errorForeground);
         }
         .diagnostics-scope-count {
             font-weight: bold;
         }
-        .diagnostics-scope-button:hover {
-            background: none;
-            opacity: 0.85;
+        .diagnostics-scope-button.selected .diagnostics-scope-count {
+            color: var(--vscode-errorForeground);
         }
-        .diagnostics-scope-button.selected {
-            opacity: 1;
+        .diagnostics-scope-divider {
+            align-self: stretch;
+            width: 1px;
+            background: var(--vscode-panel-border, var(--vscode-foreground));
+            opacity: 0.6;
         }
         .stopped-view {
             display: flex;

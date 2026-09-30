@@ -22,14 +22,12 @@ export function renderDiagnosticsView(
         : 0;
     const hasErrors = totalErrors > 0;
     const hiddenErrors = totalErrors - errors.length;
-    const fileLabel = `${renderScopeCount(fileErrors)} error${fileErrors !== 1 ? 's' : ''} in this file`;
-    const workspaceLabel = currentFile
-        ? `${renderScopeCount(totalErrors)} in workspace`
-        : `${renderScopeCount(totalErrors)} error${totalErrors !== 1 ? 's' : ''} in workspace`;
     const titleMessage = hasErrors
-        ? currentFile
-            ? `${renderScopeButton('file', fileLabel, !showAll)} · ${renderScopeButton('workspace', workspaceLabel, showAll)}`
-            : renderScopeButton('workspace', workspaceLabel, showAll)
+        ? /*html*/`<span class="diagnostics-scopes">${
+            currentFile
+                ? `${renderScopeButton('file', 'Current file', fileErrors, !showAll)}<span class="diagnostics-scope-divider"></span>${renderScopeButton('workspace', 'Workspace', totalErrors, showAll)}`
+                : renderScopeButton('workspace', 'Workspace', totalErrors, showAll)
+        }</span>`
         : "Passed Verification";
     
     return /*html*/`
@@ -54,12 +52,14 @@ export function renderDiagnosticsView(
     `;
 }
 
-function renderScopeCount(count: number): string {
-    return /*html*/`<span class="diagnostics-scope-count">${count}</span>`;
-}
-
-function renderScopeButton(scope: 'file' | 'workspace', label: string, selected: boolean): string {
-    return /*html*/`<button class="diagnostics-scope-button${selected ? ' selected' : ''}" data-diagnostics-scope="${scope}">${label}</button>`;
+function renderScopeButton(scope: 'file' | 'workspace', label: string, count: number, selected: boolean): string {
+    return /*html*/`
+        <button class="diagnostics-scope-button${selected ? ' selected' : ''}" data-diagnostics-scope="${scope}">
+            <span class="diagnostics-scope-icon" aria-hidden="true">!</span>
+            <span>${label}</span>
+            <span class="diagnostics-scope-count">${count} error${count !== 1 ? 's' : ''}</span>
+        </button>
+    `;
 }
 
 export function getDisplayDiagnostics(diagnostics: LJDiagnostic[], showAll: boolean, currentFile: string | undefined): LJDiagnostic[] {
