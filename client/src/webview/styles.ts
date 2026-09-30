@@ -766,12 +766,6 @@ export function getStyles(): string {
             font-weight: inherit;
             text-decoration-style: solid;
         }
-        .vc-binder.highlight-var-btn.clickable {
-            color: var(--vscode-textLink-foreground);
-        }
-        .vc-binder.highlight-var-btn.clickable:hover {
-            color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
-        }
         .vc-binder.highlight-var-btn.selected {
             color: var(--lj-token-identifier);
         }
