@@ -576,16 +576,13 @@ export function getStyles(): string {
         .info {
             margin: 1rem 0;
         }
-        .diagnostics-view .header h2 {
-            font-size: 0.9rem;
-            font-weight: normal;
-            margin-bottom: 0.75rem;
-        }
         .diagnostics-scopes {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 0.5rem 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
         }
         .diagnostics-scope-button {
             display: inline-flex;

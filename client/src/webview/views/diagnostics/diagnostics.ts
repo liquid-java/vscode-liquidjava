@@ -22,17 +22,18 @@ export function renderDiagnosticsView(
         : 0;
     const hasErrors = totalErrors > 0;
     const hiddenErrors = totalErrors - errors.length;
-    const titleMessage = hasErrors
-        ? /*html*/`<span class="diagnostics-scopes">${
-            currentFile
+    const scopeSelector = !hasErrors ? '' : /*html*/`
+        <div class="diagnostics-scopes">
+            ${currentFile
                 ? `${renderScopeButton('file', 'Current file', fileErrors, !showAll)}<span class="diagnostics-scope-divider"></span>${renderScopeButton('workspace', 'Workspace', totalErrors, showAll)}`
-                : renderScopeButton('workspace', 'Workspace', totalErrors, showAll)
-        }</span>`
-        : "Passed Verification";
+                : renderScopeButton('workspace', 'Workspace', totalErrors, showAll)}
+        </div>
+    `;
     
     return /*html*/`
-        <div class="diagnostics-view">
-            ${renderMainHeader(titleMessage, 'diagnostics')}
+        <div>
+            ${renderMainHeader(hasErrors ? "" : "Passed Verification", 'diagnostics')}
+            ${scopeSelector}
             ${!hasErrors ? '<p class="info">No errors were found by the LiquidJava verifier.</p>' : ''}
             ${
                 hasErrors || diagnostics.length === 0 ? '' : /*html*/`
