@@ -1,0 +1,66 @@
+name: Test
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Build server
+        working-directory: server
+        run: |
+          mvn -B package
+          mkdir -p ../client/server
+          cp target/language-server-liquidjava.jar ../client/server/
+
+      - name: Package extension
+        run: npx vsce package --out liquid-java.vsix
+
+      - name: Check packaged runtime files
+        run: |
+          unzip -Z1 liquid-java.vsix > /tmp/liquid-java-vsix-files.txt
+          grep -Fx 'extension/dist/server/language-server-liquidjava.jar' /tmp/liquid-java-vsix-files.txt
+          grep -Fx 'extension/media/webview.js' /tmp/liquid-java-vsix-files.txt
