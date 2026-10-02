@@ -17,19 +17,26 @@ export function renderDiagnosticsView(
     const errors = displayDiagnostics.filter(d => d.category === 'error') as LJError[];
     const warnings = displayDiagnostics.filter(d => d.category === 'warning') as LJWarning[];
     const totalErrors = diagnostics.filter(d => d.category === 'error').length;
+    const fileErrors = currentFile
+        ? fileDiagnostics.filter(d => d.category === 'error').length
+        : 0;
     const hasErrors = totalErrors > 0;
     const hiddenErrors = totalErrors - errors.length;
-    const titleMessage = hasErrors ? "Failed Verification" : "Passed Verification";
-    const infoMessage = hasErrors ? 
-        `${totalErrors} error${totalErrors !== 1 ? 's were' : ' was'} found by the LiquidJava verifier` :
-        "No errors were found by the LiquidJava verifier.";
+    const scopeSelector = !hasErrors ? '' : /*html*/`
+        <div class="diagnostics-scopes">
+            ${currentFile
+                ? `${renderScopeButton('file', 'Current file', fileErrors, !showAll)}<span class="diagnostics-scope-divider"></span>${renderScopeButton('workspace', 'Workspace', totalErrors, showAll)}`
+                : renderScopeButton('workspace', 'Workspace', totalErrors, showAll)}
+        </div>
+    `;
     
     return /*html*/`
         <div>
-            ${renderMainHeader(titleMessage, 'diagnostics')}
-            <p class="info">${infoMessage}</p>
+            ${renderMainHeader(hasErrors ? "" : "Passed Verification", 'diagnostics')}
+            ${scopeSelector}
+            ${!hasErrors ? '<p class="info">No errors were found by the LiquidJava verifier.</p>' : ''}
             ${
-                diagnostics.length === 0 ? '' : /*html*/`
+                hasErrors || diagnostics.length === 0 ? '' : /*html*/`
                     <button id="show-all-button" class="underline-button">
                         ${showAll ? `Show file diagnostics` : `Show all diagnostics`}
                     </button>
@@ -43,6 +50,16 @@ export function renderDiagnosticsView(
                 ` : ''}
             </div>
         </div>
+    `;
+}
+
+function renderScopeButton(scope: 'file' | 'workspace', label: string, count: number, selected: boolean): string {
+    return /*html*/`
+        <button class="diagnostics-scope-button${selected ? ' selected' : ''}" data-diagnostics-scope="${scope}">
+            <span class="diagnostics-scope-icon" aria-hidden="true">!</span>
+            <span>${label}</span>
+            <span class="diagnostics-scope-count">${count} error${count !== 1 ? 's' : ''}</span>
+        </button>
     `;
 }
 

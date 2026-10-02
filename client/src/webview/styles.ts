@@ -576,6 +576,62 @@ export function getStyles(): string {
         .info {
             margin: 1rem 0;
         }
+        .diagnostics-scopes {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+        .diagnostics-scope-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0;
+            border: none;
+            background: none;
+            color: var(--vscode-foreground);
+            font: inherit;
+            cursor: pointer;
+        }
+        .diagnostics-scope-button:hover {
+            background: none;
+        }
+        .diagnostics-scope-button:hover > span:not(.diagnostics-scope-icon) {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .diagnostics-scope-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            width: 1rem;
+            height: 1rem;
+            border: 1.5px solid var(--vscode-foreground);
+            border-radius: 50%;
+            font-size: 0.65rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .diagnostics-scope-button.selected .diagnostics-scope-icon {
+            color: var(--vscode-editor-background);
+            background: var(--vscode-errorForeground);
+            border-color: var(--vscode-errorForeground);
+        }
+        .diagnostics-scope-count {
+            font-weight: bold;
+        }
+        .diagnostics-scope-button.selected .diagnostics-scope-count {
+            color: var(--vscode-errorForeground);
+        }
+        .diagnostics-scope-divider {
+            align-self: stretch;
+            width: 1px;
+            background: var(--vscode-panel-border, var(--vscode-foreground));
+            opacity: 0.6;
+        }
         .stopped-view {
             display: flex;
             position: relative;
