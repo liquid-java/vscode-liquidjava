@@ -1,8 +1,6 @@
 name: Platform tests
 
 on:
-  push:
-    branches: [codex/issue-134-platform-tests]
   schedule:
     - cron: '0 3 * * 1'
   workflow_dispatch:
