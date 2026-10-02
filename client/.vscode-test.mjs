@@ -6,5 +6,5 @@ export default defineConfig({
     workspaceFolder: 'test-fixtures/failing',
     extensionDevelopmentPath: '.',
     launchArgs: ['--disable-extensions', '--disable-workspace-trust'],
-    mocha: { timeout: 120_000 },
+    mocha: { ui: 'tdd', timeout: 120_000 },
 });

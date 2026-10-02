@@ -18,20 +18,26 @@ suite('Bundled LiquidJava extension', () => {
         const workspace = vscode.workspace.workspaceFolders?.[0];
         assert.ok(workspace, 'the failing fixture must have its own workspace');
         const uri = vscode.Uri.joinPath(workspace.uri, 'src/main/java/FailingRefinement.java');
-        const document = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(document);
-
-        let subscription: vscode.Disposable | undefined;
-        const diagnosticsReceived = new Promise<LJDiagnostic[]>((resolve) => {
-            subscription = api.onDiagnostics((diagnostics) => {
+        const subscriptions: vscode.Disposable[] = [];
+        const nextFixtureDiagnostics = () => new Promise<LJDiagnostic[]>((resolve) => {
+            const subscription = api.onDiagnostics((diagnostics) => {
                 if (diagnostics.some(d => d.type === 'refinement-error' && path.resolve(d.file) === uri.fsPath)) {
+                    subscription.dispose();
                     resolve(diagnostics);
                 }
             });
+            subscriptions.push(subscription);
         });
         try {
+            // settle automatic verification before testing the manual command
+            const initialDiagnostics = nextFixtureDiagnostics();
+            const document = await vscode.workspace.openTextDocument(uri);
+            await vscode.window.showTextDocument(document);
+            await initialDiagnostics;
+
+            const manualDiagnostics = nextFixtureDiagnostics();
             await vscode.commands.executeCommand('liquidjava.verify');
-            const diagnostics = await diagnosticsReceived;
+            const diagnostics = await manualDiagnostics;
             const error = diagnostics.find(d => d.type === 'refinement-error' && path.resolve(d.file) === uri.fsPath);
             assert.ok(error);
             assert.equal(error.category, 'error');
@@ -40,7 +46,7 @@ suite('Bundled LiquidJava extension', () => {
             assert.equal(api.getState().status, 'failed');
             assert.deepEqual(api.getState().diagnostics, diagnostics);
         } finally {
-            subscription?.dispose();
+            subscriptions.forEach(subscription => subscription.dispose());
         }
     });
 });
