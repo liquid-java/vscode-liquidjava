@@ -156,7 +156,9 @@
 		"watch": "webpack --watch",
 		"package": "webpack --mode production --devtool hidden-source-map",
 		"build:server": "cd ../server && mvn clean package && mkdir -p ../client/server && cp target/language-server-liquidjava.jar ../client/server/",
-		"lint": "eslint src"
+		"lint": "eslint src",
+		"pretest": "npm run package && tsc -p tsconfig.integration.json",
+		"test": "vscode-test"
 	},
 	"extensionDependencies": [],
 	"dependencies": {
@@ -164,8 +166,11 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.39.0",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^24.7.2",
 		"@types/vscode": "^1.82.0",
+		"@vscode/test-cli": "^0.0.15",
+		"@vscode/test-electron": "^3.1.0",
 		"@vscode/vsce": "^3.0.0",
 		"eslint": "^9.39.0",
 		"jsonc-parser": "^0.4.2",
