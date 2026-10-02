@@ -44,6 +44,7 @@ suite('Bundled LiquidJava webview and lifecycle', () => {
         };
 
         try {
+            await vscode.commands.executeCommand('workbench.action.closeSidebar');
             await vscode.commands.executeCommand('workbench.action.closeAllEditors');
             await vscode.commands.executeCommand('liquidjava.stop');
             await vscode.commands.executeCommand('liquidjava.start');
