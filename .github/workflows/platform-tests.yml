@@ -1,0 +1,72 @@
+name: Platform tests
+
+on:
+  push:
+    branches: [codex/issue-134-platform-tests]
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  platform:
+    name: Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: client
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        id: java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run client unit tests
+        run: npm run test:unit
+
+      - name: Type-check tests
+        run: npm run test:typecheck
+
+      - name: Build server and run server unit tests
+        working-directory: server
+        run: |
+          mvn -B package
+          mkdir -p ../client/server
+          cp target/language-server-liquidjava.jar ../client/server/
+
+      - name: Run VS Code stable integration tests
+        env:
+          JAVA_HOME: ${{ steps.java.outputs.path }}
+        run: npm test
+
+      - name: Upload VS Code logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-logs-${{ matrix.os }}
+          path: client/.vscode-test/**/logs
+          if-no-files-found: ignore
