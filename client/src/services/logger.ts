@@ -53,7 +53,7 @@ export function createLogger(channel: OutputChannel): LiquidJavaLogger {
             return;
         }
         logMessage(channel, msg, level, source);
-    }
+    };
 
     return {
         client: {

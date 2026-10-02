@@ -17,14 +17,14 @@ import { handleContext } from '../services/context';
 export async function runClient(context: vscode.ExtensionContext, port: number) {
     const serverOptions: ServerOptions = async () => {
         try {
-            extension.socket = await connectToPort(port)
+            extension.socket = await connectToPort(port);
             return {
                 writer: extension.socket,
                 reader: extension.socket,
-            }
+            };
         } catch (error) {
-            await stopClient("Failed to connect to server")
-            throw error
+            await stopClient("Failed to connect to server");
+            throw error;
         }
     };
     const clientOptions: LanguageClientOptions = {

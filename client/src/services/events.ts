@@ -20,7 +20,7 @@ export function registerEvents(context: vscode.ExtensionContext) {
         }),
         vscode.workspace.onDidSaveTextDocument(async document => {
             if (document.uri.scheme !== 'file' || document.languageId !== "java") return;
-            await updateStateMachine(document)
+            await updateStateMachine(document);
         }),
         vscode.window.onDidChangeTextEditorSelection(event => {
             if (event.textEditor.document.uri.scheme !== 'file' || event.textEditor.document.languageId !== "java") return;

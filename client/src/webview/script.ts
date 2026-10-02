@@ -224,7 +224,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         const copyDiagramButton = target.closest?.('#copy-diagram-btn');
         if (copyDiagramButton) {
             e.stopPropagation();
-            if (!currentDiagram) return
+            if (!currentDiagram) return;
             copyDiagramToClipboard(copyDiagramButton, currentDiagram);
             return;
         }
@@ -259,7 +259,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             if (file !== currentFile) {
                 vscode.postMessage({ type: 'openFile', filePath: file, line: lineStart, character: colStart, highlightRange: range });
             } else {
-                vscode.postMessage({ type: 'highlight', range })
+                vscode.postMessage({ type: 'highlight', range });
             }
             return;
         }
@@ -327,7 +327,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (file !== currentFile) {
             vscode.postMessage({ type: 'openFile', filePath: file, line: lineStart, character: colStart, highlightRange: range });
         } else {
-            vscode.postMessage({ type: 'highlight', range })
+            vscode.postMessage({ type: 'highlight', range });
         }
     });
 
