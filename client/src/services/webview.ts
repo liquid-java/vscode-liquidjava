@@ -13,6 +13,7 @@ export function registerWebview(context: vscode.ExtensionContext) {
 
     // webview provider
     context.subscriptions.push(
+        extension.webview,
         vscode.window.registerWebviewViewProvider(LiquidJavaWebviewProvider.viewType, extension.webview)
     );
     // show view command
