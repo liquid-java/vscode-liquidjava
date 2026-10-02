@@ -49,6 +49,12 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Type-check tests
+        run: npm run test:typecheck
+
       - name: Build server
         working-directory: server
         run: |
