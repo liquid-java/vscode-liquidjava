@@ -81,7 +81,7 @@ function getContextCompletionItems(context: LJContext, file: string, annotation:
         keywords: () => getKeywordsCompletionItems(triggerParameterHints, inScope),
         types: () => getTypesCompletionItems(),
         packages: () => [], // TODO
-    }
+    };
     const varCompletions: CompletionItemKind[]  = ["vars", "ghosts", "aliases", "keywords"];
     const typeCompletions: CompletionItemKind[] = ["types"];
     const itemsMap: Record<LJAnnotation, CompletionItemKind[]> = {

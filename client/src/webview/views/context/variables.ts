@@ -30,7 +30,7 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                                     <td>${renderVariableHighlightButton(variable)}</td>
                                     <td><code>${renderHighlightedInlineExpression(variable.refinement)}</code></td>
                                 </tr>
-                            `}).join('')}
+                            `;}).join('')}
                             ${errorAtCursor ? renderFailingRefinement(errorAtCursor) : ''}
                         </tbody>
                     </table>

@@ -49,9 +49,9 @@ function getVariablesInScope(variables: LJVariable[], file: string, selection: R
     const enclosingScopes = scopes.filter(scope => isRangeWithin(selection, scope));
     return variables.filter(v => {
         const position = v.position;
-        if (!position) return false
+        if (!position) return false;
         return position.file === file &&
-            enclosingScopes.some(scope => isRangeWithin(position, scope))
+            enclosingScopes.some(scope => isRangeWithin(position, scope));
     });
 }
 
