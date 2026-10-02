@@ -35,7 +35,7 @@ export function createMermaidDiagram(
     
     // initial transitions
     sm.initialTransitions.forEach(transition => {
-        const label = getInitialTransitionLabel(transition.toCondition, showConditions);
+        const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
         lines.push(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`);
     });
     
@@ -89,8 +89,12 @@ function getTransitionLabel(
     ].filter(Boolean).join('<br/>');
 }
 
-function getInitialTransitionLabel(toCondition?: string | null, showConditions = false): string {
-    return showConditions ? getConditionLabel('post', toCondition) : '';
+function getInitialTransitionLabel(constructorSignature?: string | null, toCondition?: string | null,
+    showConditions = false): string {
+    return [
+        constructorSignature ? escapeMermaidLabel(constructorSignature) : '',
+        showConditions ? getConditionLabel('post', toCondition) : '',
+    ].filter(Boolean).join('<br/>');
 }
 
 function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
