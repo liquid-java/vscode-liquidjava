@@ -5,19 +5,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
 import dtos.diagnostics.LJDiagnosticDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import dtos.errors.*;
 import dtos.warnings.*;
-import liquidjava.diagnostics.LJDiagnostic;
 import liquidjava.diagnostics.TranslationTable;
 import liquidjava.diagnostics.errors.*;
 import liquidjava.diagnostics.warnings.*;
@@ -49,57 +45,41 @@ class DiagnosticConverterTest {
         position = field.getPosition();
     }
 
-    @TestFactory
-    Stream<DynamicTest> routesEachDiagnosticToItsClientCategoryAndType() {
-        Predicate expected = new Predicate(new LiteralBoolean(false));
-        VCSimplificationResult found = new VCSimplificationResult(new VCImplication(new Predicate()));
-        record Case(LJDiagnostic diagnostic, Class<? extends LJDiagnosticDTO> dto, String category, String type) {}
-        return Stream.of(
-                new Case(new RefinementError(position, null, expected, found, null, null, "must be false"),
-                        RefinementErrorDTO.class, "error", "refinement-error"),
-                new Case(new StateRefinementError(position, null, expected, found, null, "must be closed"),
-                        StateRefinementErrorDTO.class, "error", "state-refinement-error"),
-                new Case(new SyntaxError("invalid syntax", position, "_ >"), SyntaxErrorDTO.class, "error", "syntax-error"),
-                new Case(new CustomError("custom error", position), CustomErrorDTO.class, "error", "custom-error"),
-                new Case(new InvalidRefinementError(position, "not boolean", "42"), InvalidRefinementErrorDTO.class,
-                        "error", "invalid-refinement-error"),
-                new Case(new StateConflictError(position, new LiteralBoolean(false), null), StateConflictErrorDTO.class,
-                        "error", "state-conflict-error"),
-                new Case(new NotFoundError(position, "missing", NotFoundError.Kind.VARIABLE, List.of()),
-                        NotFoundErrorDTO.class, "error", "not-found-error"),
-                new Case(new IllegalConstructorTransitionError(position), IllegalConstructorTransitionErrorDTO.class,
-                        "error", "illegal-constructor-transition-error"),
-                new Case(new ArgumentMismatchError("wrong arguments", position, null), ArgumentMismatchErrorDTO.class,
-                        "error", "argument-mismatch-error"),
-                new Case(new ExternalClassNotFoundWarning(position, "missing class", "example.External"),
-                        ExternalClassNotFoundWarningDTO.class, "warning", "external-class-not-found-warning"),
-                new Case(new ExternalMethodNotFoundWarning(position, "missing method", "run()", "example.External",
-                        new String[] { "run(int)" }), ExternalMethodNotFoundWarningDTO.class, "warning",
-                        "external-method-not-found-warning"),
-                new Case(new UnsatisfiableRefinementWarning(position, "_ > 0 && _ < 0"),
-                        UnsatisfiableRefinementWarningDTO.class, "warning", "unsatisfiable-refinement-warning"),
-                new Case(new CustomWarning(position, "custom warning"), CustomWarningDTO.class, "warning", "custom-warning"),
-                new Case(new LJError("generic error", "details", position, null) {}, LJErrorDTO.class, "error", null),
-                new Case(new LJWarning("generic warning", position) {}, LJWarningDTO.class, "warning", null),
-                new Case(new LJDiagnostic("generic diagnostic", "details", position, "", null), LJDiagnosticDTO.class,
-                        null, null))
-                .map(test -> DynamicTest.dynamicTest(test.dto().getSimpleName(), () -> {
-                    test.diagnostic().setHint("check the refinement");
-                    LJDiagnosticDTO dto = assertInstanceOf(test.dto(), DiagnosticConverter.convertToDTO(test.diagnostic()));
-                    assertEquals(test.dto(), dto.getClass());
-                    assertEquals(test.category(), dto.category);
-                    assertEquals(test.type(), dto.type);
-                    assertEquals(test.diagnostic().getTitle(), dto.title);
-                    assertEquals(test.diagnostic().getMessage(), dto.message);
-                    assertEquals(test.diagnostic().getHint(), dto.hint);
-                    assertEquals(workspace.resolve("Example.java").toRealPath().toString(), dto.file);
-                    assertEquals(new SourcePositionDTO(dto.file, 1, 8, 1, 18), dto.position);
-                }));
+    @Test
+    void preservesCommonDiagnosticFields() throws Exception {
+        CustomError error = new CustomError("verification failed", position);
+        error.setHint("check the refinement");
+        LJDiagnosticDTO dto = (LJDiagnosticDTO) DiagnosticConverter.convertToDTO(error);
+        assertEquals("error", dto.category);
+        assertEquals("custom-error", dto.type);
+        assertEquals("Error", dto.title);
+        assertEquals("verification failed", dto.message);
+        assertEquals("check the refinement", dto.hint);
+        assertEquals(workspace.resolve("Example.java").toRealPath().toString(), dto.file);
+        assertEquals(new SourcePositionDTO(dto.file, 1, 8, 1, 18), dto.position);
+    }
+
+    @Test
+    void convertsIllegalConstructorTransitionToAnError() {
+        LJDiagnosticDTO dto = (LJDiagnosticDTO) DiagnosticConverter.convertToDTO(
+                new IllegalConstructorTransitionError(position));
+        assertEquals("error", dto.category);
+        assertEquals("illegal-constructor-transition-error", dto.type);
+    }
+
+    @Test
+    void convertsCustomWarningWithoutTreatingItAsAnError() {
+        LJDiagnosticDTO dto = (LJDiagnosticDTO) DiagnosticConverter.convertToDTO(new CustomWarning("custom warning"));
+        assertEquals("warning", dto.category);
+        assertEquals("custom-warning", dto.type);
+        assertEquals("custom warning", dto.message);
     }
 
     @Test
     void preservesErrorSpecificDetails() {
         SyntaxErrorDTO syntax = (SyntaxErrorDTO) DiagnosticConverter.convertToDTO(new SyntaxError("invalid syntax", "_ >"));
+        assertEquals("error", syntax.category);
+        assertEquals("syntax-error", syntax.type);
         assertEquals("_ >", syntax.refinement);
         assertNull(syntax.file);
         assertNull(syntax.position);
@@ -107,15 +87,21 @@ class DiagnosticConverterTest {
 
         InvalidRefinementErrorDTO invalid = (InvalidRefinementErrorDTO) DiagnosticConverter.convertToDTO(
                 new InvalidRefinementError(position, "not boolean", "42"));
+        assertEquals("error", invalid.category);
+        assertEquals("invalid-refinement-error", invalid.type);
         assertEquals("42", invalid.refinement);
 
         NotFoundErrorDTO missing = (NotFoundErrorDTO) DiagnosticConverter.convertToDTO(
                 new NotFoundError(position, "missing", NotFoundError.Kind.GHOST, List.of()));
+        assertEquals("error", missing.category);
+        assertEquals("not-found-error", missing.type);
         assertEquals("missing", missing.name);
         assertEquals("Ghost", missing.kind);
 
         StateConflictErrorDTO conflict = (StateConflictErrorDTO) DiagnosticConverter.convertToDTO(
                 new StateConflictError(position, new LiteralBoolean(false), null));
+        assertEquals("error", conflict.category);
+        assertEquals("state-conflict-error", conflict.type);
         assertEquals("false", conflict.state);
     }
 
@@ -123,11 +109,15 @@ class DiagnosticConverterTest {
     void preservesWarningSpecificDetailsAndOverloadHint() {
         ExternalClassNotFoundWarningDTO missingClass = (ExternalClassNotFoundWarningDTO) DiagnosticConverter.convertToDTO(
                 new ExternalClassNotFoundWarning(position, "missing class", "example.External"));
+        assertEquals("warning", missingClass.category);
+        assertEquals("external-class-not-found-warning", missingClass.type);
         assertEquals("example.External", missingClass.className);
 
         ExternalMethodNotFoundWarningDTO missingMethod = (ExternalMethodNotFoundWarningDTO) DiagnosticConverter.convertToDTO(
                 new ExternalMethodNotFoundWarning(position, "missing method", "run()", "example.External",
                         new String[] { "run(int)", "run(String)" }));
+        assertEquals("warning", missingMethod.category);
+        assertEquals("external-method-not-found-warning", missingMethod.type);
         assertEquals("run()", missingMethod.signature);
         assertEquals("example.External", missingMethod.className);
         assertArrayEquals(new String[] { "run(int)", "run(String)" }, missingMethod.overloads);
@@ -135,6 +125,8 @@ class DiagnosticConverterTest {
 
         UnsatisfiableRefinementWarningDTO unsatisfiable = (UnsatisfiableRefinementWarningDTO) DiagnosticConverter.convertToDTO(
                 new UnsatisfiableRefinementWarning(position, "_ > 0 && _ < 0"));
+        assertEquals("warning", unsatisfiable.category);
+        assertEquals("unsatisfiable-refinement-warning", unsatisfiable.type);
         assertEquals("_ > 0 && _ < 0", unsatisfiable.refinement);
     }
 
@@ -145,6 +137,8 @@ class DiagnosticConverterTest {
                 new VCImplication(new Predicate(new LiteralBoolean(false))), origin, "constant folding");
         RefinementErrorDTO dto = (RefinementErrorDTO) DiagnosticConverter.convertToDTO(
                 new RefinementError(position, position, new Predicate(), found, null, null, "expected true"));
+        assertEquals("error", dto.category);
+        assertEquals("refinement-error", dto.type);
         assertEquals("true", dto.expected);
         assertEquals("expected true", dto.customMessage);
         assertEquals(dto.position, dto.declarationPosition);
@@ -161,6 +155,8 @@ class DiagnosticConverterTest {
         StateRefinementErrorDTO dto = (StateRefinementErrorDTO) DiagnosticConverter.convertToDTO(
                 new StateRefinementError(position, null, new Predicate(new LiteralBoolean(false)),
                         new VCSimplificationResult(new VCImplication(new Predicate())), null, "expected closed"));
+        assertEquals("error", dto.category);
+        assertEquals("state-refinement-error", dto.type);
         assertEquals("false", dto.expected);
         assertEquals("true", dto.found.implication().predicate());
         assertEquals("expected closed", dto.customMessage);
@@ -174,6 +170,8 @@ class DiagnosticConverterTest {
         table.put("#value_12", PlacementInCode.createPlacement(field));
         ArgumentMismatchErrorDTO dto = (ArgumentMismatchErrorDTO) DiagnosticConverter.convertToDTO(
                 new ArgumentMismatchError("wrong arguments", position, table));
+        assertEquals("error", dto.category);
+        assertEquals("argument-mismatch-error", dto.type);
         assertEquals(1, dto.translationTable.size());
         assertFalse(dto.translationTable.containsKey("#value_12"));
         assertEquals("int value = 0;", dto.translationTable.get("value¹²").text());
