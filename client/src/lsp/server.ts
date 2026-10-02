@@ -26,7 +26,8 @@ export async function runLanguageServer(context: vscode.ExtensionContext, javaEx
         cwd: workspaceFolder ? normalizeFilePath(workspaceFolder.uri.fsPath) : context.extensionPath, // root path
     };
     extension.logger!.client.info("Creating language server process...");
-    extension.serverProcess = child_process.spawn(javaExecutablePath, args, options);
+    const serverProcess = child_process.spawn(javaExecutablePath, args, options);
+    extension.serverProcess = serverProcess;
 
     // listen to process events
     extension.serverProcess.stdout?.on("data", (data) => {
@@ -39,9 +40,9 @@ export async function runLanguageServer(context: vscode.ExtensionContext, javaEx
     extension.serverProcess.on("error", (err) => {
         extension.logger!.server.error(`Failed to start: ${err}`);
     });
-    extension.serverProcess.on("close", (code) => {
+    serverProcess.on("close", (code) => {
         extension.logger!.server.info(`Process exited with code ${code}`);
-        extension.serverProcess = undefined;
+        if (extension.serverProcess === serverProcess) extension.serverProcess = undefined;
     });
     return port;
 }
