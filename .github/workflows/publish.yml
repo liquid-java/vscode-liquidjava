@@ -6,7 +6,11 @@ on:
       - 'v*'
 
 jobs:
+  checks:
+    uses: ./.github/workflows/test.yml
+
   publish:
+    needs: checks
     runs-on: ubuntu-latest
 
     steps:
