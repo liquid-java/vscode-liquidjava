@@ -1,16 +1,19 @@
 import * as vscode from 'vscode';
 import { getHtml } from './html';
 import { highlightRange, openFile } from '../services/editor';
+import type { WebviewMessage } from '../types/test-api';
 
 /**
  * Webview provider for the LiquidJava extension
  * Provides an interactive user interface for the LiquidJava diagnostics 
  */
-export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
+export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = "liquidJavaView";
   private view?: vscode.WebviewView;
   private messageEmitter = new vscode.EventEmitter<any>();
   public readonly onDidReceiveMessage = this.messageEmitter.event;
+  private webviewMessageEmitter = new vscode.EventEmitter<WebviewMessage>();
+  public readonly onWebviewMessage = this.webviewMessageEmitter.event;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -29,6 +32,7 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
     // listen for messages coming from webview
     webviewView.webview.onDidReceiveMessage(message => {
       // emit the message to any external listeners
+      this.webviewMessageEmitter.fire({ direction: "fromWebview", message });
       this.messageEmitter.fire(message);
       
       // handle message
@@ -46,7 +50,14 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider {
    * @param message
    */
   public sendMessage(message: any) {
-    this.view?.webview.postMessage(message);
+    if (!this.view) return;
+    this.webviewMessageEmitter.fire({ direction: "toWebview", message });
+    this.view.webview.postMessage(message);
+  }
+
+  public dispose() {
+    this.messageEmitter.dispose();
+    this.webviewMessageEmitter.dispose();
   }
 
   /**
