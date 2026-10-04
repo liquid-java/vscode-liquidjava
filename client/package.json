@@ -10,6 +10,7 @@
 	},
 	"homepage": "https://liquid-java.github.io",
 	"engines": {
+		"node": ">=22",
 		"vscode": "^1.82.0"
 	},
 	"languages": [
