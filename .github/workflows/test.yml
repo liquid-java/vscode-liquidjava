@@ -33,10 +33,6 @@ jobs:
           java-version: 21
           distribution: temurin
 
-      - name: Test server
-        working-directory: server
-        run: mvn -B test
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -53,7 +49,7 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
-      - name: Build server
+      - name: Build and test server
         working-directory: server
         run: |
           mvn -B package
