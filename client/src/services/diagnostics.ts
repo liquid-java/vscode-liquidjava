@@ -33,6 +33,7 @@ export function handleLJFailure() {
     if (extension.context)
         extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
     updateStatusBar("crashed");
+    extension.failureEmitter.fire();
 }
 
 /**
