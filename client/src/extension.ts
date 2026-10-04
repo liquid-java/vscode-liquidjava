@@ -19,7 +19,7 @@ import type { LiquidJavaTestApi } from "./types/test-api";
  * @param context The extension context
  */
 export async function activate(context: vscode.ExtensionContext): Promise<LiquidJavaTestApi> {
-    context.subscriptions.push(extension.diagnosticsEmitter);
+    context.subscriptions.push(extension.diagnosticsEmitter, extension.failureEmitter);
     registerLogger(context);
     extension.logger!.client.info("Activating LiquidJava extension...");
     
@@ -42,6 +42,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Liquid
     return {
         ready,
         onDiagnostics: extension.diagnosticsEmitter.event,
+        onFailure: extension.failureEmitter.event,
         getState: () => ({
             status: extension.status,
             diagnostics: [...(extension.diagnostics ?? [])],

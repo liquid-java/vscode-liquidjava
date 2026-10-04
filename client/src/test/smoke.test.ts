@@ -21,16 +21,20 @@ suite('Bundled LiquidJava extension', () => {
         const file = passing ? 'PassingRefinement.java' : 'FailingRefinement.java';
         const uri = vscode.Uri.joinPath(workspace.uri, `src/main/java/${file}`);
         const subscriptions: vscode.Disposable[] = [];
-        const nextFixtureDiagnostics = () => new Promise<LJDiagnostic[]>((resolve) => {
-            const subscription = api.onDiagnostics((diagnostics) => {
-                const matches = passing ? diagnostics.length === 0
-                    : diagnostics.some(d => d.type === 'refinement-error' && vscode.Uri.file(path.resolve(d.file)).fsPath === uri.fsPath);
-                if (matches) {
-                    subscription.dispose();
-                    resolve(diagnostics);
-                }
+        const nextFixtureDiagnostics = () => new Promise<LJDiagnostic[]>((resolve, reject) => {
+            const dispose = () => {
+                diagnosticsSubscription.dispose();
+                failureSubscription.dispose();
+            };
+            const diagnosticsSubscription = api.onDiagnostics((diagnostics) => {
+                dispose();
+                resolve(diagnostics);
             });
-            subscriptions.push(subscription);
+            const failureSubscription = api.onFailure(() => {
+                dispose();
+                reject(new Error(`LiquidJava verifier crashed while checking ${file} (status: ${api.getState().status})`));
+            });
+            subscriptions.push(diagnosticsSubscription, failureSubscription);
         });
         try {
             // settle automatic verification before testing the manual command
@@ -47,7 +51,7 @@ suite('Bundled LiquidJava extension', () => {
                 assert.equal(api.getState().status, 'passed');
             } else {
                 const error = diagnostics.find(d => d.type === 'refinement-error' && vscode.Uri.file(path.resolve(d.file)).fsPath === uri.fsPath);
-                assert.ok(error);
+                assert.ok(error, `expected a refinement error for ${file}; received ${JSON.stringify(diagnostics)}`);
                 assert.equal(error.category, 'error');
                 assert.equal(error.title, 'Refinement Error');
                 assert.ok(error.position, 'the diagnostic must identify the invalid assignment');
