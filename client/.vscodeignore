@@ -6,6 +6,7 @@ src/**
 eslint.config.mjs
 .gitignore
 tsconfig*.json
+vitest.config.mts
 webpack.config.js
 vsc-extension-quickstart.md
 package-lock.json
