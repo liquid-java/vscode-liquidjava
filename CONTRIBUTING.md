@@ -32,18 +32,25 @@ Use `./install.sh --skip-server` to package and install the extension without re
 
 ### Releasing
 
-To create and push a git tag that will trigger the GitHub Actions workflow that automatically publishes the extension in both the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) and the [Open VSX Registry](https://open-vsx.org/extension/AlcidesFonseca/liquid-java), run the release script from the repository root:
+Create a version bump pull request from `main` with the release script:
 
 ```bash
 ./release.sh
 ```
 
-By default, the script bumps the patch version in [client/package.json](./client/package.json).
-To release a manually bumped version instead, pass the version explicitly; it must match the version in [client/package.json](./client/package.json):
+By default, this bumps the patch version in [client/package.json](./client/package.json). Pass a version to set it explicitly:
 
 ```bash
 ./release.sh <new-version>
 ```
+
+After the pull request passes Checks and is merged, create and push its release tag from `main`:
+
+```bash
+./release.sh --tag <new-version>
+```
+
+The tag runs Checks again and publishes the verified extension artifact to the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AlcidesFonseca.liquid-java) and the [Open VSX Registry](https://open-vsx.org/extension/AlcidesFonseca/liquid-java).
 
 ### Development Mode
 
