@@ -79,7 +79,6 @@ jobs:
           retention-days: 1
   integration:
     name: VS Code integration
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
 
     defaults:
