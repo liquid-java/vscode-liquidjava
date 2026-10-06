@@ -6,48 +6,29 @@ on:
       - 'v*'
 
 jobs:
+  checks:
+    uses: ./.github/workflows/test.yml
+
   publish:
+    needs: checks
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Download checked extension
+        uses: actions/download-artifact@v4
         with:
-          java-version: 20
-          distribution: temurin
+          name: liquid-java-vsix
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Build Server JAR
-        working-directory: ./server
-        run: |
-          mvn -B -ntp clean package -DskipTests
-          mkdir -p ../client/server
-          cp target/language-server-liquidjava.jar ../client/server/
-
-      - name: Install dependencies and build
-        working-directory: ./client
-        run: |
-          npm install
-          npm run package
-
       - name: Install vsce
         run: npm install -g @vscode/vsce
 
-      - name: Package extension
-        working-directory: ./client
-        run: vsce package --no-dependencies --out liquid-java.vsix
-
       - name: Publish to VS Code Marketplace
-        working-directory: ./client
         run: vsce publish --packagePath liquid-java.vsix -p ${{ secrets.VSCE_TOKEN }}
 
       - name: Publish to Open VSX Marketplace
-        working-directory: ./client
         run: npx ovsx publish liquid-java.vsix --pat ${{ secrets.OVSX_TOKEN }}

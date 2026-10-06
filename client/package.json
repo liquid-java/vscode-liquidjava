@@ -10,6 +10,7 @@
 	},
 	"homepage": "https://liquid-java.github.io",
 	"engines": {
+		"node": ">=22",
 		"vscode": "^1.82.0"
 	},
 	"languages": [
@@ -158,7 +159,9 @@
 		"build:server": "cd ../server && mvn clean package && mkdir -p ../client/server && cp target/language-server-liquidjava.jar ../client/server/",
 		"lint": "eslint src",
 		"pretest": "npm run package && tsc -p tsconfig.integration.json",
-		"test": "vscode-test"
+		"test": "vscode-test",
+		"test:typecheck": "tsc --noEmit -p tsconfig.test.json",
+		"test:unit": "vitest run"
 	},
 	"extensionDependencies": [],
 	"dependencies": {
@@ -180,6 +183,9 @@
 		"typescript-eslint": "^8.0.0",
 		"vscode-languageclient": "^9.0.1",
 		"webpack": "^5.102.1",
-		"webpack-cli": "^5.1.4"
+		"webpack-cli": "^5.1.4",
+		"@types/jsdom": "^30.0.0",
+		"jsdom": "^30.1.1",
+		"vitest": "^5.0.3"
 	}
 }
