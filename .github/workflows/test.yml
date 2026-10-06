@@ -70,3 +70,4 @@ jobs:
           name: liquid-java-vsix
           path: client/liquid-java.vsix
           if-no-files-found: error
+          retention-days: 1
