@@ -3,15 +3,17 @@
 		"module": "commonjs",
 		"target": "es2019",
 		"lib": ["ES2019", "DOM"],
+		"types": ["node", "vscode"],
 		"outDir": "out",
 		"sourceMap": true,
 		"rootDir": "src",
-		"resolveJsonModule": true,
-		"types": ["node", "vscode"]
+		"resolveJsonModule": true
 	},
 	"exclude": [
 		"node_modules",
 		".vscode-test",
-		"src/test/**"
+		"src/test/**",
+		"src/**/*.spec.ts",
+		"vitest.config.mts"
 	]
 }
