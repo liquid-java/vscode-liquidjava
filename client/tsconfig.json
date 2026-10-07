@@ -12,6 +12,7 @@
 	"exclude": [
 		"node_modules",
 		".vscode-test",
+		"src/test/**",
 		"src/**/*.spec.ts",
 		"vitest.config.mts"
 	]

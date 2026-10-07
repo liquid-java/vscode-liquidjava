@@ -43,3 +43,6 @@ server/**
 **/.DS_Store
 *.log
 npm-debug.log*
+
+.vscode-test.mjs
+test-fixtures/**
