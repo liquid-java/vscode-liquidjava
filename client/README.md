@@ -38,6 +38,10 @@ dependencies {
 
 A repository with LiquidJava examples is available at [liquidjava-examples](https://github.com/liquid-java/liquidjava-examples). You can try them out without setting up your local environment using [GitHub Codespaces](https://codespaces.new/liquid-java/liquidjava-examples).
 
+### Getting started in VS Code
+
+The **Get Started with LiquidJava** walkthrough introduces LiquidJava and its interactive tutorial, includes copyable Maven/Gradle annotation dependencies, then explains verification and its status indicator, diagnostics, context, state machines, the Command Palette, and logs. It also links to the [interactive tutorial](https://liquid-java.github.io/liquidjava-interactive-tutorial/). It opens once on installation, following VS Code’s walkthrough preferences. You can dismiss it at any time and reopen it with **LiquidJava: Show Walkthrough** from the Command Palette or **LiquidJava: Show Commands**. VS Code saves its progress across workspaces.
+
 ### What are Liquid Types?
 
 Liquid types extend a language with **logical predicates** over the basic types. They allow developers to restrict the values that a variable, parameter or return value can have. These kinds of constraints help to catch more bugs before the program is executed. For example, they allow us to prevent bugs like array index out-of-bounds or division by zero at compile-time.

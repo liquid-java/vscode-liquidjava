@@ -93,6 +93,11 @@
 				"category": "LiquidJava"
 			},
 			{
+				"command": "liquidjava.showWalkthrough",
+				"title": "Show Walkthrough",
+				"category": "LiquidJava"
+			},
+			{
 				"command": "liquidjava.showLogs",
 				"title": "Show Logs",
 				"category": "LiquidJava"
@@ -125,6 +130,16 @@
 				"command": "liquidjava.verify",
 				"title": "Verify",
 				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.copyMavenDependency",
+				"title": "Copy Maven Dependency",
+				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.copyGradleDependency",
+				"title": "Copy Gradle Dependency",
+				"category": "LiquidJava"
 			}
 		],
 		"menus": {
@@ -149,7 +164,104 @@
 			"[java]": {
 				"editor.autoClosingBrackets": "always"
 			}
-		}
+		},
+		"walkthroughs": [
+			{
+				"id": "getStarted",
+				"title": "Get Started with LiquidJava",
+				"description": "Learn LiquidJava, add annotations, and discover verification, views, commands, and logs.",
+				"steps": [
+					{
+						"id": "tutorial",
+						"title": "Learn LiquidJava",
+						"description": "LiquidJava is an additional type checker for Java, based on **liquid types** and **typestates**, which provides stronger safety guarantees to Java programs at compile-time.\nLearn refinements, method contracts, object states, and ghost variables with short examples in the interactive tutorial.\n[Open interactive tutorial](https://liquid-java.github.io/liquidjava-interactive-tutorial/)",
+						"media": {
+							"markdown": "media/walkthrough/tutorial.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "annotations",
+						"title": "Add the annotation API",
+						"description": "Add ``liquidjava-api`` to your project to use annotations such as ``@Refinement``.\n**Maven — pom.xml**\n``<dependency>``\n``    <groupId>io.github.liquid-java</groupId>``\n``    <artifactId>liquidjava-api</artifactId>``\n``    <version>0.0.7</version>``\n``</dependency>``\n[Copy Maven dependency](command:liquidjava.copyMavenDependency)\n**Gradle — build.gradle**\n``repositories {``\n``    mavenCentral()``\n``}``\n``dependencies {``\n``    implementation 'io.github.liquid-java:liquidjava-api:0.0.7'``\n``}``\n[Copy Gradle dependency](command:liquidjava.copyGradleDependency)\nReload the Java project after changing dependencies. Import annotations from ``liquidjava.specification``.",
+						"media": {
+							"markdown": "media/walkthrough/annotations.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "verification",
+						"title": "Verification and status",
+						"description": "Open or save a Java file to verify it. Watch the **LiquidJava** indicator in the bottom status bar.\nA spinner means checking; a check mark means passed; a cross means failed or crashed; a slashed circle means stopped. Hover for details or click for LiquidJava commands.",
+						"media": {
+							"markdown": "media/walkthrough/verification.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "commands",
+						"title": "Find LiquidJava commands",
+						"description": "Use the status indicator or **Show LiquidJava commands** below to list only LiquidJava actions.\nChoose **Start**, **Stop**, or **Restart** to control the verifier. Use **Verify** after returning to a Java editor. You can also press **F1** and search for LiquidJava in the Command Palette.\n[Show LiquidJava commands](command:liquidjava.showCommands)",
+						"media": {
+							"markdown": "media/walkthrough/commands.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "diagnostics",
+						"title": "Understand diagnostics",
+						"description": "The **Verification** tab compares **Found** with **Expected**. Click a location or variable to jump to its source.\nWhen a simplification history is available, use **Previous simplification** and **Next simplification** to inspect highlighted changes. Inspect a **Hint** or **Counterexample** when available.\nSwitch between **Current file** and **Workspace**, or use **View related context** and **View error on state machine** to investigate an error.\n[Open LiquidJava view](command:liquidjava.showView)",
+						"media": {
+							"markdown": "media/walkthrough/diagnostics.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "context",
+						"title": "Inspect context",
+						"description": "The **Context** tab shows **Variables**, **Aliases**, and **Ghosts** after verification. Expand or collapse each section.\nLocal variables are filtered by the cursor: only declarations before it and in enclosing scopes appear. Select a range to inspect declarations that overlap it; global variables are also included.\nClick a variable to reveal its source. Variables relevant to a nearby error are highlighted alongside the failing refinement.\n[Open LiquidJava view](command:liquidjava.showView)",
+						"media": {
+							"markdown": "media/walkthrough/context.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "stateMachine",
+						"title": "Explore state machines",
+						"description": "The **State Machine** tab shows object states and method transitions declared with ``@StateSet`` and ``@StateRefinement``.\nPan the diagram; use **Zoom In**, **Zoom Out**, **Reset Zoom**, and **Toggle Orientation** to inspect it.\nUse **Expand Conditions** or **Collapse Conditions** to show or hide preconditions and postconditions. **Copy Mermaid Source** copies the diagram definition.\nFrom a state error, choose **View error on state machine** to see the related states and call.\n[Open LiquidJava view](command:liquidjava.showView)",
+						"media": {
+							"markdown": "media/walkthrough/state-machine.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "logs",
+						"title": "Check the logs",
+						"description": "The **LiquidJava** output channel records extension and verifier activity. Use it to investigate startup or verification problems.\nEach entry includes a timestamp, **CLIENT** or **SERVER** source, and **INFO** or **ERROR** level.\n[Show LiquidJava logs](command:liquidjava.showLogs)",
+						"media": {
+							"markdown": "media/walkthrough/logs.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					}
+				]
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run package",
