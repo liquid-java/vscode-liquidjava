@@ -92,7 +92,7 @@ export async function copyDiagnosticToClipboard(button: any, displayDiagnostics:
     if (!diagnostic) return;
 
     const diagnosticText = formatDiagnosticForClipboard(diagnostic);
-    await copyToClipboard(button, diagnosticText);
+    return copyToClipboard(button, diagnosticText);
 }
 
 export function formatDiagnosticForClipboard(diagnostic: LJDiagnostic): string {

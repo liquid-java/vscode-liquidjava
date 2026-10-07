@@ -7,8 +7,10 @@ export async function copyToClipboard(button: HTMLButtonElement, text: string) {
         button.disabled = true;
         await navigator.clipboard.writeText(text);
         button.setAttribute('title', 'Copied!');
+        return true;
     } catch (e) {
         button.setAttribute('title', 'Copy failed');
+        return false;
     } finally {
         setTimeout(() => {
             if (originalTitle !== null) {

@@ -3,6 +3,7 @@ import java.util.List;
 import org.eclipse.lsp4j.services.LanguageClient;
 
 import dtos.context.ContextHistoryDTO;
+import dtos.diagnostics.VerificationEventDTO;
 
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 
@@ -10,6 +11,8 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
  * Language client interface to specify custom notifications
  */
 public interface LJLanguageClient extends LanguageClient {
+    @JsonNotification("liquidjava/verification")
+    void sendVerification(VerificationEventDTO event);
     
     /**
      * Sends custom diagnostics notification to the client

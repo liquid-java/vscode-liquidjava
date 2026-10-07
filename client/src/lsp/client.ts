@@ -8,6 +8,7 @@ import { onActiveFileChange } from '../services/events';
 import type { LJDiagnostic } from "../types/diagnostics";
 import { LJContext } from '../types/context';
 import { handleContext } from '../services/context';
+import { isStudyEnabled, handleStudyVerification, studyVerificationCancelled } from '../services/study-log';
 
 /**
  * Starts the client and connects it to the language server
@@ -29,12 +30,14 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
     };
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ language: "java" }],
+        initializationOptions: { studyLogging: isStudyEnabled() },
     };
     extension.client = new LanguageClient("liquidJavaServer", "LiquidJava Server", serverOptions, clientOptions);
     
     context.subscriptions.push(extension.client); // disposed on deactivation
 
     try {
+        extension.client.onNotification('liquidjava/verification', handleStudyVerification);
         await extension.client.start();
         extension.logger!.client.info("Extension is ready");
         
@@ -73,6 +76,7 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
  * @param reason The reason for stopping the client
  */
 export async function stopClient(reason: string) {
+    studyVerificationCancelled();
     if (!extension.client && !extension.serverProcess && !extension.socket) {
         extension.logger!.client.info("Extension already stopped");
         return;

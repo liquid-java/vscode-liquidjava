@@ -24,12 +24,20 @@ import liquidjava.processor.context.ContextHistory;
 import utils.ContextHistoryConverter;
 import utils.DiagnosticConverter;
 import utils.PathUtils;
+import dtos.diagnostics.VerificationEventDTO;
 
 public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
 
     private LJLanguageClient client;
     private String workspaceRoot;
     private boolean initialVerification;
+    private volatile boolean studyLogging;
+    private long verificationRun;
+    private String verificationSession;
+
+    public void setStudyLogging(boolean enabled) {
+        studyLogging = enabled;
+    }
     private final Set<String> publishedDiagnosticUris = new HashSet<>();
     private final ExecutorService diagnosticsExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "liquidjava-diagnostics");
@@ -63,7 +71,16 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      * Generates diagnostics for the given URI and publishes them to the client
      * @param uri the URI of the document
      */
-    public void generateDiagnostics(String uri) {
+    private void generateDiagnostics(String uri, String trigger) {
+        boolean logging = studyLogging && client != null;
+        String run = null;
+        if (logging) {
+            if (verificationSession == null) verificationSession = java.util.UUID.randomUUID().toString();
+            run = verificationSession + ":" + ++verificationRun;
+        }
+        long started = logging ? System.nanoTime() : 0;
+        String result = "crashed";
+        if (logging) client.sendVerification(new VerificationEventDTO("started", uri, trigger, run, null, null));
         String path = PathUtils.extractBasePath(uri);
         clearPublishedDiagnostics(uri);
 
@@ -79,10 +96,14 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
             List<LJDiagnostic> diagnostics = Stream.concat(ljDiagnostics.errors().stream(), ljDiagnostics.warnings().stream()).collect(Collectors.toList());
             sendDiagnosticsNotification(diagnostics);
             this.client.sendContext(ContextHistoryConverter.convertToDTO(ContextHistory.getInstance()));
+            result = ljDiagnostics.errors().isEmpty() ? "passed" : "failed";
         } catch (Exception e) {
             System.err.println("LiquidJava internal error: " + e.getMessage());
             clearPublishedDiagnostics(uri);
             this.client.sendFailure();
+        } finally {
+            if (logging && studyLogging) client.sendVerification(new VerificationEventDTO(
+                "finished", uri, trigger, run, (System.nanoTime() - started) / 1_000_000, result));
         }
     }
 
@@ -92,7 +113,11 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      * @return a future that completes when diagnostics are published
      */
     public CompletableFuture<Void> generateDiagnosticsAsync(String uri) {
-        return CompletableFuture.runAsync(() -> generateDiagnostics(uri), diagnosticsExecutor);
+        return generateDiagnosticsAsync(uri, "manual");
+    }
+
+    private CompletableFuture<Void> generateDiagnosticsAsync(String uri, String trigger) {
+        return CompletableFuture.runAsync(() -> generateDiagnostics(uri, trigger), diagnosticsExecutor);
     }
 
     /**
@@ -130,7 +155,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
         if (!PathUtils.isFileInDirectory(uri, workspaceRoot) || initialVerification) return;
         initialVerification = true;
         System.out.println("First document opened — checking diagnostics");
-        generateDiagnosticsAsync(uri);
+        generateDiagnosticsAsync(uri, "open");
     }
 
     /**
@@ -143,7 +168,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
         if (!PathUtils.isFileInDirectory(uri, workspaceRoot)) return;
         System.out.println("Document saved — checking diagnostics");
         clearDiagnostic(uri);
-        generateDiagnosticsAsync(uri);
+        generateDiagnosticsAsync(uri, "save");
     }
 
     /**

@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { getHtml } from './html';
 import { highlightRange, openFile } from '../services/editor';
 import type { WebviewMessage } from '../types/test-api';
+import { logStudy, isStudyEnabled } from '../services/study-log';
+import { extension } from '../state';
 
 /**
  * Webview provider for the LiquidJava extension
@@ -23,6 +25,9 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider, vs
     _token: vscode.CancellationToken
   ) {
     this.view = webviewView;
+    logStudy(webviewView.visible ? 'view_visible' : 'view_hidden');
+    webviewView.onDidChangeVisibility(() => logStudy(webviewView.visible ? 'view_visible' : 'view_hidden'));
+    webviewView.onDidDispose(() => logStudy('view_hidden'));
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this.extensionUri]
@@ -37,10 +42,27 @@ export class LiquidJavaWebviewProvider implements vscode.WebviewViewProvider, vs
       
       // handle message
       if (message.type === "openFile") {
+        logStudy('diagnostic_reveal', { file: message.filePath, line: message.line + 1, column: message.character + 1 });
+        if (message.highlightRange) logStudy('highlight', { file: message.filePath, line: message.highlightRange.lineStart + 1 });
         openFile(message.filePath, message.line, message.character, message.highlightRange);
       } else if (message.type === "highlight") {
+        logStudy('highlight', { file: extension.file, line: message.range ? message.range.lineStart + 1 : null, active: Boolean(message.range) });
         // highlight the specified range in the current editor
         highlightRange(vscode.window.activeTextEditor, message.range);
+      } else if (message.type === 'log' && isStudyEnabled()) {
+        // accept only metadata; never persist arbitrary webview payloads
+        if (message.event === 'tab_selected' && ['diagnostics', 'context', 'fsm'].includes(message.tab)) {
+          logStudy('tab_selected', { tab: message.tab, file: extension.file });
+        } else if (message.event === 'section_toggled' && typeof message.section === 'string' &&
+          ['context-vars', 'context-ghosts', 'context-aliases', 'vc-changes', 'vc-implications'].includes(message.section)) {
+          logStudy('section_toggled', { section: message.section, expanded: Boolean(message.expanded), file: extension.file });
+        } else if (message.event === 'clipboard_copy' && ['diagnostic', 'fsm'].includes(message.target)) {
+          logStudy('clipboard_copy', { target: message.target, file: extension.file });
+        } else if (message.event === 'vc_step_selected' && ['previous', 'next'].includes(message.direction)) {
+          logStudy('vc_step_selected', { direction: message.direction, file: extension.file });
+        } else if (message.event === 'section_shown' && ['counterexample', 'vc-implications', 'hint'].includes(message.section)) {
+          logStudy('section_shown', { section: message.section, file: extension.file });
+        }
       }
     });
   }

@@ -68,3 +68,44 @@ To run the language server manually, follow these steps:
 ### Project Structure
 - `/server` - Implements the language server in Java using [LSP4J](https://github.com/eclipse/lsp4j)
 - `/client` - Implements the VS Code extension in TypeScript that connects to the language server via LSP
+
+### Local study logging
+
+Study logging is disabled by default. To enable it, add these settings to the study workspace's `.vscode/settings.json`:
+
+```json
+{
+  "liquidjava.study.enabled": true,
+  "liquidjava.study.participantId": "P01",
+  "liquidjava.study.logPath": ".liquidjava/study-log.jsonl"
+}
+```
+
+The log path is relative to the first workspace folder, which is also the folder the verifier checks. Absolute paths and paths outside that folder are rejected. Logging requires a local filesystem workspace. Changes to any study setting take effect immediately; disabling logging flushes pending events and removes study editor listeners and timers. When disabled, the extension creates no log file and performs no study writes, diagnostic hashing, or server timing notifications. The configuration listener remains active so logging can be enabled later.
+
+Run **LiquidJava: Reveal Study Log** to flush and open the JSONL file. Each line is a JSON object with `t` (UTC ISO timestamp), `pid` (participant ID), `session` (UUID for this extension activation), `event`, and the fields below. Events use workspace-relative paths with `/` separators and **one-based** lines and columns. Logs append across launches; settings changes and server restarts retain the activation's session ID.
+
+| Event | Fields / meaning |
+| --- | --- |
+| `logging_started`, `logging_stopped` | Boundaries of each enabled logging interval; includes settings changes and normal shutdown. |
+| `file_opened`, `file_focused`, `file_blurred`, `file_saved` | `file`; Java files inside the workspace only. Initial focus is recorded even if the file was already open. Switching to another file, a non-Java editor, or no editor ends focus. |
+| `file_edited` | `file`, `count`; number of content changes, batched after 500 ms of quiet, and flushed on save, file switch, or shutdown. No edited text is stored. |
+| `window_focus`, `window_blur` | VS Code window focus, including its initial state. |
+| `verify_started` | `file`, `trigger` (`open`, `save`, `manual`), `run`; emitted when the server begins a queued verification. Run IDs remain unique after server restarts. |
+| `verify_finished` | Same fields plus `durationMs` and `result` (`passed`, `failed`, `crashed`, `cancelled`). Duration excludes queue wait. Stopping the server or logging cancels pending runs; cancellations use elapsed client time. |
+| `diagnostic_shown`, `diagnostic_resolved` | `file`, `line`, `column` (null if unavailable), `kind` (the diagnostic type), `category`, `key`. Repeated results do not repeat appearances. Only successful diagnostic results resolve previous errors; crashes and stops do not. |
+| `view_visible`, `view_hidden` | LiquidJava sidebar visibility, including initial state when logging is enabled. |
+| `tab_selected` | `tab` (`diagnostics`, `context`, `fsm`), `file` when available; includes initial selection and diagnostic context / state-machine actions. |
+| `section_toggled` | `section` (`context-vars`, `context-ghosts`, `context-aliases`), `expanded`, `file`. |
+| `section_shown` | `section` (`counterexample`, `vc-implications`, `hint`), `file`; these sections currently render without collapse controls. Records transitions into the rendered view; redraws of continuously visible sections are deduplicated. |
+| `vc_step_selected` | `direction` (`previous`, `next`), `file`; records simplification steps, including the displayed changes between implications. |
+| `diagnostic_reveal` | `file`, `line`, `column`; navigation from the webview to source. |
+| `highlight` | `file`, `line`, `active` for same-file highlights; cross-file navigation also records its highlight. |
+| `clipboard_copy` | `target` (`diagnostic`, `fsm`), `file`; emitted after a successful copy, without clipboard contents. |
+| `hover_shown` | `file`, `line`, `column`; LiquidJava supplied a nonempty hover (VS Code does not expose whether it was ultimately displayed). |
+| `codelens_clicked` | `file`, `line`; diagnostic CodeLens activation. |
+| `command_run` | `command`; registered `liquidjava.*` commands, including Reveal Study Log. |
+
+To compute time focused per exercise, intersect `file_focused`/`file_blurred` intervals with `window_focus`/`window_blur` and `logging_started`/`logging_stopped` intervals. Edits and saves provide activity counts; the analysis can choose its own idle threshold. Match diagnostic appearances and resolutions using `key` to compute observed time-to-fix. Keys preserve the nearest previous diagnostic of the same file, kind, and category when edits move its line, which suits the study's one intended error per exercise. Multiple identical errors are matched by proximity; replacing one with another of the same kind may retain its key. An abrupt process exit has no reliable end event: treat the final interval as incomplete rather than assuming it ended at a later launch.
+
+No source code, expressions, diagnostic messages, counterexamples, hover contents, or clipboard text are logged. Nothing is uploaded, and the VS Code telemetry API is not used. Participants can inspect the file and hand it in themselves. Keep `.liquidjava/` out of the study repository's `.gitignore` if collecting with git. AI explanation events are deferred until the explanation UI in issue #113 exists.

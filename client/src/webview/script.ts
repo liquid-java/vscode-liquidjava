@@ -39,6 +39,15 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let context: LJContext;
     let errorAtCursor: RefinementMismatchError;
     let selectedTab: NavTab = 'diagnostics';
+    let studyEnabled = false;
+    let visibleSections = new Set<string>();
+    const log = (event: string, data: object) => {
+        if (studyEnabled) vscode.postMessage({ type: 'log', event, ...data });
+    };
+    const selectTab = (tab: NavTab) => {
+        selectedTab = tab;
+        log('tab_selected', { tab });
+    };
     let status: ExtensionStatus = 'loading';
     let diagramOrientation: "LR" | "TB" = "TB";
     // the pre and postconditions of the transitions are shown unless collapsed
@@ -89,6 +98,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
             const isExpanded = contextToggleButton.getAttribute('aria-expanded') !== 'false';
             const nextExpanded = !isExpanded;
+            log('section_toggled', { section: sectionId, expanded: nextExpanded });
             if (sectionId === 'context-vars') contextSectionState.vars = nextExpanded;
             if (sectionId === 'context-ghosts') contextSectionState.ghosts = nextExpanded;
             if (sectionId === 'context-aliases') contextSectionState.aliases = nextExpanded;
@@ -183,10 +193,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         const vcImplicationStepButton = target.closest?.('.vc-step-btn');
         if (vcImplicationStepButton) {
             e.stopPropagation();
-            handleVCImplicationStepClick(vcImplicationStepButton, () => {
+            const changed = handleVCImplicationStepClick(vcImplicationStepButton, () => {
                 root.querySelector<HTMLElement>('.highlight-var-btn.selected')?.classList.remove('selected');
                 vscode.postMessage({ type: 'highlight', range: null });
             });
+            if (changed) log('vc_step_selected', { direction: vcImplicationStepButton.getAttribute('data-vc-step') });
             return;
         }
 
@@ -260,7 +271,9 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (copyDiagramButton) {
             e.stopPropagation();
             if (!currentDiagram) return;
-            copyDiagramToClipboard(copyDiagramButton, currentDiagram);
+            void copyDiagramToClipboard(copyDiagramButton, currentDiagram).then(copied => {
+                if (copied) log('clipboard_copy', { target: 'fsm' });
+            });
             return;
         }
 
@@ -305,7 +318,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             const tab = target.getAttribute('data-tab') as NavTab;
             if (tab && tab !== selectedTab) {
                 vscode.postMessage({ type: 'highlight', range: null });
-                selectedTab = tab;
+                selectTab(tab);
                 updateView();
             }
             return;
@@ -316,7 +329,9 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (diagnosticCopyBtn) {
             e.preventDefault();
             e.stopPropagation();
-            copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics || [], showAllDiagnostics, currentFile));
+            void copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics || [], showAllDiagnostics, currentFile)).then(copied => {
+                if (copied) log('clipboard_copy', { target: 'diagnostic' });
+            });
             return;
         }
     });
@@ -366,6 +381,14 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     window.addEventListener('message', event => {
         const msg = event.data;
         switch (msg.type) {
+            case 'study':
+                studyEnabled = msg.enabled === true;
+                visibleSections.clear();
+                if (studyEnabled) {
+                    log('tab_selected', { tab: selectedTab });
+                    logVisibleSections();
+                }
+                break;
             case 'status':
                 status = msg.status as ExtensionStatus;
                 updateView();
@@ -411,11 +434,13 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
      */
     function updateView() {
         if (status === 'stopped' || status === 'crashed') {
+            visibleSections.clear();
             currentDiagram = '';
             root.innerHTML = renderStopped(status);
             return;
         }
         if (status === 'loading') {
+            visibleSections.clear();
             currentDiagram = '';
             root.innerHTML = renderLoading();
             return;
@@ -450,6 +475,18 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor, badges);
                 break;
         }
+        logVisibleSections();
+    }
+
+    function logVisibleSections() {
+        if (!studyEnabled) return;
+        const next = new Set<string>();
+        for (const section of Array.from(root.querySelectorAll<HTMLElement>('[data-study-section]'))) {
+            const name = section.dataset.studySection!;
+            next.add(name);
+            if (!visibleSections.has(name)) log('section_shown', { section: name });
+        }
+        visibleSections = next;
     }
 
     // the 1-based line of the shown error, null without a position, undefined when no error is shown
@@ -478,7 +515,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     }
 
     function showStateError(error: StateRefinementError) {
-        selectedTab = 'fsm';
+        selectTab('fsm');
         selectedStateError = error;
         showDiagramConditions = true;
         focusDiagramOnError = true;
@@ -518,7 +555,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     }
 
     function revealDiagnostic(target: DiagnosticRevealTarget) {
-        selectedTab = 'diagnostics';
+        selectTab('diagnostics');
 
         const isVisibleInCurrentFile = showAllDiagnostics || !target.file || target.file.toLowerCase() === currentFile?.toLowerCase();
         if (!isVisibleInCurrentFile) {
@@ -544,7 +581,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     }
 
     function revealContextForDiagnostic(target: DiagnosticRevealTarget) {
-        selectedTab = 'context';
+        selectTab('context');
         vscode.postMessage({
             type: 'openFile',
             filePath: target.file,

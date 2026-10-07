@@ -5,6 +5,7 @@ import { getSelectionContextVariables } from './context';
 import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
 import { definitionMatchesClass, getDefinitions } from './definition';
 import { isExtensionRunning } from '../extension';
+import { logStudy } from './study-log';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -30,6 +31,7 @@ export function registerHover() {
             }
 
             if (hoverContent.value.length === 0) return null;
+            logStudy('hover_shown', { file: document.uri.fsPath, line: position.line + 1, column: position.character + 1 });
             return new vscode.Hover(hoverContent);
         }
     });

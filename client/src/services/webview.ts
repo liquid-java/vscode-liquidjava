@@ -3,6 +3,7 @@ import { LiquidJavaWebviewProvider } from "../webview/provider";
 import { extension } from "../state";
 import type { DiagnosticRevealTarget } from "../types/diagnostics";
 import type { NavTab } from "../webview/views/sections";
+import { logStudy, isStudyEnabled } from './study-log';
 
 /**
  * Initializes the webview panel for the extension
@@ -21,6 +22,8 @@ export function registerWebview(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         // shows the diagnostic in the Verification tab, or a state error in the State Machine tab when tab is 'fsm'
         vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget, tab?: NavTab) => {
+            logStudy('command_run', { command: 'liquidjava.showView' });
+            if (diagnostic) logStudy('codelens_clicked', { file: diagnostic.file, line: diagnostic.position.lineStart + 1 });
             const isVisible = extension.webview?.isVisible();
             await vscode.commands.executeCommand("liquidJavaView.focus");
             if (!diagnostic) return; 
@@ -36,6 +39,7 @@ export function registerWebview(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         extension.webview.onDidReceiveMessage(message => {
             if (message.type === "ready") {
+                extension.webview?.sendMessage({ type: 'study', enabled: isStudyEnabled() });
                 if (extension.file) extension.webview?.sendMessage({ type: "file", file: extension.file });
                 if (extension.diagnostics) extension.webview?.sendMessage({ type: "diagnostics", diagnostics: extension.diagnostics });
                 if (extension.context) extension.webview?.sendMessage({ type: "context", context: extension.context , errorAtCursor: extension.errorAtCursor });
