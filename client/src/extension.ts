@@ -46,6 +46,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Liquid
         getState: () => ({
             status: extension.status,
             diagnostics: [...(extension.diagnostics ?? [])],
+            serverPid: extension.serverProcess?.pid,
         }),
         onWebviewMessage: extension.webview!.onWebviewMessage,
     };

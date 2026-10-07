@@ -100,7 +100,7 @@ export async function connectToPort(
  */
 export async function killProcess(proc?: child_process.ChildProcess) {
     return new Promise<void>((resolve, reject) => {
-        if (!proc || proc.killed || proc.pid === undefined) {
+        if (!proc || proc.exitCode !== null || proc.signalCode !== null || proc.pid === undefined) {
             // already killed
             resolve();
             return;
@@ -116,10 +116,12 @@ export async function killProcess(proc?: child_process.ChildProcess) {
             });
         } else {
             // Unix
+            const onClose = () => resolve();
+            proc.once("close", onClose);
             try {
                 process.kill(proc.pid, "SIGKILL");
-                resolve();
             } catch (err) {
+                proc.removeListener("close", onClose);
                 reject(err);
             }
         }

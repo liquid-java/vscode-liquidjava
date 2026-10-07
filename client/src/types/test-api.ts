@@ -11,6 +11,6 @@ export interface LiquidJavaTestApi {
     readonly ready: Promise<void>;
     readonly onDiagnostics: vscode.Event<LJDiagnostic[]>;
     readonly onFailure: vscode.Event<void>;
-    getState(): { status: ExtensionStatus | undefined; diagnostics: LJDiagnostic[] };
+    getState(): { status: ExtensionStatus | undefined; diagnostics: LJDiagnostic[]; serverPid: number | undefined };
     readonly onWebviewMessage: vscode.Event<WebviewMessage>;
 }
