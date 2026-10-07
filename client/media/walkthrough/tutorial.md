@@ -1,5 +1,5 @@
-# Try it in your browser
+# Learn LiquidJava
 
-Edit short Java examples and run the LiquidJava verifier directly in the interactive tutorial.
+LiquidJava is an additional type checker for Java, based on **liquid types** and **typestates**, which provides stronger safety guarantees to Java programs at compile-time.
 
-Learn about refinements, contracts, object states, and ghost variables through exercises.
+Edit short Java examples and run verification in the browser with the interactive tutorial. No local setup needed.

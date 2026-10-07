@@ -40,7 +40,7 @@ A repository with LiquidJava examples is available at [liquidjava-examples](http
 
 ### Getting started in VS Code
 
-The **Get Started with LiquidJava** walkthrough covers Java setup and the Maven/Gradle annotation dependency, then introduces verification and its status indicator, diagnostics, context, state machines, the Command Palette, and logs. It also links to the [interactive tutorial](https://liquid-java.github.io/liquidjava-interactive-tutorial/). It opens once on installation, following VS Code’s walkthrough preferences. You can dismiss it at any time and reopen it with **LiquidJava: Show Walkthrough** from the Command Palette or **LiquidJava: Show Commands**. VS Code saves its progress across workspaces.
+The **Get Started with LiquidJava** walkthrough introduces LiquidJava and its interactive tutorial, includes copyable Maven/Gradle annotation dependencies, then explains verification and its status indicator, diagnostics, context, state machines, the Command Palette, and logs. It also links to the [interactive tutorial](https://liquid-java.github.io/liquidjava-interactive-tutorial/). It opens once on installation, following VS Code’s walkthrough preferences. You can dismiss it at any time and reopen it with **LiquidJava: Show Walkthrough** from the Command Palette or **LiquidJava: Show Commands**. VS Code saves its progress across workspaces.
 
 ### What are Liquid Types?
 

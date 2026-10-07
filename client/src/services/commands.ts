@@ -1,12 +1,14 @@
 import * as vscode from "vscode";
 import { startExtension, stopExtension, restartExtension } from "../extension";
 import { verify } from "./diagnostics";
-import { showWalkthrough } from './walkthrough';
+import { copyWalkthroughDependency, showWalkthrough } from './walkthrough';
 
 const commandIcons: Record<string, string> = {
     "liquidjava.showLogs": "$(output)",
     "liquidjava.showView": "$(window)",
     "liquidjava.showWalkthrough": "$(book)",
+    "liquidjava.copyMavenDependency": "$(copy)",
+    "liquidjava.copyGradleDependency": "$(copy)",
     "liquidjava.start": "$(play)",
     "liquidjava.stop": "$(debug-stop)",
     "liquidjava.restart": "$(debug-restart)",
@@ -15,6 +17,8 @@ const commandIcons: Record<string, string> = {
 
 const commandHandlers: Record<string, (context: vscode.ExtensionContext) => Promise<void>> = {
     "liquidjava.showWalkthrough": showWalkthrough,
+    "liquidjava.copyMavenDependency": async context => await copyWalkthroughDependency(context, 'xml'),
+    "liquidjava.copyGradleDependency": async context => await copyWalkthroughDependency(context, 'groovy'),
     "liquidjava.start": async (context) => await startExtension(context),
     "liquidjava.stop": async () => await stopExtension(),
     "liquidjava.restart": async (context) => await restartExtension(context),

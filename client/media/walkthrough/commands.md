@@ -1,5 +1,5 @@
-# Run a command
+# LiquidJava commands
 
-Press **F1** to open the Command Palette, then type **LiquidJava**.
+Click the status indicator or **Show LiquidJava commands** to open the LiquidJava-only command list.
 
-Use **Start**, **Stop**, or **Restart** to control the verifier. Use **Verify** after returning to a Java editor.
+Use **Start**, **Stop**, or **Restart** to control the verifier. Run **Verify** after returning to a Java editor.
