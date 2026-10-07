@@ -26,6 +26,7 @@ test/**
 *.md
 !README.md
 !USAGE.md
+!media/walkthrough/*.md
 
 # Source maps (comment out if you want to include them)
 **/*.map
