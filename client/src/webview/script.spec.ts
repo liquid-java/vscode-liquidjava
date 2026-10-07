@@ -226,4 +226,49 @@ describe('webview script', () => {
             highlightRange: range,
         }]]);
     });
+
+    it('logs tab and section interactions only while study logging is enabled', () => {
+        showDiagnostics([diagnostic(currentFile, 'Error')]);
+        receive({ type: 'context', context: context() });
+        click('[data-tab="context"]');
+        expect(postMessage.mock.calls.some(([message]) => (message as any).type === 'log')).toBe(false);
+
+        receive({ type: 'study', enabled: true });
+        postMessage.mockClear();
+        click('[data-context-toggle="context-vars"]');
+        click('[data-tab="diagnostics"]');
+        expect(postMessage.mock.calls).toContainEqual([{ type: 'log', event: 'section_toggled', section: 'context-vars', expanded: false }]);
+        expect(postMessage.mock.calls).toContainEqual([{ type: 'log', event: 'tab_selected', tab: 'diagnostics' }]);
+
+        receive({ type: 'study', enabled: false });
+        postMessage.mockClear();
+        click('[data-tab="context"]');
+        expect(postMessage.mock.calls.some(([message]) => (message as any).type === 'log')).toBe(false);
+    });
+
+    it('records successful clipboard copies without the copied diagnostic content', async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+        showDiagnostics([diagnostic(currentFile, 'Private diagnostic text')]);
+        receive({ type: 'study', enabled: true });
+        postMessage.mockClear();
+        click('.copy-diagnostic-btn');
+        await vi.waitFor(() => expect(postMessage.mock.calls).toContainEqual([{ type: 'log', event: 'clipboard_copy', target: 'diagnostic' }]));
+        expect(writeText).toHaveBeenCalledOnce();
+        expect(JSON.stringify(postMessage.mock.calls)).not.toContain('Private diagnostic text');
+    });
+
+    it('deduplicates continuously visible sections across diagnostic redraws', () => {
+        const error = { ...diagnostic(currentFile, 'Error'), hint: 'Private hint' };
+        showDiagnostics([error]);
+        receive({ type: 'study', enabled: true });
+        postMessage.mockClear();
+        receive({ type: 'diagnostics', diagnostics: [error] });
+        expect(postMessage.mock.calls.some(([message]) => (message as any).event === 'section_shown')).toBe(false);
+        receive({ type: 'context', context: context() });
+        click('[data-tab="context"]');
+        click('[data-tab="diagnostics"]');
+        expect(postMessage.mock.calls).toContainEqual([{ type: 'log', event: 'section_shown', section: 'hint' }]);
+        expect(JSON.stringify(postMessage.mock.calls)).not.toContain('Private hint');
+    });
 });

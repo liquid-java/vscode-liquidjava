@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { OutputChannel } from "vscode";
 import { extension } from "../state";
+import { logStudy } from './study-log';
 
 enum LogLevel {
     INFO = "INFO",
@@ -77,5 +78,8 @@ export function registerLogger(context: vscode.ExtensionContext) {
     extension.logger = createLogger(outputChannel);
     context.subscriptions.push(outputChannel);
     context.subscriptions.push(extension.logger);
-    context.subscriptions.push(vscode.commands.registerCommand("liquidjava.showLogs", () => outputChannel.show(true)));
+    context.subscriptions.push(vscode.commands.registerCommand("liquidjava.showLogs", () => {
+        logStudy('command_run', { command: 'liquidjava.showLogs' });
+        outputChannel.show(true);
+    }));
 }

@@ -4,12 +4,14 @@ import { LJDiagnostic } from "../types/diagnostics";
 import { updateStatusBar } from "./status-bar";
 import { updateErrorAtCursor } from "./context";
 import { refreshCodeLenses } from "./codelens";
+import { studyDiagnostics } from './study-log';
 
 /**
  * Handles LiquidJava diagnostics received from the language server
  * @param diagnostics The array of diagnostics received
  */
 export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
+    studyDiagnostics(diagnostics);
     const containsError = diagnostics.some(d => d.category === "error");
     const statusBarState: ExtensionStatus = containsError ? "failed" : "passed";
     updateStatusBar(statusBarState);

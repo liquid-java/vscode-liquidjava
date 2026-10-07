@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { startExtension, stopExtension, restartExtension } from "../extension";
 import { verify } from "./diagnostics";
+import { logStudy } from './study-log';
 
 const commandIcons: Record<string, string> = {
     "liquidjava.showLogs": "$(output)",
@@ -31,7 +32,10 @@ export function registerCommands(context: vscode.ExtensionContext) {
         const handler = commandHandlers[cmd.command];
         if (handler) {
             context.subscriptions.push(
-                vscode.commands.registerCommand(cmd.command, () => handler(context))
+                vscode.commands.registerCommand(cmd.command, () => {
+                    logStudy('command_run', { command: cmd.command });
+                    return handler(context);
+                })
             );
         }
     });
@@ -39,6 +43,7 @@ export function registerCommands(context: vscode.ExtensionContext) {
     // register command to show all commands
     context.subscriptions.push(
         vscode.commands.registerCommand("liquidjava.showCommands", async () => {
+            logStudy('command_run', { command: 'liquidjava.showCommands' });
             const quickPickItems = commands
                 .filter(cmd => cmd.command !== "liquidjava.showCommands")
                 .map(cmd => ({

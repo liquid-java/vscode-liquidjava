@@ -292,5 +292,5 @@ export function registerPanListeners(document: any) {
 }
 
 export async function copyDiagramToClipboard(target: any, diagram: string) {
-    await copyToClipboard(target, diagram);
+    return copyToClipboard(target, diagram);
 }
