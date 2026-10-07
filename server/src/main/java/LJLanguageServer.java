@@ -17,6 +17,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
 import dtos.uri.Uri;
 import liquidjava.fsm.StateMachine;
 import liquidjava.fsm.StateMachineParser;
+import com.google.gson.JsonObject;
 
 public class LJLanguageServer implements LanguageServer {
 
@@ -38,6 +39,9 @@ public class LJLanguageServer implements LanguageServer {
      * @return CompletableFuture with the InitializeResult
      */
     public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
+        if (params.getInitializationOptions() instanceof JsonObject options) {
+            diagnosticsService.setStudyLogging(options.has("studyLogging") && options.get("studyLogging").getAsBoolean());
+        }
         CompletableFuture<InitializeResult> completableFuture = new CompletableFuture<>();
         ServerCapabilities capabilities = new ServerCapabilities();
         WorkspaceServerCapabilities workspaceServerCapabilities = new WorkspaceServerCapabilities();
@@ -100,5 +104,10 @@ public class LJLanguageServer implements LanguageServer {
     @JsonNotification("liquidjava/verify")
     public void verify(Uri uri) {
         diagnosticsService.generateDiagnosticsAsync(uri.uri());
+    }
+
+    @JsonNotification("liquidjava/studyLogging")
+    public void studyLogging(boolean enabled) {
+        diagnosticsService.setStudyLogging(enabled);
     }
 }

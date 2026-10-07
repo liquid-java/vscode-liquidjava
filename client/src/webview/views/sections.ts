@@ -12,8 +12,10 @@ export const renderMainHeader = (title: string, selectedTab: NavTab): string => 
     </div>
 `;
 
-export const renderCustomSection = (title: string, body: string): string => /*html*/
-    `<div class="section"><strong>${title}:</strong><div>${body}</div></div>`;
+export const renderCustomSection = (title: string, body: string): string => {
+    const studySection = ({ Counterexample: 'counterexample', Found: 'vc-implications', Hint: 'hint' } as Record<string, string>)[title];
+    return `<div class="section"${studySection ? ` data-study-section="${studySection}"` : ''}><strong>${title}:</strong><div>${body}</div></div>`;
+};
 
 export const renderSection = (title: string, body: string): string => /*html*/
     renderCustomSection(title, `<pre>${body}</pre>`);

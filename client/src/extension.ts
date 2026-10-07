@@ -13,6 +13,7 @@ import { refreshCodeLenses, registerCodeLens } from "./services/codelens";
 import { runLanguageServer, stopLanguageServer } from "./lsp/server";
 import { runClient, stopClient } from "./lsp/client";
 import type { LiquidJavaTestApi } from "./types/test-api";
+import { registerStudyLog, stopStudyLog } from './services/study-log';
 
 /**
  * Activates the LiquidJava extension
@@ -21,6 +22,7 @@ import type { LiquidJavaTestApi } from "./types/test-api";
 export async function activate(context: vscode.ExtensionContext): Promise<LiquidJavaTestApi> {
     context.subscriptions.push(extension.diagnosticsEmitter, extension.failureEmitter);
     registerLogger(context);
+    registerStudyLog(context);
     extension.logger!.client.info("Activating LiquidJava extension...");
     
     registerStatusBar(context);
@@ -59,6 +61,7 @@ export async function deactivate() {
     extension.logger?.client.info("Deactivating LiquidJava extension...");
     await stopClient("Extension was deactivated");
     await stopLanguageServer();
+    await stopStudyLog();
     resetExtension();
 }
 

@@ -60,6 +60,24 @@
 					"default": "off",
 					"description": "Traces the communication between VSCode and the liquidJavaServer service."
 				},
+				"liquidjava.study.enabled": {
+					"type": "boolean",
+					"default": false,
+					"scope": "resource",
+					"description": "Record LiquidJava study interactions locally in the first workspace folder. Disabled by default."
+				},
+				"liquidjava.study.participantId": {
+					"type": "string",
+					"default": "",
+					"scope": "resource",
+					"description": "Participant ID included in every local study event."
+				},
+				"liquidjava.study.logPath": {
+					"type": "string",
+					"default": ".liquidjava/study-log.jsonl",
+					"scope": "resource",
+					"description": "Study log file path relative to the first workspace folder."
+				},
 				"liquidjava.applyItalicOverlay": {
 					"type": "boolean",
 					"default": true,
@@ -119,6 +137,11 @@
 			{
 				"command": "liquidjava.restart",
 				"title": "Restart",
+				"category": "LiquidJava"
+			},
+			{
+				"command": "liquidjava.study.revealLog",
+				"title": "Reveal Study Log",
 				"category": "LiquidJava"
 			},
 			{
