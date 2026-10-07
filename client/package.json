@@ -159,23 +159,56 @@
 			{
 				"id": "getStarted",
 				"title": "Get Started with LiquidJava",
-				"description": "Verify refinements, understand diagnostics, inspect context, and explore object states.",
+				"description": "Set up your project and discover verification, views, commands, and logs.",
 				"steps": [
 					{
+						"id": "setup",
+						"title": "Set up Java support",
+						"description": "Install Java and **Language Support for Java by Red Hat**, then open your Java project folder.\n[Get Java language support](https://marketplace.visualstudio.com/items?itemName=redhat.java)",
+						"media": {
+							"markdown": "media/walkthrough/setup.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "annotations",
+						"title": "Add the annotation API",
+						"description": "Add `liquidjava-api` to your Maven or Gradle project to use annotations such as `@Refinement`.",
+						"media": {
+							"markdown": "media/walkthrough/annotations.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
 						"id": "verification",
-						"title": "Verify your Java code",
-						"description": "LiquidJava checks refinements and object states before you run your program. Open a Java project with the `liquidjava-api` dependency and a Java runtime available in `JAVA_HOME` or `PATH`. Files are verified when opened or saved; use **LiquidJava: Verify** to check the active Java file manually. The status bar shows the verification result.\n[Verify the active Java file](command:liquidjava.verify)",
+						"title": "Verification and status",
+						"description": "Open or save a Java file to verify it. Watch the **LiquidJava** indicator in the bottom status bar.",
 						"media": {
 							"markdown": "media/walkthrough/verification.md"
 						},
 						"completionEvents": [
-							"onCommand:liquidjava.verify"
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "commands",
+						"title": "Find LiquidJava commands",
+						"description": "Open the **Command Palette**, type `LiquidJava`, and choose a command.\n[Open Command Palette](command:workbench.action.showCommands)",
+						"media": {
+							"markdown": "media/walkthrough/commands.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
 						]
 					},
 					{
 						"id": "diagnostics",
-						"title": "Understand verification diagnostics",
-						"description": "Open the LiquidJava view and select **Verification**. Compare **Found** with **Expected**, inspect a counterexample or hint when available, and click a location to jump to the source. Switch between **Current file** and **Workspace** to find other errors.\n[Open the LiquidJava view](command:liquidjava.showView)",
+						"title": "Understand diagnostics",
+						"description": "The **Verification** tab compares **Found** with **Expected**. Click a location to jump to the error.\n[Open LiquidJava view](command:liquidjava.showView)",
 						"media": {
 							"markdown": "media/walkthrough/diagnostics.md"
 						},
@@ -185,8 +218,8 @@
 					},
 					{
 						"id": "context",
-						"title": "Inspect the context at your cursor",
-						"description": "In the LiquidJava view, select **Context** and move the cursor or select code in a Java file. Inspect variable refinements, predicate aliases, and ghost variables to understand what the verifier knows at that position. Click a variable to navigate to its source.\n[Open the LiquidJava view](command:liquidjava.showView)",
+						"title": "Inspect context",
+						"description": "The **Context** tab shows variable refinements, aliases, and ghosts at your cursor or selection.\n[Open LiquidJava view](command:liquidjava.showView)",
 						"media": {
 							"markdown": "media/walkthrough/context.md"
 						},
@@ -196,10 +229,32 @@
 					},
 					{
 						"id": "stateMachine",
-						"title": "Explore object state machines",
-						"description": "Open a Java class with `@StateSet` and `@StateRefinement`, then select **State Machine** in the LiquidJava view. Follow method transitions and their conditions; pan and zoom to inspect the diagram. For a state error, use **View error on state machine** in its diagnostic to see the related states and call.\n[Open the LiquidJava view](command:liquidjava.showView)",
+						"title": "Explore state machines",
+						"description": "The **State Machine** tab shows object states and method transitions declared with `@StateSet` and `@StateRefinement`.\n[Open LiquidJava view](command:liquidjava.showView)",
 						"media": {
 							"markdown": "media/walkthrough/state-machine.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "logs",
+						"title": "Check the logs",
+						"description": "The **LiquidJava** output channel records extension and verifier activity. Use it to investigate startup or verification problems.\n[Show LiquidJava logs](command:liquidjava.showLogs)",
+						"media": {
+							"markdown": "media/walkthrough/logs.md"
+						},
+						"completionEvents": [
+							"onStepSelected"
+						]
+					},
+					{
+						"id": "tutorial",
+						"title": "Learn LiquidJava interactively",
+						"description": "Try refinements, method contracts, object states, and ghosts in the browser. No local setup needed.\n[Open interactive tutorial](https://liquid-java.github.io/liquidjava-interactive-tutorial/)",
+						"media": {
+							"markdown": "media/walkthrough/tutorial.md"
 						},
 						"completionEvents": [
 							"onStepSelected"
