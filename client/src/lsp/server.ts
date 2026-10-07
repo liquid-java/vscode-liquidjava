@@ -34,10 +34,10 @@ export async function runLanguageServer(context: vscode.ExtensionContext, javaEx
         extension.logger!.server.info(message);
     });
     extension.serverProcess.stderr?.on("data", (data) => {
-        extension.logger!.server.error(data.toString().trim())
+        extension.logger!.server.error(data.toString().trim());
     });
     extension.serverProcess.on("error", (err) => {
-        extension.logger!.server.error(`Failed to start: ${err}`)
+        extension.logger!.server.error(`Failed to start: ${err}`);
     });
     extension.serverProcess.on("close", (code) => {
         extension.logger!.server.info(`Process exited with code ${code}`);

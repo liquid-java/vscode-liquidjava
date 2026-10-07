@@ -9,14 +9,14 @@ const commandIcons: Record<string, string> = {
     "liquidjava.stop": "$(debug-stop)",
     "liquidjava.restart": "$(debug-restart)",
     "liquidjava.verify": "$(check)",
-}
+};
 
 const commandHandlers: Record<string, (context: vscode.ExtensionContext) => Promise<void>> = {
     "liquidjava.start": async (context) => await startExtension(context),
     "liquidjava.stop": async () => await stopExtension(),
     "liquidjava.restart": async (context) => await restartExtension(context),
     "liquidjava.verify": async () => await verify(),
-}
+};
 
 /**
  * Registers all commands for the LiquidJava extension

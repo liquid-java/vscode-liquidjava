@@ -106,7 +106,7 @@ export function renderDiagnosticStateMachineButton(errorIndex: number): string {
 }
 
 export function renderDiagnosticRevealButton(position: SourcePosition, content: string): string {
-    if (!position.file) return `<code>${content}</code>`
+    if (!position.file) return `<code>${content}</code>`;
     return /*html*/`
         <button
             class="diagnostic-reveal-btn error"

@@ -31,7 +31,7 @@ const warningContentRenderers: WarningContentRenderers = {
         ${renderExpressionSection('Refinement', w.refinement)}
     `,
     "custom-warning": (_: CustomWarning) => ""
-}
+};
 
 export function renderWarning(warning: LJWarning): string {
     const header = renderDiagnosticHeader(warning.title, warning.message);

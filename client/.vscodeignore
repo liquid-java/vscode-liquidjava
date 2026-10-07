@@ -3,9 +3,7 @@
 .vscode-test/**
 .idea/**
 src/**
-.eslintrc.json
-.eslintrc.js
-.eslintignore
+eslint.config.mjs
 .gitignore
 tsconfig.json
 webpack.config.js
