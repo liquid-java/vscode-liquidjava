@@ -12,12 +12,14 @@ import { registerAutocomplete } from "./services/autocomplete";
 import { refreshCodeLenses, registerCodeLens } from "./services/codelens";
 import { runLanguageServer, stopLanguageServer } from "./lsp/server";
 import { runClient, stopClient } from "./lsp/client";
+import type { LiquidJavaTestApi } from "./types/test-api";
 
 /**
  * Activates the LiquidJava extension
  * @param context The extension context
  */
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext): Promise<LiquidJavaTestApi> {
+    context.subscriptions.push(extension.diagnosticsEmitter, extension.failureEmitter);
     registerLogger(context);
     extension.logger!.client.info("Activating LiquidJava extension...");
     
@@ -30,6 +32,23 @@ export async function activate(context: vscode.ExtensionContext) {
     registerHover();
     await applyItalicOverlay();
     await startExtension(context);
+
+    const ready = extension.client?.isRunning()
+        ? Promise.resolve()
+        : Promise.reject(new Error("LiquidJava language client did not start"));
+    // keep activation behavior while callers observe startup failures through ready
+    void ready.catch(() => {});
+
+    return {
+        ready,
+        onDiagnostics: extension.diagnosticsEmitter.event,
+        onFailure: extension.failureEmitter.event,
+        getState: () => ({
+            status: extension.status,
+            diagnostics: [...(extension.diagnostics ?? [])],
+        }),
+        onWebviewMessage: extension.webview!.onWebviewMessage,
+    };
 }
 
 /**

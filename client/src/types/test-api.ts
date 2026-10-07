@@ -1,0 +1,16 @@
+import type * as vscode from "vscode";
+import type { ExtensionStatus } from "../state";
+import type { LJDiagnostic } from "./diagnostics";
+
+export interface WebviewMessage {
+    direction: "toWebview" | "fromWebview";
+    message: any;
+}
+
+export interface LiquidJavaTestApi {
+    readonly ready: Promise<void>;
+    readonly onDiagnostics: vscode.Event<LJDiagnostic[]>;
+    readonly onFailure: vscode.Event<void>;
+    getState(): { status: ExtensionStatus | undefined; diagnostics: LJDiagnostic[] };
+    readonly onWebviewMessage: vscode.Event<WebviewMessage>;
+}

@@ -19,6 +19,7 @@ export function handleLJDiagnostics(diagnostics: LJDiagnostic[]) {
     extension.webview?.sendMessage({ type: "diagnostics", diagnostics });
     if (extension.context)
         extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
+    extension.diagnosticsEmitter.fire(diagnostics);
 }
 
 /**
@@ -32,6 +33,7 @@ export function handleLJFailure() {
     if (extension.context)
         extension.webview?.sendMessage({ type: "context", context: extension.context, errorAtCursor: extension.errorAtCursor });
     updateStatusBar("crashed");
+    extension.failureEmitter.fire();
 }
 
 /**
