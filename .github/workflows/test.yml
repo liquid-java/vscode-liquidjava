@@ -63,3 +63,11 @@ jobs:
           unzip -Z1 liquid-java.vsix > /tmp/liquid-java-vsix-files.txt
           grep -Fx 'extension/dist/server/language-server-liquidjava.jar' /tmp/liquid-java-vsix-files.txt
           grep -Fx 'extension/media/webview.js' /tmp/liquid-java-vsix-files.txt
+
+      - name: Upload checked extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: liquid-java-vsix
+          path: client/liquid-java.vsix
+          if-no-files-found: error
+          retention-days: 1
