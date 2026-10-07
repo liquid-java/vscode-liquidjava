@@ -54,7 +54,7 @@ jobs:
       - name: Type-check tests
         run: npm run test:typecheck
 
-      - name: Build server
+      - name: Build and test server
         working-directory: server
         run: |
           mvn -B package
