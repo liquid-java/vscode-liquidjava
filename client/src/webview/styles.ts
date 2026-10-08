@@ -822,6 +822,9 @@ export function getStyles(): string {
             font-weight: inherit;
             text-decoration-style: solid;
         }
+        .vc-binder.highlight-var-btn.clickable {
+            text-decoration-color: currentColor;
+        }
         .vc-binder.highlight-var-btn.selected {
             color: var(--lj-token-identifier);
         }
