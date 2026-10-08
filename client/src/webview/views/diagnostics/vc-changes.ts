@@ -19,12 +19,12 @@ function hasBinder(node: VCImplication): boolean {
 function formatImplicationLine(node: VCImplication): string {
     const binder = hasBinder(node) ? `∀${node.name}` : "";
     const type = typeof node.type === "string" ? node.type : "";
-    return [binder, type, node.predicate].join(VC_LINE_SEPARATOR);
+    return [binder, type, node.predicate, node.next ? "next" : ""].join(VC_LINE_SEPARATOR);
 }
 
-function parseImplicationLine(line: string): { binder: string; type: string; predicate: string } {
-    const [binder = "", type = "", predicate = ""] = line.split(VC_LINE_SEPARATOR);
-    return { binder, type, predicate };
+function parseImplicationLine(line: string): { binder: string; type: string; predicate: string; hasNext: boolean } {
+    const [binder = "", type = "", predicate = "", next = ""] = line.split(VC_LINE_SEPARATOR);
+    return { binder, type, predicate, hasNext: next === "next" };
 }
 
 function getImplicationLines(node: VCImplication): string[] {
@@ -55,11 +55,11 @@ export function renderVCLine(
     predicateContent?: string,
     translationTable?: TranslationTable,
 ): string {
-    const { binder, type, predicate } = parseImplicationLine(line);
+    const { binder, type, predicate, hasNext } = parseImplicationLine(line);
     return /*html*/`
         <div class="vc-line ${className}">
-            ${binder ? /*html*/`<div class="vc-binder-cell">${renderBinder(binder, type, translationTable)} -&gt;</div>` : ""}
-            <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span></div>
+            ${binder ? /*html*/`<div class="vc-binder-cell">${renderBinder(binder, type, translationTable)}</div>` : ""}
+            <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span>${hasNext ? ' <span class="vc-arrow">→</span>' : ""}</div>
         </div>
     `;
 }

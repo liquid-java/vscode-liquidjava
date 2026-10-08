@@ -415,6 +415,9 @@ export function getStyles(): string {
         .vc-predicate-cell {
             color: var(--vscode-editor-foreground);
         }
+        .vc-arrow {
+            color: var(--vscode-descriptionForeground);
+        }
         .vc-predicate-cell:only-child {
             grid-column: 1 / -1;
         }
