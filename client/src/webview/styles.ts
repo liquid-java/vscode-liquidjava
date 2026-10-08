@@ -415,6 +415,12 @@ export function getStyles(): string {
         .vc-predicate-cell {
             color: var(--vscode-editor-foreground);
         }
+        .vc-arrow {
+            font-size: 1.5em;
+            line-height: 0;
+            vertical-align: middle;
+            color: var(--vscode-descriptionForeground);
+        }
         .vc-predicate-cell:only-child {
             grid-column: 1 / -1;
         }
