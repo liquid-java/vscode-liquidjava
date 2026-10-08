@@ -58,7 +58,7 @@ export function renderVCLine(
     const { binder, type, predicate } = parseImplicationLine(line);
     return /*html*/`
         <div class="vc-line ${className}">
-            ${binder ? /*html*/`<div class="vc-binder-cell">${renderBinder(binder, type, translationTable)}</div>` : ""}
+            ${binder ? /*html*/`<div class="vc-binder-cell">${renderBinder(binder, type, translationTable)} -&gt;</div>` : ""}
             <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span></div>
         </div>
     `;
