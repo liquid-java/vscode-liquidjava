@@ -820,7 +820,9 @@ export function getStyles(): string {
         }
         .highlight-var-btn.clickable:hover {
             font-weight: inherit;
-            text-decoration-style: solid;
+        }
+        .vc-binder.highlight-var-btn:not(.selected):hover {
+            background-color: color-mix(in srgb, var(--vscode-button-background) 35%, transparent);
         }
         .vc-binder.highlight-var-btn.clickable {
             text-decoration-color: currentColor;
