@@ -65,11 +65,11 @@ function renderStateErrorSummary(focus: StateErrorFocus, focusOnError: boolean):
     if (focus.unknownState) {
         summary = `${rejected}: the state of ${receiver} is unknown here`;
     } else if (focus.invalidStates.length > 0) {
-        summary = `${rejected} when ${receiver} is ${renderStates(focus.invalidStates)}`;
+        summary = `${rejected} when ${receiver} is in state ${renderStates(focus.invalidStates)}`;
     } else {
         summary = `${rejected} here`;
     }
-    if (allowedStates.length > 0) summary += ` \u00B7 allowed when ${renderStates(allowedStates)}`;
+    if (allowedStates.length > 0) summary += ` \u00B7 allowed in state ${renderStates(allowedStates)}`;
     return /*html*/`
         <div class="diagram-error-summary">
             <p class="diagram-error-text">${summary}</p>

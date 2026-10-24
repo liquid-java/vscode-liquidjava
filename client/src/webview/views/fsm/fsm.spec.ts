@@ -120,7 +120,7 @@ describe('state machine view', () => {
         renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true);
 
         const summary = document.querySelector('.diagram-error-text')!;
-        expect(summary.textContent).toBe('socket.receive() is rejected when socket is closed \u00B7 allowed when bound');
+        expect(summary.textContent).toBe('socket.receive() is rejected when socket is in state closed \u00B7 allowed in state bound');
         expect(Array.from(summary.querySelectorAll('code'), node => node.textContent)).toEqual(['socket.receive()', 'socket', 'closed', 'bound']);
         expect(button('diagram-focus-btn').textContent?.trim()).toBe('Show all');
 
@@ -137,19 +137,19 @@ describe('state machine view', () => {
             },
         }), diagram, 'TB', false, true);
 
-        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('root.getFirstChild() is rejected when root is childrenAllowed');
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('root.getFirstChild() is rejected when root is in state childrenAllowed');
     });
 
     it.each([
         [
             'the state of the receiver is unknown',
             { possibleStates: ['unbound', 'bound', 'connected', 'closed'] },
-            'socket.receive() is rejected: the state of socket is unknown here \u00B7 allowed when unbound or bound or connected',
+            'socket.receive() is rejected: the state of socket is unknown here \u00B7 allowed in state unbound or bound or connected',
         ],
         [
             'every possible state accepts the call',
             { possibleStates: ['bound'] },
-            'socket.receive() is rejected here \u00B7 allowed when bound',
+            'socket.receive() is rejected here \u00B7 allowed in state bound',
         ],
     ])('summarizes the error when %s', (_, errorContext, summary) => {
         renderStateMachineView(document.body, machine({
