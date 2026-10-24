@@ -223,4 +223,50 @@ describe('state machine view', () => {
         expect(container.style.minHeight).toBe('240px');
         expect(document.querySelector('.diagram-title')?.textContent).toBe('UpdatedConnection');
     });
+
+    it('steps through several state errors and links back to the shown one', () => {
+        const errorMachine = machine({
+            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+        });
+        const stepButtons = () => Array.from(document.querySelectorAll<HTMLButtonElement>('.state-error-step-btn'),
+            node => [node.getAttribute('aria-label'), node.disabled]);
+
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true, { index: 0, count: 3 });
+        expect(document.querySelector('.state-error-position')?.textContent).toBe('1 of 3');
+        expect(stepButtons()).toEqual([['Previous state error', true], ['Next state error', false]]);
+        expect(button('state-error-reveal-btn').textContent).toBe('View error');
+        expect(document.querySelector('.nav-tab.selected .nav-badge')?.textContent).toBe('3');
+
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true, { index: 2, count: 3 });
+        expect(document.querySelector('.state-error-position')?.textContent).toBe('3 of 3');
+        expect(stepButtons()).toEqual([['Previous state error', false], ['Next state error', true]]);
+
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true, { index: 0, count: 1 });
+        expect(document.querySelector('.state-error-stepper')).toBeNull();
+        expect(button('state-error-reveal-btn')).not.toBeNull();
+    });
+
+    it.each([
+        ['the file state machine', machine()],
+        ['no state machine', undefined],
+    ])('points to the state errors of the file when none is shown, with %s', (_, sm) => {
+        renderStateMachineView(document.body, sm, sm ? diagram : '', 'TB', false, false, { index: -1, count: 2 });
+
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('2 state errors found');
+        expect(button('state-error-show-btn').textContent).toBe('Show first');
+        expect(document.querySelector('#diagram-focus-btn')).toBeNull();
+        expect(document.querySelector('.nav-badge')?.textContent).toBe('2');
+        expect(document.body.textContent).not.toContain('No state machine available');
+
+        renderStateMachineView(document.body, sm, sm ? diagram : '', 'TB', false, false, { index: -1, count: 1 });
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('1 state error found');
+        expect(button('state-error-show-btn').textContent).toBe('Show error');
+    });
+
+    it('shows no state error badge or hint when the file has no state errors', () => {
+        renderStateMachineView(document.body, machine(), diagram, 'TB', false, false, { index: -1, count: 0 });
+
+        expect(document.querySelector('.nav-badge')).toBeNull();
+        expect(document.querySelector('.diagram-error-summary')).toBeNull();
+    });
 });

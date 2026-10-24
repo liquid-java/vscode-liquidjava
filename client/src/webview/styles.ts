@@ -144,6 +144,20 @@ export function getStyles(): string {
             opacity: 1;
             background: none;
         }
+        .nav-badge {
+            display: inline-block;
+            min-width: 1rem;
+            margin-left: 0.2rem;
+            padding: 0 0.25rem;
+            box-sizing: border-box;
+            color: var(--vscode-editor-background);
+            background: var(--vscode-errorForeground);
+            border-radius: 0.5rem;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1rem;
+            text-align: center;
+        }
         .container {
             margin: 0;
             padding: 0.5rem;
@@ -189,8 +203,7 @@ export function getStyles(): string {
             gap: 0.25rem;
         }
         .copy-diagnostic-btn,
-        .diagnostic-context-btn,
-        .diagnostic-state-machine-btn {
+        .diagnostic-context-btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -225,17 +238,28 @@ export function getStyles(): string {
             pointer-events: none;
         }
         .copy-diagnostic-btn:hover,
-        .diagnostic-context-btn:hover,
-        .diagnostic-state-machine-btn:hover {
+        .diagnostic-context-btn:hover {
             background: var(--vscode-editor-background);
             border-color: var(--vscode-widget-border);
             opacity: 1;
         }
         .copy-diagnostic-btn:disabled,
-        .diagnostic-context-btn:disabled,
-        .diagnostic-state-machine-btn:disabled {
+        .diagnostic-context-btn:disabled {
             opacity: 0.8;
             cursor: default;
+        }
+        .diagnostic-state-machine-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin: 0.75rem 0 0.25rem;
+            padding: 0.25rem 0.6rem;
+            color: var(--vscode-button-secondaryForeground);
+            background-color: var(--vscode-button-secondaryBackground);
+            font-size: 0.85rem;
+        }
+        .diagnostic-state-machine-btn:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
         }
         .icon-button-pop {
             animation: icon-button-pop 0.28s ease-out;
@@ -1071,6 +1095,31 @@ export function getStyles(): string {
         }
         .diagram-focus-btn {
             flex-shrink: 0;
+        }
+        .diagram-error-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.25rem 0.75rem;
+        }
+        .state-error-stepper {
+            display: inline-flex;
+            align-items: center;
+        }
+        .state-error-position {
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+        .state-error-reveal-btn {
+            padding: 0;
+            color: var(--vscode-textLink-foreground);
+            background: none;
+            border: none;
+            font-size: inherit;
+        }
+        .state-error-reveal-btn:hover {
+            background: none;
+            text-decoration: underline;
         }
         .diagram-error-legend {
             display: flex;

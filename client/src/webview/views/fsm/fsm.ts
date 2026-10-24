@@ -4,14 +4,27 @@ import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
 import { renderMainHeader } from "../sections";
 
-export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, focusOnError = false) {
+/**
+ * The position of the shown state error among the state errors of the current file
+ * The index is -1 when none of them is shown
+ */
+export type StateErrorNavigation = {
+    index: number;
+    count: number;
+};
+
+// shows the error context of the machine, if any, without stepping through errors
+const NO_STATE_ERROR_NAVIGATION: StateErrorNavigation = { index: 0, count: 0 };
+
+export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, focusOnError = false, stateErrors = NO_STATE_ERROR_NAVIGATION) {
     const previousDiagramContainer = root.querySelector('.diagram-container') as HTMLElement | null;
     const diagramHeight = previousDiagramContainer?.offsetHeight;
-    root.innerHTML = renderStateMachineViewHtml(sm, diagram, orientation, showConditions, focusOnError, diagramHeight);
+    root.innerHTML = renderStateMachineViewHtml(sm, diagram, orientation, showConditions, focusOnError, stateErrors, diagramHeight);
 }
 
-function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, diagramHeight?: number): string {
-    const errorFocus = getStateErrorFocus(sm);
+function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, stateErrors: StateErrorNavigation, diagramHeight?: number): string {
+    const errorFocus = stateErrors.index >= 0 ? getStateErrorFocus(sm) : null;
+    const hiddenErrors = stateErrors.index < 0 ? renderHiddenStateErrors(stateErrors.count) : '';
     const hasConditionExpansions = sm
         ? sm.initialTransitions.some(transition => !!transition.toCondition)
             || sm.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition)
@@ -22,7 +35,8 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
 
     return /*html*/`
         <div>
-            ${renderMainHeader("", 'fsm')}
+            ${renderMainHeader("", 'fsm', stateErrors.count)}
+            ${!sm ? hiddenErrors : ''}
             ${sm ? /*html*/`
                 <div class="diagram-section">
                     <div class="diagram-container"${diagramHeight ? ` style="min-height: ${diagramHeight}px"` : ''}>
@@ -37,7 +51,7 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                                 ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
                             </div>
                         </div>
-                        ${errorFocus ? renderStateErrorSummary(errorFocus, focusOnError) + renderStateErrorLegend(errorFocus) : ''}
+                        ${errorFocus ? renderStateErrorSummary(errorFocus, focusOnError, stateErrors) + renderStateErrorLegend(errorFocus) : hiddenErrors}
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
                                 <span class="diagram-condition-legend-pre">Precondition</span>
@@ -51,12 +65,12 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                         </div>
                     </div>
                 </div>`
-            : 'No state machine available for the current file'}
+            : hiddenErrors ? '' : 'No state machine available for the current file'}
         </div>
     `;
 }
 
-function renderStateErrorSummary(focus: StateErrorFocus, focusOnError: boolean): string {
+function renderStateErrorSummary(focus: StateErrorFocus, focusOnError: boolean, stateErrors: StateErrorNavigation): string {
     const call = getRejectedCallText(focus);
     const receiver = focus.receiver ? `<code>${escapeHtml(focus.receiver)}</code>` : 'the receiver';
     const rejected = `${call ? `<code>${escapeHtml(call)}</code>` : 'The call'} is rejected`;
@@ -73,9 +87,34 @@ function renderStateErrorSummary(focus: StateErrorFocus, focusOnError: boolean):
     return /*html*/`
         <div class="diagram-error-summary">
             <p class="diagram-error-text">${summary}</p>
-            <button id="diagram-focus-btn" class="diagram-focus-btn" type="button">
-                ${focusOnError ? 'Show all' : 'Focus on error'}
-            </button>
+            <div class="diagram-error-actions">
+                ${stateErrors.count > 1 ? renderStateErrorStepper(stateErrors) : ''}
+                <button id="state-error-reveal-btn" class="state-error-reveal-btn" type="button" title="Show this error in the Verification tab">View error</button>
+                <button id="diagram-focus-btn" class="diagram-focus-btn" type="button">
+                    ${focusOnError ? 'Show all' : 'Focus on error'}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderStateErrorStepper({ index, count }: StateErrorNavigation): string {
+    return /*html*/`
+        <span class="state-error-stepper">
+            ${renderCodiconButton("chevron-left", { className: "diagram-control-btn state-error-step-btn", title: "Previous state error", attributes: 'data-step="-1"', disabled: index <= 0 })}
+            <span class="state-error-position">${index + 1} of ${count}</span>
+            ${renderCodiconButton("chevron-right", { className: "diagram-control-btn state-error-step-btn", title: "Next state error", attributes: 'data-step="1"', disabled: index >= count - 1 })}
+        </span>
+    `;
+}
+
+// points to the state errors of the current file when none of them is shown
+function renderHiddenStateErrors(count: number): string {
+    if (count === 0) return '';
+    return /*html*/`
+        <div class="diagram-error-summary">
+            <p class="diagram-error-text">${count} state error${count === 1 ? '' : 's'} found</p>
+            <button id="state-error-show-btn" class="diagram-focus-btn" type="button">${count === 1 ? 'Show error' : 'Show first'}</button>
         </div>
     `;
 }

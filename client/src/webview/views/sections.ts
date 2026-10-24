@@ -5,9 +5,9 @@ import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diag
 import { renderCodicon, renderCodiconButton } from "../icons";
 import { LJVariable } from "../../types/context";
 
-export const renderMainHeader = (title: string, selectedTab: NavTab): string => /*html*/`
+export const renderMainHeader = (title: string, selectedTab: NavTab, stateErrorCount = 0): string => /*html*/`
     <div class="header">
-        ${renderNav(selectedTab)}
+        ${renderNav(selectedTab, stateErrorCount)}
         <h2>${title}</h2>
     </div>
 `;
@@ -97,12 +97,11 @@ export function renderDiagnosticContextButton(position?: SourcePosition | null):
 }
 
 export function renderDiagnosticStateMachineButton(errorIndex: number): string {
-    return renderCodiconButton("type-hierarchy", {
-        className: "diagnostic-state-machine-btn",
-        title: "View error on state machine",
-        attributes: `data-error-index="${errorIndex}"`,
-        errorBadge: true,
-    });
+    return /*html*/`
+        <button class="diagnostic-state-machine-btn" data-error-index="${errorIndex}" type="button">
+            ${renderCodicon("type-hierarchy")}<span>Show in state machine</span>
+        </button>
+    `;
 }
 
 export function renderDiagnosticRevealButton(position: SourcePosition, content: string): string {
@@ -134,13 +133,16 @@ function getFile(position: SourcePosition): string {
 
 export type NavTab = 'diagnostics' | 'fsm' | 'context';
 
-export function renderNav(selectedTab: NavTab): string {
+export function renderNav(selectedTab: NavTab, stateErrorCount = 0): string {
+    const stateErrorBadge = stateErrorCount > 0
+        ? ` <span class="nav-badge" title="${stateErrorCount} state error${stateErrorCount === 1 ? '' : 's'}">${stateErrorCount}</span>`
+        : '';
     return /*html*/`
         <nav>
             <ul>
                 <li><button class="nav-tab ${selectedTab === 'diagnostics' ? 'selected' : ''}" data-tab="diagnostics">Verification</button></li>
                 <li><button class="nav-tab ${selectedTab === 'context' ? 'selected' : ''}" data-tab="context">Context</button></li>
-                <li><button class="nav-tab ${selectedTab === 'fsm' ? 'selected' : ''}" data-tab="fsm">State Machine</button></li>
+                <li><button class="nav-tab ${selectedTab === 'fsm' ? 'selected' : ''}" data-tab="fsm">State Machine${stateErrorBadge}</button></li>
             </ul>
         </nav>
     `;

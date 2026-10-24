@@ -22,11 +22,11 @@ export function renderErrors(errors: LJError[]): string {
                 return /*html*/`
                 <li class="diagnostic-item error-item" ${renderDiagnosticDataAttributes(error)}>
                     <div class="diagnostic-actions">
-                        ${renderDiagnosticStateMachineAction(error, index)}
                         ${renderDiagnosticContextAction(error)}
                         ${renderCopyDiagnosticButton('error', index)}
                     </div>
                     ${renderError(error)}
+                    ${renderDiagnosticStateMachineAction(error, index)}
                 </li>
             `;
             }).join("")}

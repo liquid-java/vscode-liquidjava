@@ -3,7 +3,7 @@ import { renderLoading } from "./views/loading";
 import { renderStopped } from "./views/stopped";
 import { renderStateMachineView } from "./views/fsm/fsm";
 import { createMermaidDiagram, renderMermaidDiagram, resetZoom, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
-import type { LJDiagnostic, RefinementMismatchError } from "../types/diagnostics";
+import type { LJDiagnostic, RefinementMismatchError, StateRefinementError } from "../types/diagnostics";
 import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { ExtensionStatus } from "../state";
@@ -12,7 +12,8 @@ import { copyDiagnosticToClipboard, getDisplayDiagnostics, renderDiagnosticsView
 import type { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
 import type { DiagnosticRevealTarget } from "../types/diagnostics";
-import { getDiagnosticRevealTargetFromKey, getDiagnosticRevealTargetKey } from "./diagnostic-reveal";
+import { getDiagnosticRevealTarget, getDiagnosticRevealTargetFromKey, getDiagnosticRevealTargetKey } from "./diagnostic-reveal";
+import { findStateError, getAllStateErrors, getStateErrorKey, getStateErrors } from "./state-errors";
 
 type VSCodeApi = {
     postMessage(message: unknown): void;
@@ -31,8 +32,9 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let showAllDiagnostics = false;
     let currentFile: string;
     let stateMachine: LJStateMachine | undefined;
-    let diagnosticStateMachine: LJStateMachine | undefined;
-    let diagnosticStateMachineFile: string | undefined;
+    // the last state error shown, kept while switching tabs
+    let selectedStateError: StateRefinementError | undefined;
+    let cursorStateErrorKey: string | undefined;
     let context: LJContext;
     let errorAtCursor: RefinementMismatchError;
     let selectedTab: NavTab = 'diagnostics';
@@ -41,6 +43,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let showDiagramConditions = false;
     let focusDiagramOnError = false;
     let currentDiagram: string = '';
+    let renderedStateMachineView: string | undefined;
     let revealTimeout: ReturnType<typeof setTimeout> | undefined;
     const contextSectionState: ContextSectionState = {
         aliases: false,
@@ -143,15 +146,34 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             const diagnostic = getDisplayDiagnostics(diagnostics ?? [], showAllDiagnostics, currentFile)
                 .filter(d => d.category === 'error')[errorIndex];
             if (diagnostic?.type !== 'state-refinement-error' || !diagnostic.stateMachine) return;
+            showStateError(diagnostic);
+            return;
+        }
 
-            selectedTab = 'fsm';
-            diagnosticStateMachine = diagnostic.stateMachine;
-            diagnosticStateMachineFile = diagnostic.file;
-            showDiagramConditions = false;
-            focusDiagramOnError = true;
-            resetZoom(document);
-            currentDiagram = '';
-            updateView();
+        // step through the state errors of the current file
+        const stateErrorStepButton = target.closest?.('.state-error-step-btn');
+        if (stateErrorStepButton) {
+            e.stopPropagation();
+            if ((stateErrorStepButton as HTMLButtonElement).disabled) return;
+            const errors = getCurrentStateErrors();
+            const index = getShownStateErrorIndex(errors) + parseInt(stateErrorStepButton.getAttribute('data-step') || '0', 10);
+            if (errors[index]) showStateError(errors[index]);
+            return;
+        }
+
+        // show the first state error of the current file
+        if (target.closest?.('#state-error-show-btn')) {
+            e.stopPropagation();
+            const [first] = getCurrentStateErrors();
+            if (first) showStateError(first);
+            return;
+        }
+
+        // go back to the shown state error in the Verification tab
+        if (target.closest?.('#state-error-reveal-btn')) {
+            e.stopPropagation();
+            const revealTarget = selectedStateError && getDiagnosticRevealTarget(selectedStateError);
+            if (revealTarget) revealDiagnostic(revealTarget);
             return;
         }
 
@@ -281,10 +303,6 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             const tab = target.getAttribute('data-tab') as NavTab;
             if (tab && tab !== selectedTab) {
                 vscode.postMessage({ type: 'highlight', range: null });
-                if (tab === 'fsm') {
-                    diagnosticStateMachine = undefined;
-                    diagnosticStateMachineFile = undefined;
-                }
                 selectedTab = tab;
                 updateView();
             }
@@ -351,42 +369,36 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 updateView();
                 break;
             case 'diagnostics': {
+                const previousErrors = getAllStateErrors(diagnostics);
                 diagnostics = msg.diagnostics as LJDiagnostic[];
-                if (diagnosticStateMachine) {
-                    const updatedError = diagnostics.find(diagnostic =>
-                        diagnostic.type === 'state-refinement-error'
-                        && diagnostic.file.toLowerCase() === diagnosticStateMachineFile?.toLowerCase()
-                        && diagnostic.stateMachine?.className === diagnosticStateMachine?.className
-                    );
-                    diagnosticStateMachine = updatedError?.type === 'state-refinement-error'
-                        ? updatedError.stateMachine ?? diagnosticStateMachine
-                        : { ...diagnosticStateMachine, errorContext: null };
-                }
-                if (selectedTab === 'diagnostics' || (selectedTab === 'fsm' && diagnosticStateMachine)) updateView();
+                selectedStateError = findStateError(getAllStateErrors(diagnostics), selectedStateError, previousErrors);
+                if (selectedTab === 'fsm') updateStateMachineViewIfChanged();
+                else updateView();
                 break;
             }
             case 'file':
                 currentFile = msg.file;
                 if (diagnostics && !showAllDiagnostics && selectedTab === 'diagnostics') updateView();
-                diagnosticStateMachine = undefined;
-                diagnosticStateMachineFile = undefined;
                 stateMachine = undefined;
-                currentDiagram = '';
-                if (selectedTab === 'fsm') updateView();
+                if (selectedTab === 'fsm') updateStateMachineViewIfChanged();
                 break;
             case 'fsm':
                 stateMachine = (msg.sm as LJStateMachine | null) ?? undefined;
-                showDiagramConditions = false;
-                if (selectedTab === 'fsm' && !diagnosticStateMachine) updateView();
+                if (selectedTab === 'fsm') updateStateMachineViewIfChanged();
                 break;
             case 'context':
                 context = msg.context as LJContext;
                 errorAtCursor = msg.errorAtCursor as RefinementMismatchError;
+                followCursorStateError(msg.errorAtCursor as LJDiagnostic | undefined);
                 if (selectedTab === 'context') updateView();
                 break;
-            case 'revealDiagnostic':
-                revealDiagnostic(msg.diagnostic as DiagnosticRevealTarget);
+            case 'revealDiagnostic': {
+                const revealTarget = msg.diagnostic as DiagnosticRevealTarget;
+                const stateError = msg.tab === 'fsm' ? findStateErrorAt(revealTarget) : undefined;
+                if (stateError) showStateError(stateError);
+                else revealDiagnostic(revealTarget);
                 break;
+            }
         }
     });
 
@@ -405,28 +417,88 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
+        const stateErrors = getCurrentStateErrors();
+        renderedStateMachineView = undefined;
         switch (selectedTab) {
             case 'diagnostics':
                 root.innerHTML = diagnostics
-                    ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile)
+                    ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, stateErrors.length)
                     : renderLoading();
                 break;
             case 'fsm': {
-                const displayedStateMachine = diagnosticStateMachine ?? stateMachine;
-                const focusOnError = focusDiagramOnError && !!diagnosticStateMachine;
+                const shownIndex = getShownStateErrorIndex(stateErrors);
+                const shownError = stateErrors[shownIndex];
+                const displayedStateMachine = shownError?.stateMachine ?? stateMachine;
+                const focusOnError = focusDiagramOnError && !!shownError;
                 const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions, focusOnError);
                 // copy the diagram without the error overlay
                 currentDiagram = displayedStateMachine?.errorContext
                     ? createMermaidDiagram({ ...displayedStateMachine, errorContext: null }, diagramOrientation, showDiagramConditions)
                     : diagram;
-                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions, focusOnError);
+                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions, focusOnError,
+                    { index: shownIndex, count: stateErrors.length });
+                renderedStateMachineView = getStateMachineViewKey();
                 if (displayedStateMachine) renderMermaidDiagram(document, window);
                 break;
             }
             case 'context':
-                root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor);
+                root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor, stateErrors.length);
                 break;
         }
+    }
+
+    function getCurrentStateErrors(): StateRefinementError[] {
+        return getStateErrors(diagnostics, currentFile, stateMachine);
+    }
+
+    function getShownStateErrorIndex(errors: StateRefinementError[]): number {
+        if (!selectedStateError) return -1;
+        const key = getStateErrorKey(selectedStateError);
+        return errors.findIndex(error => getStateErrorKey(error) === key);
+    }
+
+    function findStateErrorAt(target: DiagnosticRevealTarget): StateRefinementError | undefined {
+        const key = getDiagnosticRevealTargetKey(target);
+        return getAllStateErrors(diagnostics).find(error => getStateErrorKey(error) === key);
+    }
+
+    function showStateError(error: StateRefinementError) {
+        selectedTab = 'fsm';
+        selectedStateError = error;
+        showDiagramConditions = false;
+        focusDiagramOnError = true;
+        resetZoom(document);
+        currentDiagram = '';
+        updateView();
+    }
+
+    // shows the state error at the cursor once the cursor reaches it, without overriding later choices in the view
+    function followCursorStateError(error: LJDiagnostic | undefined) {
+        const stateError = error?.type === 'state-refinement-error' && error.stateMachine ? error : undefined;
+        const key = stateError ? getStateErrorKey(stateError) : undefined;
+        if (key === cursorStateErrorKey) return;
+        cursorStateErrorKey = key;
+        if (!stateError || (selectedStateError && getStateErrorKey(selectedStateError) === key)) return;
+        if (selectedTab === 'fsm') {
+            showStateError(stateError);
+        } else {
+            selectedStateError = stateError;
+            focusDiagramOnError = true;
+        }
+    }
+
+    // a new verification or file only re-renders the diagram when what it shows changed, so panning and focus are kept
+    function updateStateMachineViewIfChanged() {
+        if (status !== 'loading' && status !== 'stopped' && status !== 'crashed'
+            && renderedStateMachineView === getStateMachineViewKey()) return;
+        currentDiagram = '';
+        updateView();
+    }
+
+    function getStateMachineViewKey(): string {
+        const stateErrors = getCurrentStateErrors();
+        const shownError = stateErrors[getShownStateErrorIndex(stateErrors)];
+        return JSON.stringify([shownError?.stateMachine ?? stateMachine ?? null, shownError ? getStateErrorKey(shownError) : null, stateErrors.length]);
     }
 
     function revealDiagnostic(target: DiagnosticRevealTarget) {

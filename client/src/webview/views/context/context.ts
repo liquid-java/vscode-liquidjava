@@ -11,14 +11,14 @@ export type ContextSectionState = {
     vars: boolean;
 }
 
-export function renderContextView(context: LJContext | undefined, currentFile: string | undefined, sectionState: ContextSectionState, errorAtCursor?: RefinementMismatchError): string {
+export function renderContextView(context: LJContext | undefined, currentFile: string | undefined, sectionState: ContextSectionState, errorAtCursor?: RefinementMismatchError, stateErrorCount = 0): string {
     const allVars = context?.allVars || [];
     const ghosts = context?.ghosts?.filter(ghost => ghost.file === currentFile) || [];
     const aliases = context?.aliases || [];
     const total = allVars.length + ghosts.length + aliases.length;
     return /*html*/`
         <div>
-            ${renderMainHeader("", 'context')}
+            ${renderMainHeader("", 'context', stateErrorCount)}
             ${total === 0
                 ? 'No context information available at the cursor position'
                 : `${renderContextAliases(aliases, sectionState.aliases)}

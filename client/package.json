@@ -218,7 +218,7 @@
 					{
 						"id": "diagnostics",
 						"title": "Understand diagnostics",
-						"description": "The **Verification** tab compares **Found** with **Expected**. Click a location or variable to jump to its source.\nWhen a simplification history is available, use **Previous simplification** and **Next simplification** to inspect highlighted changes. Inspect a **Hint** or **Counterexample** when available.\nSwitch between **Current file** and **Workspace**, or use **View related context** and **View error on state machine** to investigate an error.\n[Open LiquidJava view](command:liquidjava.showView)",
+						"description": "The **Verification** tab compares **Found** with **Expected**. Click a location or variable to jump to its source.\nWhen a simplification history is available, use **Previous simplification** and **Next simplification** to inspect highlighted changes. Inspect a **Hint** or **Counterexample** when available.\nSwitch between **Current file** and **Workspace**, or use **View related context** and **Show in state machine** to investigate an error.\n[Open LiquidJava view](command:liquidjava.showView)",
 						"media": {
 							"markdown": "media/walkthrough/diagnostics.md"
 						},
@@ -240,7 +240,7 @@
 					{
 						"id": "stateMachine",
 						"title": "Explore state machines",
-						"description": "The **State Machine** tab shows object states and method transitions declared with ``@StateSet`` and ``@StateRefinement``.\nPan the diagram; use **Zoom In**, **Zoom Out**, **Reset Zoom**, and **Toggle Orientation** to inspect it.\nUse **Expand Conditions** or **Collapse Conditions** to show or hide preconditions and postconditions. **Copy Mermaid Source** copies the diagram definition.\nFrom a state error, choose **View error on state machine** to see the related states and call.\n[Open LiquidJava view](command:liquidjava.showView)",
+						"description": "The **State Machine** tab shows object states and method transitions declared with ``@StateSet`` and ``@StateRefinement``.\nPan the diagram; use **Zoom In**, **Zoom Out**, **Reset Zoom**, and **Toggle Orientation** to inspect it.\nUse **Expand Conditions** or **Collapse Conditions** to show or hide preconditions and postconditions. **Copy Mermaid Source** copies the diagram definition.\nFrom a state error, choose **Show in state machine** to see the related states and call. The tab keeps the last state error shown and follows the error at the cursor; step through several with the arrows, and use **View error** to go back to it.\n[Open LiquidJava view](command:liquidjava.showView)",
 						"media": {
 							"markdown": "media/walkthrough/state-machine.md"
 						},
