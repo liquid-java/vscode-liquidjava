@@ -41,7 +41,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let status: ExtensionStatus = 'loading';
     let diagramOrientation: "LR" | "TB" = "TB";
     let showDiagramConditions = false;
-    let focusDiagramOnError = false;
+    let focusDiagramOnError = true;
     let currentDiagram: string = '';
     let renderedStateMachineView: string | undefined;
     let revealTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -156,23 +156,16 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             e.stopPropagation();
             if ((stateErrorStepButton as HTMLButtonElement).disabled) return;
             const errors = getCurrentStateErrors();
-            const index = getShownStateErrorIndex(errors) + parseInt(stateErrorStepButton.getAttribute('data-step') || '0', 10);
+            const index = getShownStateError(errors).index + parseInt(stateErrorStepButton.getAttribute('data-step') || '0', 10);
             if (errors[index]) showStateError(errors[index]);
-            return;
-        }
-
-        // show the first state error of the current file
-        if (target.closest?.('#state-error-show-btn')) {
-            e.stopPropagation();
-            const [first] = getCurrentStateErrors();
-            if (first) showStateError(first);
             return;
         }
 
         // go back to the shown state error in the Verification tab
         if (target.closest?.('#state-error-reveal-btn')) {
             e.stopPropagation();
-            const revealTarget = selectedStateError && getDiagnosticRevealTarget(selectedStateError);
+            const { error } = getShownStateError(getCurrentStateErrors());
+            const revealTarget = error && getDiagnosticRevealTarget(error);
             if (revealTarget) revealDiagnostic(revealTarget);
             return;
         }
@@ -378,6 +371,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             }
             case 'file':
                 currentFile = msg.file;
+                // the view shows the first error of the new file instead
+                if (selectedStateError && selectedStateError.file.toLowerCase() !== currentFile?.toLowerCase()) selectedStateError = undefined;
                 if (diagnostics && !showAllDiagnostics && selectedTab === 'diagnostics') updateView();
                 stateMachine = undefined;
                 if (selectedTab === 'fsm') updateStateMachineViewIfChanged();
@@ -426,8 +421,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                     : renderLoading();
                 break;
             case 'fsm': {
-                const shownIndex = getShownStateErrorIndex(stateErrors);
-                const shownError = stateErrors[shownIndex];
+                const { error: shownError, index: shownIndex } = getShownStateError(stateErrors);
                 const displayedStateMachine = shownError?.stateMachine ?? stateMachine;
                 const focusOnError = focusDiagramOnError && !!shownError;
                 const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions, focusOnError);
@@ -448,13 +442,17 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     }
 
     function getCurrentStateErrors(): StateRefinementError[] {
-        return getStateErrors(diagnostics, currentFile, stateMachine);
+        return getStateErrors(diagnostics, currentFile);
     }
 
-    function getShownStateErrorIndex(errors: StateRefinementError[]): number {
-        if (!selectedStateError) return -1;
+    /**
+     * Gets the state error the view shows and its index among the state errors of the current file
+     * This is the selected error, which is outside them when chosen from another file, or else the first one
+     */
+    function getShownStateError(errors: StateRefinementError[]): { error: StateRefinementError | undefined; index: number } {
+        if (!selectedStateError) return { error: errors[0], index: errors.length > 0 ? 0 : -1 };
         const key = getStateErrorKey(selectedStateError);
-        return errors.findIndex(error => getStateErrorKey(error) === key);
+        return { error: selectedStateError, index: errors.findIndex(error => getStateErrorKey(error) === key) };
     }
 
     function findStateErrorAt(target: DiagnosticRevealTarget): StateRefinementError | undefined {
@@ -497,7 +495,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
     function getStateMachineViewKey(): string {
         const stateErrors = getCurrentStateErrors();
-        const shownError = stateErrors[getShownStateErrorIndex(stateErrors)];
+        const { error: shownError } = getShownStateError(stateErrors);
         return JSON.stringify([shownError?.stateMachine ?? stateMachine ?? null, shownError ? getStateErrorKey(shownError) : null, stateErrors.length]);
     }
 

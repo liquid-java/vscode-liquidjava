@@ -246,24 +246,28 @@ describe('state machine view', () => {
         expect(button('state-error-reveal-btn')).not.toBeNull();
     });
 
-    it.each([
-        ['the file state machine', machine()],
-        ['no state machine', undefined],
-    ])('points to the state errors of the file when none is shown, with %s', (_, sm) => {
-        renderStateMachineView(document.body, sm, sm ? diagram : '', 'TB', false, false, { index: -1, count: 2 });
+    it('shows an error chosen from another file without stepping through the errors of the file', () => {
+        const errorMachine = machine({
+            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+        });
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true, { index: -1, count: 2 });
 
-        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('2 state errors found');
-        expect(button('state-error-show-btn').textContent).toBe('Show first');
-        expect(document.querySelector('#diagram-focus-btn')).toBeNull();
+        expect(document.querySelector('.state-error-stepper')).toBeNull();
+        expect(button('state-error-reveal-btn')).not.toBeNull();
         expect(document.querySelector('.nav-badge')?.textContent).toBe('2');
-        expect(document.body.textContent).not.toContain('No state machine available');
-
-        renderStateMachineView(document.body, sm, sm ? diagram : '', 'TB', false, false, { index: -1, count: 1 });
-        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('1 state error found');
-        expect(button('state-error-show-btn').textContent).toBe('Show error');
     });
 
-    it('shows no state error badge or hint when the file has no state errors', () => {
+    it('keeps the focus toggle with the legend, apart from the error actions', () => {
+        const errorMachine = machine({
+            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+        });
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true, { index: 0, count: 3 });
+
+        expect(button('diagram-focus-btn').closest('.diagram-error-legend')).not.toBeNull();
+        expect(document.querySelector('.diagram-error-actions #diagram-focus-btn')).toBeNull();
+    });
+
+    it('shows no state error badge or summary when the file has no state errors', () => {
         renderStateMachineView(document.body, machine(), diagram, 'TB', false, false, { index: -1, count: 0 });
 
         expect(document.querySelector('.nav-badge')).toBeNull();

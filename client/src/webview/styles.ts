@@ -252,7 +252,7 @@ export function getStyles(): string {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            margin: 0.75rem 0 0.25rem;
+            margin: 0 0 1rem;
             padding: 0.25rem 0.6rem;
             color: var(--vscode-button-secondaryForeground);
             background-color: var(--vscode-button-secondaryBackground);
@@ -1095,6 +1095,7 @@ export function getStyles(): string {
         }
         .diagram-focus-btn {
             flex-shrink: 0;
+            margin-left: auto;
         }
         .diagram-error-actions {
             display: flex;
@@ -1124,6 +1125,7 @@ export function getStyles(): string {
         .diagram-error-legend {
             display: flex;
             flex-wrap: wrap;
+            align-items: center;
             gap: 0.25rem 1rem;
             margin-bottom: 0.75rem;
             font-size: 0.8rem;

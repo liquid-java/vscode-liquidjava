@@ -25,8 +25,7 @@ export function renderErrors(errors: LJError[]): string {
                         ${renderDiagnosticContextAction(error)}
                         ${renderCopyDiagnosticButton('error', index)}
                     </div>
-                    ${renderError(error)}
-                    ${renderDiagnosticStateMachineAction(error, index)}
+                    ${renderError(error, renderDiagnosticStateMachineAction(error, index))}
                 </li>
             `;
             }).join("")}
@@ -67,13 +66,18 @@ const errorContentRenderers: ErrorRendererMap = {
     'custom-error': (_: CustomError) => "",
 };
 
-export function renderError(error: LJError): string {
+/**
+ * Renders the error content
+ * @param error The error to render
+ * @param headerActions Actions shown below the error message
+ */
+export function renderError(error: LJError, headerActions = ''): string {
     const message = error.type === 'refinement-error' || error.type === 'state-refinement-error' ? error.customMessage : error.message;
     const header = renderDiagnosticHeader(error.title, message || '');
     const content = (errorContentRenderers[error.type] as (error: LJError) => string)?.(error) || '';
     const hint = renderHint(error.hint);
     const location = renderLocation(error);
-    return /*html*/`${header}${content}${hint}${location}`;
+    return /*html*/`${header}${headerActions}${content}${hint}${location}`;
 }
 
 function renderDiagnosticContextAction(error: LJError): string {

@@ -57,10 +57,10 @@ const stateMachine: LJStateMachine = {
     errorContext: null,
 };
 
-function stateError(title: string, sm: LJStateMachine, line = position.lineStart): LJDiagnostic {
-    const errorPosition = { ...position, lineStart: line, lineEnd: line };
+function stateError(title: string, sm: LJStateMachine, line = position.lineStart, file = currentFile): LJDiagnostic {
+    const errorPosition = { ...position, file, lineStart: line, lineEnd: line };
     return {
-        title, message: `${title} message`, hint: null, file: currentFile, position: errorPosition,
+        title, message: `${title} message`, hint: null, file, position: errorPosition,
         category: 'error', type: 'state-refinement-error', translationTable: {}, expected: 'Open(counter)',
         found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
         customMessage: '', declarationPosition: null, stateMachine: sm,
@@ -285,16 +285,28 @@ describe('webview script', () => {
         expect(root.querySelector('.diagram-title')?.textContent).toBe('First');
     });
 
-    it('points to the state errors of the file until one is shown', () => {
-        showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
+    it('opens on the first state error of the file, focused', () => {
+        showDiagnostics([
+            stateError('Second state error', errorMachine('Second', 'reset'), 9),
+            stateError('First state error', errorMachine('First', 'close'), 4),
+        ]);
         receive({ type: 'fsm', sm: stateMachine });
         click('[data-tab="fsm"]');
-        expect(root.querySelector('.diagram-error-text')?.textContent).toBe('1 state error found');
-        expect(root.querySelector('.mermaid')?.textContent).not.toContain('ljState');
 
-        click('#state-error-show-btn');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('First');
+        expect(root.querySelector('.state-error-position')?.textContent).toBe('1 of 2');
         expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
-        expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('ljStateDimmed');
+    });
+
+    it('counts only the state errors of the current file, as listed in the Verification tab', () => {
+        showDiagnostics([
+            stateError('State refinement error', errorMachine('Counter', 'close'), 4),
+            stateError('Other file error', errorMachine('Counter', 'close'), 2, otherFile),
+        ]);
+
+        expect(root.querySelector('[data-tab="fsm"] .nav-badge')?.textContent).toBe('1');
+        expect(root.querySelectorAll('.diagnostic-state-machine-btn')).toHaveLength(1);
     });
 
     it('follows the state error at the cursor without overriding a later choice', () => {
@@ -368,6 +380,21 @@ describe('webview script', () => {
 
         expect(root.querySelector('.diagnostic-state-machine-btn')?.textContent?.trim()).toBe('Show in state machine');
         expect(root.querySelector('.diagnostic-actions .diagnostic-state-machine-btn')).toBeNull();
+        // right below the error message, before its details
+        const firstSection = root.querySelector('.error-item .section')!;
+        expect(root.querySelector('.diagnostic-state-machine-btn')!.compareDocumentPosition(firstSection)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+
+    it('opens on the first state error of a newly opened file', () => {
+        showDiagnostics([
+            stateError('Main error', errorMachine('Main', 'close'), 4),
+            stateError('Other file error', errorMachine('Other', 'close'), 2, otherFile),
+        ]);
+        click('.diagnostic-state-machine-btn');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Main');
+
+        receive({ type: 'file', file: otherFile });
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Other');
     });
 
     it('toggles between file and workspace errors by clicking scope buttons', () => {

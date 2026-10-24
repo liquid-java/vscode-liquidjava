@@ -1,23 +1,18 @@
 import type { LJDiagnostic, StateRefinementError } from "../types/diagnostics";
-import type { LJStateMachine } from "../types/fsm";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "./diagnostic-reveal";
 
 /**
- * Gets the state errors that the State Machine view can show for the current file
- * These are the state errors reported in the file and, since errors are usually reported in the caller file,
- * the ones on the state machine declared in the file, with the errors of the file first in source order
+ * Gets the state errors reported in the current file, in source order
+ * These are the errors the State Machine view steps through, one for each Show in state machine button of the file
  * @param diagnostics All diagnostics in the workspace
  * @param currentFile The file open in the editor
- * @param sm The state machine declared in the current file
  */
-export function getStateErrors(diagnostics: LJDiagnostic[] | undefined, currentFile: string | undefined, sm: LJStateMachine | undefined): StateRefinementError[] {
-    const isCurrentFile = (error: StateRefinementError) => !!currentFile && error.file.toLowerCase() === currentFile.toLowerCase();
+export function getStateErrors(diagnostics: LJDiagnostic[] | undefined, currentFile: string | undefined): StateRefinementError[] {
+    if (!currentFile) return [];
     return getAllStateErrors(diagnostics)
-        .filter(error => isCurrentFile(error) || error.stateMachine?.className === sm?.className)
+        .filter(error => error.file.toLowerCase() === currentFile.toLowerCase())
         .map((error, index) => ({ error, index }))
-        .sort((a, b) => Number(isCurrentFile(b.error)) - Number(isCurrentFile(a.error))
-            || a.error.file.localeCompare(b.error.file)
-            || (a.error.position?.lineStart ?? 0) - (b.error.position?.lineStart ?? 0)
+        .sort((a, b) => (a.error.position?.lineStart ?? 0) - (b.error.position?.lineStart ?? 0)
             || (a.error.position?.colStart ?? 0) - (b.error.position?.colStart ?? 0)
             || a.index - b.index)
         .map(({ error }) => error);

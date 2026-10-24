@@ -44,20 +44,11 @@ describe('state errors', () => {
     it('lists the errors of the current file in source order', () => {
         const later = stateError(20);
         const earlier = stateError(10);
-        const otherFile = stateError(5, { file: otherCallerFile, stateMachine: machine('java.util.ArrayList') });
+        const otherFile = stateError(5, { file: otherCallerFile });
 
-        expect(getStateErrors([later, otherFile, earlier], callerFile, undefined)).toEqual([earlier, later]);
-        expect(getStateErrors([later], undefined, undefined)).toEqual([]);
-    });
-
-    it('adds the errors on the state machine of the current file from other files after its own', () => {
-        const ownError = stateError(30, { file: refinementsFile, stateMachine: machine('java.util.ArrayList') });
-        const callerError = stateError(10);
-        const otherCallerError = stateError(4, { file: otherCallerFile });
-        const otherMachine = stateError(2, { file: otherCallerFile, stateMachine: machine('java.util.ArrayList') });
-
-        expect(getStateErrors([callerError, otherMachine, otherCallerError, ownError], refinementsFile, machine()))
-            .toEqual([ownError, otherCallerError, callerError]);
+        expect(getStateErrors([later, otherFile, earlier], callerFile)).toEqual([earlier, later]);
+        expect(getStateErrors([later, otherFile], refinementsFile)).toEqual([]);
+        expect(getStateErrors([later], undefined)).toEqual([]);
     });
 
     it('finds the selected error again after verification', () => {
