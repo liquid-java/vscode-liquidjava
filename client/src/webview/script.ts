@@ -39,6 +39,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let status: ExtensionStatus = 'loading';
     let diagramOrientation: "LR" | "TB" = "TB";
     let showDiagramConditions = false;
+    let focusDiagramOnError = false;
     let currentDiagram: string = '';
     let revealTimeout: ReturnType<typeof setTimeout> | undefined;
     const contextSectionState: ContextSectionState = {
@@ -147,6 +148,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             diagnosticStateMachine = diagnostic.stateMachine;
             diagnosticStateMachineFile = diagnostic.file;
             showDiagramConditions = false;
+            focusDiagramOnError = true;
+            resetZoom(document);
             currentDiagram = '';
             updateView();
             return;
@@ -195,6 +198,14 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             e.stopPropagation();
             if ((diagramConditionsButton as HTMLButtonElement).disabled) return;
             showDiagramConditions = !showDiagramConditions;
+            updateView();
+            return;
+        }
+
+        // toggle the dimming of the diagram parts unrelated to the selected state error
+        if (target.closest?.('#diagram-focus-btn')) {
+            e.stopPropagation();
+            focusDiagramOnError = !focusDiagramOnError;
             updateView();
             return;
         }
@@ -402,9 +413,13 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 break;
             case 'fsm': {
                 const displayedStateMachine = diagnosticStateMachine ?? stateMachine;
-                const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions);
-                currentDiagram = diagram;
-                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions);
+                const focusOnError = focusDiagramOnError && !!diagnosticStateMachine;
+                const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions, focusOnError);
+                // copy the diagram without the error overlay
+                currentDiagram = displayedStateMachine?.errorContext
+                    ? createMermaidDiagram({ ...displayedStateMachine, errorContext: null }, diagramOrientation, showDiagramConditions)
+                    : diagram;
+                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions, focusOnError);
                 if (displayedStateMachine) renderMermaidDiagram(document, window);
                 break;
             }

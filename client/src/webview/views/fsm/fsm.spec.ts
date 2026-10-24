@@ -109,6 +109,101 @@ describe('state machine view', () => {
         }
     });
 
+    it('summarizes where the call is rejected and allowed in one line', () => {
+        const errorMachine = machine({
+            states: ['unbound', 'bound', 'connected', 'closed'],
+            errorContext: {
+                calledMethod: 'receive', actualStates: ['bound', 'closed'], receiver: 'socket',
+                expectedStates: ['unbound', 'bound', 'connected'], possibleStates: ['bound', 'closed'],
+            },
+        });
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true);
+
+        const summary = document.querySelector('.diagram-error-text')!;
+        expect(summary.textContent).toBe('socket.receive() is rejected when socket is in state closed \u00B7 allowed in state bound');
+        expect(Array.from(summary.querySelectorAll('code'), node => node.textContent)).toEqual(['socket.receive()', 'socket', 'closed', 'bound']);
+        expect(button('diagram-focus-btn').textContent?.trim()).toBe('Show all');
+
+        renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, false);
+        expect(button('diagram-focus-btn').textContent?.trim()).toBe('Focus on error');
+    });
+
+    it('omits the allowed part of the summary when no possible state accepts the call', () => {
+        renderStateMachineView(document.body, machine({
+            states: ['childrenAllowed', 'maybeHasChildren'],
+            errorContext: {
+                calledMethod: 'getFirstChild', actualStates: ['childrenAllowed'], receiver: 'root',
+                expectedStates: ['maybeHasChildren'], definiteFoundState: 'childrenAllowed',
+            },
+        }), diagram, 'TB', false, true);
+
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('root.getFirstChild() is rejected when root is in state childrenAllowed');
+    });
+
+    it.each([
+        [
+            'the state of the receiver is unknown',
+            { possibleStates: ['unbound', 'bound', 'connected', 'closed'] },
+            'socket.receive() is rejected: the state of socket is unknown here \u00B7 allowed in state unbound or bound or connected',
+        ],
+        [
+            'every possible state accepts the call',
+            { possibleStates: ['bound'] },
+            'socket.receive() is rejected here \u00B7 allowed in state bound',
+        ],
+    ])('summarizes the error when %s', (_, errorContext, summary) => {
+        renderStateMachineView(document.body, machine({
+            states: ['unbound', 'bound', 'connected', 'closed'],
+            errorContext: {
+                calledMethod: 'receive', actualStates: [], receiver: 'socket',
+                expectedStates: ['unbound', 'bound', 'connected'], ...errorContext,
+            },
+        }), diagram, 'TB', false, true);
+
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe(summary);
+    });
+
+    it.each([
+        ['invalid, valid, and other accepted states', ['bound', 'closed'], ['\u2715 Call rejected', '\u2713 Call allowed', 'Allowed, but not reachable here']],
+        ['only an invalid and other accepted states', ['closed'], ['\u2715 Call rejected', 'Allowed, but not reachable here']],
+        ['an unknown receiver state', ['unbound', 'bound', 'connected', 'closed'], ['Allowed, but not reachable here']],
+    ])('explains the state marks in a legend with %s', (_, possibleStates, items) => {
+        renderStateMachineView(document.body, machine({
+            states: ['unbound', 'bound', 'connected', 'closed'],
+            errorContext: {
+                calledMethod: 'receive', actualStates: [], receiver: 'socket',
+                expectedStates: ['unbound', 'bound', 'connected'], possibleStates,
+            },
+        }), diagram, 'TB', false, true);
+
+        const legend = document.querySelectorAll('.diagram-error-legend-item');
+        expect(Array.from(legend, item => item.textContent)).toEqual(items);
+        expect(Array.from(legend, item => item.querySelector('.diagram-error-legend-swatch')?.getAttribute('aria-hidden'))).toEqual(items.map(() => 'true'));
+    });
+
+    it.each([
+        ['no error', null],
+        ['an error context without the accepted states', { calledMethod: 'open', actualStates: ['Closed'] }],
+    ])('omits the error summary with %s', (_, errorContext) => {
+        renderStateMachineView(document.body, machine({ errorContext }), diagram, 'TB', false, true);
+
+        expect(document.querySelector('.diagram-error-summary')).toBeNull();
+        expect(document.querySelector('.diagram-error-legend')).toBeNull();
+        expect(document.querySelector('#diagram-focus-btn')).toBeNull();
+    });
+
+    it('clips the panned diagram below the error summary and legend', () => {
+        renderStateMachineView(document.body, machine({
+            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+        }), diagram, 'TB', false, true);
+
+        const viewport = document.querySelector('.diagram-viewport')!;
+        expect(viewport.querySelector('#diagram-wrapper .mermaid')).not.toBeNull();
+        for (const selector of ['.diagram-header', '.diagram-error-summary', '.diagram-error-legend']) {
+            expect(document.querySelector(selector)?.compareDocumentPosition(viewport)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+        }
+    });
+
     it('preserves the previous diagram container height when rerendering', () => {
         renderStateMachineView(document.body, machine(), diagram, 'TB', false);
         const previousContainer = document.querySelector<HTMLElement>('.diagram-container')!;

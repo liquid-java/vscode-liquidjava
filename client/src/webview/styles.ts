@@ -42,8 +42,13 @@ export function getStyles(): string {
             --lj-token-punctuation: var(--vscode-editor-foreground);
             --lj-state-cond-pre: var(--lj-token-identifier);
             --lj-state-cond-post: var(--lj-token-type);
+            --lj-state-valid: var(--vscode-testing-iconPassed, var(--vscode-charts-green, #388a34));
+            --lj-state-invalid: var(--vscode-errorForeground);
+            --lj-state-accepted: var(--vscode-editorWarning-foreground, #cca700);
         }
         body.vscode-light {
+            /* the light warning colour is too faint for a thin dashed outline on white */
+            --lj-state-accepted: color-mix(in srgb, var(--vscode-editorWarning-foreground, #bf8803) 75%, black);
             --lj-token-keyword: #0000FF;
             --lj-token-function: #795E26;
             --lj-token-operator: #000000;
@@ -870,6 +875,10 @@ export function getStyles(): string {
         .diagram-container:active {
             cursor: grabbing;
         }
+        /* clips the panned diagram so that it stays below the header, summary, and legend */
+        .diagram-viewport {
+            overflow: hidden;
+        }
         .diagram-wrapper {
             transition: transform 0.1s ease-out;
             transform-origin: 0 0;
@@ -1015,6 +1024,87 @@ export function getStyles(): string {
         .diagram-container .mermaid svg marker.lj-state-error-marker path {
             fill: var(--vscode-errorForeground) !important;
             stroke: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid svg .ljStateInvalid .label-container {
+            fill: color-mix(in srgb, var(--lj-state-invalid) 10%, var(--vscode-editor-background)) !important;
+            stroke: var(--lj-state-invalid) !important;
+            stroke-width: 2px !important;
+        }
+        .diagram-container .mermaid svg .ljStateValid .label-container {
+            fill: color-mix(in srgb, var(--lj-state-valid) 10%, var(--vscode-editor-background)) !important;
+            stroke: var(--lj-state-valid) !important;
+            stroke-width: 2px !important;
+        }
+        .diagram-container .mermaid svg .ljStateAccepted .label-container {
+            stroke: var(--lj-state-accepted) !important;
+            stroke-width: 1px !important;
+            stroke-dasharray: 4 3;
+        }
+        .diagram-container .mermaid svg .ljStateDimmed,
+        .diagram-container .mermaid svg .lj-dimmed,
+        .diagram-container .mermaid .edgeLabel .lj-dimmed-method {
+            opacity: 0.25;
+        }
+        .diagram-container .mermaid svg .lj-dimmed .lj-dimmed-method {
+            opacity: 1;
+        }
+        /* the opaque label background would stand out from the dimmed transition */
+        .diagram-container .mermaid .edgeLabel .lj-dimmed,
+        .diagram-container .mermaid .edgeLabel .lj-dimmed * {
+            background: transparent !important;
+        }
+        .diagram-error-summary {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            cursor: default;
+            user-select: text;
+        }
+        .diagram-error-text {
+            min-width: 0;
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+        .diagram-focus-btn {
+            flex-shrink: 0;
+        }
+        .diagram-error-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .diagram-error-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            white-space: nowrap;
+        }
+        .diagram-error-legend-swatch {
+            flex-shrink: 0;
+            width: 0.9rem;
+            height: 0.6rem;
+            border-radius: 2px;
+        }
+        .diagram-error-legend-invalid {
+            background: color-mix(in srgb, var(--lj-state-invalid) 10%, var(--vscode-editor-background));
+            border: 2px solid;
+            border-color: var(--lj-state-invalid);
+        }
+        .diagram-error-legend-valid {
+            background: color-mix(in srgb, var(--lj-state-valid) 10%, var(--vscode-editor-background));
+            border: 2px solid;
+            border-color: var(--lj-state-valid);
+        }
+        .diagram-error-legend-accepted {
+            border: 1px dashed;
+            border-color: var(--lj-state-accepted);
         }
     `;
 }

@@ -57,6 +57,30 @@ const stateMachine: LJStateMachine = {
     errorContext: null,
 };
 
+function stateError(title: string, sm: LJStateMachine, line = position.lineStart): LJDiagnostic {
+    const errorPosition = { ...position, lineStart: line, lineEnd: line };
+    return {
+        title, message: `${title} message`, hint: null, file: currentFile, position: errorPosition,
+        category: 'error', type: 'state-refinement-error', translationTable: {}, expected: 'Open(counter)',
+        found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
+        customMessage: '', declarationPosition: null, stateMachine: sm,
+    };
+}
+
+function errorMachine(className: string, calledMethod: string): LJStateMachine {
+    return {
+        ...stateMachine,
+        className,
+        states: [...stateMachine.states, 'Broken'],
+        transitions: [...stateMachine.transitions, { from: 'Broken', to: 'Broken', label: 'reopen()' }],
+        initialTransitions: [{ to: 'Open' }, { to: 'Broken' }],
+        errorContext: {
+            calledMethod, actualStates: ['Closed'], receiver: 'counter', expectedStates: ['Open'],
+            expectedCondition: 'Open(counter)', foundCondition: 'Closed(counter)', definiteFoundState: 'Closed',
+        },
+    };
+}
+
 describe('webview script', () => {
     let dom: JSDOM;
     let root: HTMLElement;
@@ -139,6 +163,105 @@ describe('webview script', () => {
             [{ type: 'highlight', range: null }],
             [{ type: 'highlight', range: null }],
         ]);
+    });
+
+    it('opens a state error focused on the error and toggles the dimming', () => {
+        const error = stateError('State refinement error', errorMachine('Counter', 'close'));
+        showDiagnostics([error]);
+
+        click('.diagnostic-state-machine-btn');
+        expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('fsm');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
+
+        // the full diagram stays visible, only the dimming is toggled
+        click('#diagram-focus-btn');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Focus on error');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('Broken --> Broken : reopen()');
+        expect(root.querySelector('.mermaid')?.textContent).not.toMatch(/ljStateDimmed|lj-dimmed/);
+        expect(root.querySelector('.mermaid .lj-dimmed-method')).toBeNull();
+
+        click('#diagram-focus-btn');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
+        expect(Array.from(root.querySelectorAll('.mermaid .lj-dimmed-method'), node => node.textContent)).toEqual(['close()', 'reopen()']);
+
+        // the general diagram of the file has no error to focus on
+        click('[data-tab="diagnostics"]');
+        receive({ type: 'fsm', sm: stateMachine });
+        click('[data-tab="fsm"]');
+        expect(root.querySelector('#diagram-focus-btn')).toBeNull();
+        expect(root.querySelector('.mermaid')?.textContent).not.toContain('ljState');
+    });
+
+    it('keeps the zoom when toggling the dimming and resets it for a new error', async () => {
+        showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
+        click('.diagnostic-state-machine-btn');
+        const transform = () => root.querySelector<HTMLElement>('#diagram-wrapper')?.style.transform;
+        await vi.waitFor(() => expect(transform()).toBe('matrix(1, 0, 0, 1, 0, 0)'));
+
+        click('#zoom-in-btn');
+        click('#diagram-focus-btn');
+        await vi.waitFor(() => expect(runMermaid).toHaveBeenCalledTimes(2));
+        await vi.waitFor(() => expect(transform()).toBe('matrix(1.5, 0, 0, 1.5, 0, 0)'));
+
+        click('[data-tab="diagnostics"]');
+        click('.diagnostic-state-machine-btn');
+        await vi.waitFor(() => expect(transform()).toBe('matrix(1, 0, 0, 1, 0, 0)'));
+    });
+
+    it('copies the Mermaid source without the error overlay', async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+        showDiagnostics([]);
+        receive({ type: 'fsm', sm: { ...errorMachine('Counter', 'close'), errorContext: null } });
+        click('[data-tab="fsm"]');
+        click('#copy-diagram-btn');
+        const plain = writeText.mock.calls[0][0];
+
+        click('[data-tab="diagnostics"]');
+        showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
+        click('.diagnostic-state-machine-btn');
+        await vi.waitFor(() => expect(root.querySelector<HTMLButtonElement>('#copy-diagram-btn')?.disabled).toBe(false));
+        click('#copy-diagram-btn');
+
+        expect(root.querySelector('.mermaid')?.textContent).toContain('ljStateDimmed');
+        expect(writeText.mock.calls[1][0]).toBe(plain);
+        expect(plain).not.toMatch(/ljState|lj-dimmed|lj-state-error-method/);
+    });
+
+    it('opens another state error focused after showing the full diagram of the previous one', () => {
+        showDiagnostics([
+            stateError('First state error', errorMachine('First', 'close'), 4),
+            stateError('Second state error', errorMachine('Second', 'reset'), 9),
+        ]);
+
+        click('.diagnostic-state-machine-btn[data-error-index="0"]');
+        click('#diagram-focus-btn');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Focus on error');
+
+        click('[data-tab="diagnostics"]');
+        click('.diagnostic-state-machine-btn[data-error-index="1"]');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+        expect(root.querySelector('.diagram-error-text')?.textContent).toContain('counter.reset()');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
+    });
+
+    it('keeps the error summary selectable while the diagram pans', async () => {
+        showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
+        click('.diagnostic-state-machine-btn');
+        await vi.waitFor(() => {
+            expect(root.querySelector<HTMLElement>('#diagram-wrapper')?.style.transform).toBe('matrix(1, 0, 0, 1, 0, 0)');
+        });
+
+        const mouseDown = (selector: string) => {
+            const event = new dom.window.MouseEvent('mousedown', { bubbles: true, cancelable: true });
+            root.querySelector(selector)!.dispatchEvent(event);
+            return event.defaultPrevented;
+        };
+        expect(mouseDown('.diagram-error-text code')).toBe(false);
+        expect(mouseDown('#diagram-wrapper')).toBe(true);
     });
 
     it('toggles between file and workspace errors by clicking scope buttons', () => {
