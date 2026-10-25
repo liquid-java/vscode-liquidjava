@@ -87,7 +87,7 @@ export function createMermaidDiagram(
     });
 
     if (!errorFocus) {
-        const highlightedStates = sm.states.filter(state => sm.errorContext?.actualStates.includes(state));
+        const highlightedStates = sm.errorContext?.possibleStates ?? [];
         if (highlightedStates.length > 0) {
             lines.push(`    class ${highlightedStates.join(',')} ljStateErrorActual`);
         }

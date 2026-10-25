@@ -4,9 +4,10 @@ import java.io.File;
 
 import dtos.diagnostics.SourcePositionDTO;
 import dtos.diagnostics.VCSimplificationResultDTO;
-import liquidjava.fsm.StateMachine;
-import liquidjava.fsm.StateMachineParser;
+import dtos.fsm.StateMachineDTO;
+import liquidjava.diagnostics.errors.StateErrorContext;
 import liquidjava.diagnostics.errors.StateRefinementError;
+import liquidjava.fsm.StateMachineParser;
 import liquidjava.rj_language.ast.formatter.ExpressionFormatter;
 
 /**
@@ -18,7 +19,7 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
     public final VCSimplificationResultDTO found;
     public final String customMessage;
     public final SourcePositionDTO declarationPosition;
-    public final StateMachine stateMachine;
+    public final StateMachineDTO stateMachine;
 
     public StateRefinementErrorDTO(StateRefinementError error) {
         super("state-refinement-error", error);
@@ -26,12 +27,10 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
         this.found = VCSimplificationResultDTO.from(error.getFoundSimplification());
         this.customMessage = error.getCustomMessage();
         this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
+        StateErrorContext context = error.getContext();
         this.stateMachine = declarationPosition == null || declarationPosition.file() == null ? null
-                : StateMachineParser.parseWithErrorContext(
-                        new File(declarationPosition.file()).toURI().toString(),
-                        error.getDeclarationPosition(),
-                        error.getExpected() == null ? null : error.getExpected().getExpression(),
-                        error.getFound());
+                : StateMachineDTO.from(StateMachineParser.parse(new File(declarationPosition.file()).toURI().toString(),
+                        context == null ? null : context.receiverClass()), context);
     }
 
     public static StateRefinementErrorDTO from(StateRefinementError error) {

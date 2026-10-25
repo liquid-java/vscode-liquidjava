@@ -75,8 +75,8 @@ function errorMachine(className: string, calledMethod: string): LJStateMachine {
         transitions: [...stateMachine.transitions, { from: 'Broken', to: 'Broken', label: 'reopen()' }],
         initialTransitions: [{ to: 'Open' }, { to: 'Broken' }],
         errorContext: {
-            calledMethod, actualStates: ['Closed'], receiver: 'counter', expectedStates: ['Open'],
-            expectedCondition: 'Open(counter)', foundCondition: 'Closed(counter)', definiteFoundState: 'Closed',
+            calledMethod, receiver: 'counter', possibleStates: ['Closed'], acceptedStates: ['Open'],
+            validStates: [], invalidStates: ['Closed'],
         },
     };
 }
