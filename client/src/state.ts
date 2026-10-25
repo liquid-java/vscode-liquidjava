@@ -27,7 +27,7 @@ export class ExtensionState {
     diagnostics?: LJDiagnostic[];
     readonly diagnosticsEmitter = new vscode.EventEmitter<LJDiagnostic[]>();
     readonly failureEmitter = new vscode.EventEmitter<void>();
-    stateMachine?: LJStateMachine | null;
+    stateMachines?: LJStateMachine[] | null;
     context?: LJContext;
     currentSelection?: Range;
     errorAtCursor?: RefinementMismatchError;

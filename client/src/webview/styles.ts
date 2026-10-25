@@ -966,6 +966,22 @@ export function getStyles(): string {
             max-width: 100%;
             height: auto;
         }
+        /* the diagrams of a class with several state sets, one below the other */
+        .diagram-state-set + .diagram-state-set {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+        .diagram-state-set-title {
+            margin: 0 0 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            color: var(--vscode-descriptionForeground);
+        }
+        .diagram-state-set-dimmed {
+            opacity: 0.25;
+        }
         .diagram-header {
             position: absolute;
             top: 1rem;

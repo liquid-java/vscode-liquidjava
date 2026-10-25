@@ -40,7 +40,7 @@ function createDiagnosticCodeLenses(diagnostic: LJDiagnostic, file: string): vsc
         command: "liquidjava.showView",
         arguments: [targetDiagnostic]
     })];
-    if (diagnostic.type === 'state-refinement-error' && diagnostic.stateMachine) {
+    if (diagnostic.type === 'state-refinement-error' && diagnostic.stateMachines.length > 0) {
         codeLenses.push(new vscode.CodeLens(range, {
             title: "Show in state machine",
             command: "liquidjava.showView",

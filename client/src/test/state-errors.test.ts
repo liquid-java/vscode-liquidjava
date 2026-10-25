@@ -47,8 +47,8 @@ suite('Bundled LiquidJava state machine errors', () => {
             await ready;
 
             const machine = nextWebviewMessage('the refinements file state machine', event =>
-                event.direction === 'toWebview' && event.message.type === 'fsm' && event.message.sm
-                    ? event.message.sm as LJStateMachine : undefined);
+                event.direction === 'toWebview' && event.message.type === 'fsm' && event.message.sms?.length
+                    ? (event.message.sms as LJStateMachine[])[0] : undefined);
             const stateError = nextWebviewMessage('the state error diagnostics', event =>
                 event.direction === 'toWebview' && event.message.type === 'diagnostics'
                     ? (event.message.diagnostics as LJDiagnostic[]).find(isStateError) : undefined);
@@ -58,9 +58,9 @@ suite('Bundled LiquidJava state machine errors', () => {
 
             const [sm, error] = await Promise.all([machine, stateError]);
             assert.equal(sm.className, 'javax.swing.tree.DefaultMutableTreeNode');
-            assert.ok(error.stateMachine, 'the state error must carry its state machine');
-            assert.equal(error.stateMachine.className, sm.className, 'errors are matched to the machine by class');
-            assert.ok(error.stateMachine.errorContext, 'the state error must carry its error context');
+            assert.equal(error.stateMachines.length, 1, 'the state error must carry the state machine of each state set');
+            assert.equal(error.stateMachines[0].className, sm.className, 'errors are matched to the machine by class');
+            assert.ok(error.stateMachines[0].errorContext, 'the state error must carry its error context');
             assert.ok(error.position && sameFile(error.position.file ?? error.file, callerUri));
             assert.ok(error.declarationPosition?.file && sameFile(error.declarationPosition.file, refinementsUri));
 

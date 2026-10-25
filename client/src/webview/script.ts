@@ -2,6 +2,7 @@ import { handleVCImplicationStepClick } from "./views/diagnostics/vc-implication
 import { renderLoading } from "./views/loading";
 import { renderStopped } from "./views/stopped";
 import { renderStateMachineView } from "./views/fsm/fsm";
+import { orderStateMachines } from "./diagram-focus";
 import { createMermaidDiagram, renderMermaidDiagram, resetZoom, zoomIn, zoomOut, copyDiagramToClipboard } from "./diagram";
 import type { LJDiagnostic, RefinementMismatchError, StateRefinementError } from "../types/diagnostics";
 import type { Range } from "../types/context";
@@ -31,7 +32,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let diagnostics: LJDiagnostic[] | undefined;
     let showAllDiagnostics = false;
     let currentFile: string;
-    let stateMachine: LJStateMachine | undefined;
+    let stateMachines: LJStateMachine[] = [];
     // the last state error shown, kept while switching tabs
     let selectedStateError: StateRefinementError | undefined;
     let cursorStateErrorKey: string | undefined;
@@ -152,7 +153,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             const errorIndex = parseInt(diagnosticStateMachineButton.getAttribute('data-error-index') || '-1', 10);
             const diagnostic = getDisplayDiagnostics(diagnostics ?? [], showAllDiagnostics, currentFile)
                 .filter(d => d.category === 'error')[errorIndex];
-            if (diagnostic?.type !== 'state-refinement-error' || !diagnostic.stateMachine) return;
+            if (diagnostic?.type !== 'state-refinement-error' || diagnostic.stateMachines.length === 0) return;
             showStateError(diagnostic);
             return;
         }
@@ -381,11 +382,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 // the view shows the first error of the new file instead
                 if (selectedStateError && selectedStateError.file.toLowerCase() !== currentFile?.toLowerCase()) selectedStateError = undefined;
                 if (diagnostics && !showAllDiagnostics && selectedTab === 'diagnostics') updateView();
-                stateMachine = undefined;
+                stateMachines = [];
                 if (selectedTab === 'fsm') updateStateMachineViewIfChanged();
                 break;
             case 'fsm':
-                stateMachine = (msg.sm as LJStateMachine | null) ?? undefined;
+                stateMachines = (msg.sms as LJStateMachine[] | null) ?? [];
                 if (selectedTab === 'fsm') updateStateMachineViewIfChanged();
                 break;
             case 'context':
@@ -429,17 +430,18 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 break;
             case 'fsm': {
                 const { error: shownError, index: shownIndex } = getShownStateError(stateErrors);
-                const displayedStateMachine = shownError?.stateMachine ?? stateMachine;
+                const displayedStateMachines = orderStateMachines(shownError?.stateMachines ?? stateMachines);
                 const focusOnError = focusDiagramOnError && !!shownError;
-                const diagram = createMermaidDiagram(displayedStateMachine, diagramOrientation, showDiagramConditions, focusOnError);
-                // copy the diagram without the error overlay
-                currentDiagram = displayedStateMachine?.errorContext
-                    ? createMermaidDiagram({ ...displayedStateMachine, errorContext: null }, diagramOrientation, showDiagramConditions)
-                    : diagram;
-                renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions, focusOnError,
+                const diagrams = displayedStateMachines.map(sm =>
+                    createMermaidDiagram(sm, diagramOrientation, showDiagramConditions, focusOnError));
+                // copy the diagrams without the error overlay
+                currentDiagram = displayedStateMachines
+                    .map(sm => createMermaidDiagram({ ...sm, errorContext: null }, diagramOrientation, showDiagramConditions))
+                    .join('\n\n');
+                renderStateMachineView(root, displayedStateMachines, diagrams, diagramOrientation, showDiagramConditions, focusOnError,
                     { index: shownIndex, count: stateErrors.length, line: getStateErrorLine(shownError) });
                 renderedStateMachineView = getStateMachineViewKey();
-                if (displayedStateMachine) renderMermaidDiagram(document, window);
+                if (displayedStateMachines.length > 0) renderMermaidDiagram(document, window);
                 break;
             }
             case 'context':
@@ -485,7 +487,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
     // shows the state error at the cursor once the cursor reaches it, without overriding later choices in the view
     function followCursorStateError(error: LJDiagnostic | undefined) {
-        const stateError = error?.type === 'state-refinement-error' && error.stateMachine ? error : undefined;
+        const stateError = error?.type === 'state-refinement-error' && error.stateMachines.length > 0 ? error : undefined;
         const key = stateError ? getStateErrorKey(stateError) : undefined;
         if (key === cursorStateErrorKey) return;
         cursorStateErrorKey = key;
@@ -509,7 +511,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     function getStateMachineViewKey(): string {
         const stateErrors = getCurrentStateErrors();
         const { error: shownError } = getShownStateError(stateErrors);
-        return JSON.stringify([shownError?.stateMachine ?? stateMachine ?? null, shownError ? getStateErrorKey(shownError) : null, stateErrors.length]);
+        return JSON.stringify([shownError?.stateMachines ?? stateMachines, shownError ? getStateErrorKey(shownError) : null, stateErrors.length]);
     }
 
     function revealDiagnostic(target: DiagnosticRevealTarget) {
