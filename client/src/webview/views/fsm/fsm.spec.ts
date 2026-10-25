@@ -226,7 +226,7 @@ describe('state machine view', () => {
 
     it('steps through several state errors and links back to the shown one', () => {
         const errorMachine = machine({
-            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+            errorContext: { calledMethod: 'read', receiver: 'connection', possibleStates: ['Closed'], acceptedStates: ['Open'], validStates: [], invalidStates: ['Closed'] },
         });
         const stepButtons = () => Array.from(document.querySelectorAll<HTMLButtonElement>('.state-error-step-btn'),
             node => [node.getAttribute('aria-label'), node.disabled]);
@@ -248,7 +248,7 @@ describe('state machine view', () => {
 
     it('shows an error chosen from another file without stepping through the errors of the file', () => {
         const errorMachine = machine({
-            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+            errorContext: { calledMethod: 'read', receiver: 'connection', possibleStates: ['Closed'], acceptedStates: ['Open'], validStates: [], invalidStates: ['Closed'] },
         });
         renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true, { index: -1, count: 2 });
 
@@ -259,7 +259,7 @@ describe('state machine view', () => {
 
     it('keeps the focus toggle with the legend, apart from the error actions', () => {
         const errorMachine = machine({
-            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+            errorContext: { calledMethod: 'read', receiver: 'connection', possibleStates: ['Closed'], acceptedStates: ['Open'], validStates: [], invalidStates: ['Closed'] },
         });
         renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true, { index: 0, count: 3 });
 

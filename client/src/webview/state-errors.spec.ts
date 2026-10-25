@@ -12,7 +12,7 @@ function machine(className = 'javax.swing.tree.DefaultMutableTreeNode'): LJState
         className, states: ['childrenAllowed', 'maybeHasChildren'],
         initialTransitions: [{ to: 'childrenAllowed' }],
         transitions: [{ from: 'childrenAllowed', to: 'maybeHasChildren', label: 'add' }],
-        errorContext: { calledMethod: 'getFirstChild', actualStates: ['childrenAllowed'] },
+        errorContext: { calledMethod: 'getFirstChild', receiver: 'root', possibleStates: ['childrenAllowed'], acceptedStates: ['maybeHasChildren'], validStates: [], invalidStates: ['childrenAllowed'] },
     };
 }
 
