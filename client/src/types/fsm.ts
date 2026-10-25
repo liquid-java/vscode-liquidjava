@@ -8,13 +8,16 @@ export type LJStateMachine = {
     errorContext: LJStateMachineErrorContext | null;
 };
 
+// The verifier's states of a rejected call, on the diagram's states
 export type LJStateMachineErrorContext = {
-    calledMethod: string | null;
-    actualStates: string[];
-    receiver?: string | null;
-    expectedStates?: string[];
-    expectedCondition?: string | null;
-    foundCondition?: string | null;
-    definiteFoundState?: string | null;
-    possibleStates?: string[];
+    calledMethod: string;
+    receiver: string;
+    // states the receiver may be in at the call
+    possibleStates: string[];
+    // states from which the call is accepted, empty when they depend on more than the receiver's state
+    acceptedStates: string[];
+    // possible states from which the call is accepted
+    validStates: string[];
+    // possible states from which the call is rejected
+    invalidStates: string[];
 };

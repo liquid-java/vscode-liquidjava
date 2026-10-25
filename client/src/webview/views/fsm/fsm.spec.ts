@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { LJStateMachine } from '../../../types/fsm';
+import type { LJStateMachine, LJStateMachineErrorContext } from '../../../types/fsm';
 import { renderStateMachineView } from './fsm';
 
 const diagram = 'stateDiagram-v2\n[*] --> Closed\nClosed --> Open: open';
@@ -10,6 +10,16 @@ function machine(overrides: Partial<LJStateMachine> = {}): LJStateMachine {
         initialTransitions: [{ to: 'Closed' }],
         transitions: [{ from: 'Closed', to: 'Open', label: 'open' }],
         errorContext: null, ...overrides,
+    };
+}
+
+// socket.receive(), allowed while the socket is open, as the server reports it for the given possible states
+function socketError(possibleStates: string[]): LJStateMachineErrorContext {
+    const acceptedStates = ['unbound', 'bound', 'connected'];
+    return {
+        calledMethod: 'receive', receiver: 'socket', possibleStates, acceptedStates,
+        validStates: possibleStates.filter(state => acceptedStates.includes(state)),
+        invalidStates: possibleStates.filter(state => !acceptedStates.includes(state)),
     };
 }
 
@@ -112,10 +122,7 @@ describe('state machine view', () => {
     it('summarizes where the call is rejected and allowed in one line', () => {
         const errorMachine = machine({
             states: ['unbound', 'bound', 'connected', 'closed'],
-            errorContext: {
-                calledMethod: 'receive', actualStates: ['bound', 'closed'], receiver: 'socket',
-                expectedStates: ['unbound', 'bound', 'connected'], possibleStates: ['bound', 'closed'],
-            },
+            errorContext: socketError(['bound', 'closed']),
         });
         renderStateMachineView(document.body, errorMachine, diagram, 'TB', false, true);
 
@@ -132,8 +139,8 @@ describe('state machine view', () => {
         renderStateMachineView(document.body, machine({
             states: ['childrenAllowed', 'maybeHasChildren'],
             errorContext: {
-                calledMethod: 'getFirstChild', actualStates: ['childrenAllowed'], receiver: 'root',
-                expectedStates: ['maybeHasChildren'], definiteFoundState: 'childrenAllowed',
+                calledMethod: 'getFirstChild', receiver: 'root', possibleStates: ['childrenAllowed'],
+                acceptedStates: ['maybeHasChildren'], validStates: [], invalidStates: ['childrenAllowed'],
             },
         }), diagram, 'TB', false, true);
 
@@ -143,21 +150,18 @@ describe('state machine view', () => {
     it.each([
         [
             'the state of the receiver is unknown',
-            { possibleStates: ['unbound', 'bound', 'connected', 'closed'] },
+            ['unbound', 'bound', 'connected', 'closed'],
             'socket.receive() is rejected: the state of socket is unknown here \u00B7 allowed in state unbound or bound or connected',
         ],
         [
             'every possible state accepts the call',
-            { possibleStates: ['bound'] },
+            ['bound'],
             'socket.receive() is rejected here \u00B7 allowed in state bound',
         ],
-    ])('summarizes the error when %s', (_, errorContext, summary) => {
+    ])('summarizes the error when %s', (_, possibleStates, summary) => {
         renderStateMachineView(document.body, machine({
             states: ['unbound', 'bound', 'connected', 'closed'],
-            errorContext: {
-                calledMethod: 'receive', actualStates: [], receiver: 'socket',
-                expectedStates: ['unbound', 'bound', 'connected'], ...errorContext,
-            },
+            errorContext: socketError(possibleStates),
         }), diagram, 'TB', false, true);
 
         expect(document.querySelector('.diagram-error-text')?.textContent).toBe(summary);
@@ -170,10 +174,7 @@ describe('state machine view', () => {
     ])('explains the state marks in a legend with %s', (_, possibleStates, items) => {
         renderStateMachineView(document.body, machine({
             states: ['unbound', 'bound', 'connected', 'closed'],
-            errorContext: {
-                calledMethod: 'receive', actualStates: [], receiver: 'socket',
-                expectedStates: ['unbound', 'bound', 'connected'], possibleStates,
-            },
+            errorContext: socketError(possibleStates),
         }), diagram, 'TB', false, true);
 
         const legend = document.querySelectorAll('.diagram-error-legend-item');
@@ -183,7 +184,10 @@ describe('state machine view', () => {
 
     it.each([
         ['no error', null],
-        ['an error context without the accepted states', { calledMethod: 'open', actualStates: ['Closed'] }],
+        ['an error context without the accepted states', {
+            calledMethod: 'open', receiver: 'counter', possibleStates: ['Closed'],
+            acceptedStates: [], validStates: [], invalidStates: [],
+        }],
     ])('omits the error summary with %s', (_, errorContext) => {
         renderStateMachineView(document.body, machine({ errorContext }), diagram, 'TB', false, true);
 
@@ -194,7 +198,10 @@ describe('state machine view', () => {
 
     it('clips the panned diagram below the error summary and legend', () => {
         renderStateMachineView(document.body, machine({
-            errorContext: { calledMethod: 'read', actualStates: ['Closed'], expectedStates: ['Open'], possibleStates: ['Closed'] },
+            errorContext: {
+                calledMethod: 'read', receiver: 'counter', possibleStates: ['Closed'],
+                acceptedStates: ['Open'], validStates: [], invalidStates: ['Closed'],
+            },
         }), diagram, 'TB', false, true);
 
         const viewport = document.querySelector('.diagram-viewport')!;

@@ -16,6 +16,7 @@ import dtos.errors.*;
 import dtos.warnings.*;
 import liquidjava.diagnostics.TranslationTable;
 import liquidjava.diagnostics.errors.*;
+import liquidjava.diagnostics.hints.Hint;
 import liquidjava.diagnostics.warnings.*;
 import liquidjava.processor.VCImplication;
 import liquidjava.processor.context.PlacementInCode;
@@ -48,7 +49,7 @@ class DiagnosticConverterTest {
     @Test
     void preservesCommonDiagnosticFields() throws Exception {
         CustomError error = new CustomError("verification failed", position);
-        error.setHint("check the refinement");
+        error.addHint(Hint.general("check the refinement"));
         LJDiagnosticDTO dto = (LJDiagnosticDTO) DiagnosticConverter.convertToDTO(error);
         assertEquals("error", dto.category);
         assertEquals("custom-error", dto.type);
@@ -154,7 +155,8 @@ class DiagnosticConverterTest {
     void preservesStateRefinementDetailsWithoutDeclarationFile() {
         StateRefinementErrorDTO dto = (StateRefinementErrorDTO) DiagnosticConverter.convertToDTO(
                 new StateRefinementError(position, null, new Predicate(new LiteralBoolean(false)),
-                        new VCSimplificationResult(new VCImplication(new Predicate())), null, "expected closed"));
+                        new VCSimplificationResult(new VCImplication(new Predicate())), null, "expected closed",
+                        List.of(), null, null));
         assertEquals("error", dto.category);
         assertEquals("state-refinement-error", dto.type);
         assertEquals("false", dto.expected);

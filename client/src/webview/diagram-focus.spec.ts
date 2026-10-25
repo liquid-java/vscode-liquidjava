@@ -17,11 +17,11 @@ function treeNode(errorContext: Partial<LJStateMachineErrorContext> | null = {})
         ],
         errorContext: errorContext && {
             calledMethod: 'getFirstChild',
-            actualStates: ['childrenAllowed'],
             receiver: 'root',
-            expectedStates: ['maybeHasChildren'],
-            definiteFoundState: 'childrenAllowed',
             possibleStates: ['childrenAllowed'],
+            acceptedStates: ['maybeHasChildren'],
+            validStates: [],
+            invalidStates: ['childrenAllowed'],
             ...errorContext,
         },
     };
@@ -47,13 +47,11 @@ function datagramSocket(errorContext: Partial<LJStateMachineErrorContext> = {}):
         ],
         errorContext: {
             calledMethod: 'receive',
-            actualStates: ['bound', 'closed'],
             receiver: 'socket',
-            expectedStates: open,
-            expectedCondition: 'unbound(socket) || bound(socket) || connected(socket)',
-            foundCondition: 'flag ? closed(socket) : bound(socket)',
-            definiteFoundState: null,
             possibleStates: ['bound', 'closed'],
+            acceptedStates: open,
+            validStates: ['bound'],
+            invalidStates: ['closed'],
             ...errorContext,
         },
     };
@@ -82,16 +80,6 @@ describe('state error focus', () => {
             unknownState: false,
         });
         expect(getRelatedStates(getStateErrorFocus(datagramSocket())!)).toEqual(['bound', 'closed', 'unbound', 'connected']);
-    });
-
-    it.each([
-        ['the definite found state', { possibleStates: undefined, definiteFoundState: 'closed' }, [], ['closed']],
-        ['the found states', { possibleStates: undefined, definiteFoundState: null }, ['bound'], ['closed']],
-    ])('falls back to %s without possible states', (_, errorContext, validStates, invalidStates) => {
-        const focus = getStateErrorFocus(datagramSocket(errorContext));
-
-        expect(focus?.validStates).toEqual(validStates);
-        expect(focus?.invalidStates).toEqual(invalidStates);
     });
 
     it('marks valid and invalid states and colours every edge of the called method', () => {
@@ -174,11 +162,8 @@ describe('state error focus', () => {
             .toContain(`bound --> bound : ${calledMethod('receive')}<br/>${dimmedMethod('send')}<br/>${dimmedMethod('receiveAll')}`);
     });
 
-    it.each([
-        ['no accepted states', { expectedStates: [], possibleStates: [] }],
-        ['accepted states outside the machine', { expectedStates: ['listening'] }],
-    ])('does not focus with %s', (_, errorContext) => {
-        const sm = datagramSocket(errorContext);
+    it('does not focus without accepted states', () => {
+        const sm = datagramSocket({ acceptedStates: [], validStates: [], invalidStates: [] });
 
         expect(getStateErrorFocus(sm)).toBeNull();
         const diagram = createMermaidDiagram(sm, 'TB', false, true);
@@ -186,13 +171,12 @@ describe('state error focus', () => {
         expect(diagram).toContain('class bound,closed ljStateErrorActual');
     });
 
-    it('ignores possible states outside the machine and falls back when none are given', () => {
-        expect(getStateErrorFocus(datagramSocket({ possibleStates: ['closed', 'listening'] }))?.possibleStates).toEqual(['closed']);
-        expect(getStateErrorFocus(datagramSocket({ possibleStates: [] }))?.possibleStates).toEqual(['bound', 'closed']);
-    });
-
     it('only hints at the accepted states when the state of the receiver is unknown', () => {
-        const sm = datagramSocket({ possibleStates: ['unbound', 'bound', 'connected', 'closed', 'broken'], foundCondition: 'true' });
+        const sm = datagramSocket({
+            possibleStates: ['unbound', 'bound', 'connected', 'closed', 'broken'],
+            validStates: ['unbound', 'bound', 'connected'],
+            invalidStates: ['closed', 'broken'],
+        });
 
         const focus = getStateErrorFocus(sm);
         expect(focus).toMatchObject({ unknownState: true, validStates: [], invalidStates: [] });
@@ -220,9 +204,8 @@ describe('state error focus', () => {
         expect(dimmedTransitions(diagram.join('\n'))).toEqual(['%% lj-dimmed-transitions: edge0 edge2']);
     });
 
-    it('keeps the previous highlighting for an error context without the accepted states', () => {
-        const sm = treeNode();
-        sm.errorContext = { calledMethod: 'getFirstChild', actualStates: ['childrenAllowed'] };
+    it('only highlights the possible states when the accepted states are unknown', () => {
+        const sm = treeNode({ acceptedStates: [], validStates: [], invalidStates: [] });
 
         expect(getStateErrorFocus(sm)).toBeNull();
         const diagram = createMermaidDiagram(sm, 'TB', false, true);

@@ -28,23 +28,17 @@ export type StateErrorFocus = {
  */
 export function getStateErrorFocus(sm: LJStateMachine | undefined): StateErrorFocus | null {
     const context = sm?.errorContext;
-    const acceptedStates = sm?.states.filter(state => context?.expectedStates?.includes(state)) ?? [];
-    if (!sm || !context || acceptedStates.length === 0) return null;
+    if (!sm || !context || context.acceptedStates.length === 0) return null;
 
-    const possible = context.possibleStates?.length
-        ? context.possibleStates
-        : context.definiteFoundState ? [context.definiteFoundState] : context.actualStates;
-    const possibleStates = sm.states.filter(state => possible.includes(state));
     // marking every state as valid or invalid would only say that the state is unknown
-    const unknownState = possibleStates.length === sm.states.length;
-    const markedStates = unknownState ? [] : possibleStates;
+    const unknownState = context.possibleStates.length === sm.states.length;
     return {
         calledMethod: context.calledMethod,
-        receiver: context.receiver ?? null,
-        possibleStates,
-        validStates: markedStates.filter(state => acceptedStates.includes(state)),
-        invalidStates: markedStates.filter(state => !acceptedStates.includes(state)),
-        acceptedStates,
+        receiver: context.receiver,
+        possibleStates: context.possibleStates,
+        validStates: unknownState ? [] : context.validStates,
+        invalidStates: unknownState ? [] : context.invalidStates,
+        acceptedStates: context.acceptedStates,
         unknownState,
     };
 }
