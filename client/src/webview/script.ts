@@ -430,7 +430,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                     ? createMermaidDiagram({ ...displayedStateMachine, errorContext: null }, diagramOrientation, showDiagramConditions)
                     : diagram;
                 renderStateMachineView(root, displayedStateMachine, diagram, diagramOrientation, showDiagramConditions, focusOnError,
-                    { index: shownIndex, count: stateErrors.length });
+                    { index: shownIndex, count: stateErrors.length, line: getStateErrorLine(shownError) });
                 renderedStateMachineView = getStateMachineViewKey();
                 if (displayedStateMachine) renderMermaidDiagram(document, window);
                 break;
@@ -439,6 +439,12 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor, stateErrors.length);
                 break;
         }
+    }
+
+    // the 1-based line of the shown error, null without a position, undefined when no error is shown
+    function getStateErrorLine(error: StateRefinementError | undefined): number | null | undefined {
+        if (!error) return undefined;
+        return error.position ? error.position.lineStart + 1 : null;
     }
 
     function getCurrentStateErrors(): StateRefinementError[] {

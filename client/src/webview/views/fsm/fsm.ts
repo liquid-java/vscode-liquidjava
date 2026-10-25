@@ -11,6 +11,8 @@ import { renderMainHeader } from "../sections";
 export type StateErrorNavigation = {
     index: number;
     count: number;
+    // the 1-based line of the shown error, if any error is shown
+    line?: number | null;
 };
 
 const NO_STATE_ERROR_NAVIGATION: StateErrorNavigation = { index: -1, count: 0 };
@@ -48,7 +50,9 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                                 ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
                             </div>
                         </div>
-                        ${errorFocus ? renderStateErrorSummary(errorFocus, stateErrors) + renderStateErrorLegend(errorFocus, focusOnError) : ''}
+                        ${errorFocus
+                            ? renderStateErrorSummary(getStateErrorSummary(errorFocus), stateErrors) + renderStateErrorLegend(errorFocus, focusOnError)
+                            : isStateErrorShown(stateErrors) ? renderStateErrorSummary(getUnmarkedStateErrorSummary(sm, stateErrors), stateErrors) : ''}
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
                                 <span class="diagram-condition-legend-pre">Precondition</span>
@@ -67,7 +71,11 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
     `;
 }
 
-function renderStateErrorSummary(focus: StateErrorFocus, stateErrors: StateErrorNavigation): string {
+function isStateErrorShown(stateErrors: StateErrorNavigation): boolean {
+    return stateErrors.index >= 0 || stateErrors.line !== undefined;
+}
+
+function getStateErrorSummary(focus: StateErrorFocus): string {
     const call = getRejectedCallText(focus);
     const receiver = focus.receiver ? `<code>${escapeHtml(focus.receiver)}</code>` : 'the receiver';
     const rejected = `${call ? `<code>${escapeHtml(call)}</code>` : 'The call'} is rejected`;
@@ -81,6 +89,20 @@ function renderStateErrorSummary(focus: StateErrorFocus, stateErrors: StateError
         summary = `${rejected} here`;
     }
     if (allowedStates.length > 0) summary += ` \u00B7 allowed in state ${renderStates(allowedStates)}`;
+    return summary;
+}
+
+// the shown error cannot be marked on the diagram when the verifier could not tell which states allow the call
+function getUnmarkedStateErrorSummary(sm: LJStateMachine, stateErrors: StateErrorNavigation): string {
+    const context = sm.errorContext;
+    if (context?.calledMethod) {
+        const call = `${context.receiver ? `${context.receiver}.` : ''}${context.calledMethod}()`;
+        return `<code>${escapeHtml(call)}</code> is rejected here`;
+    }
+    return stateErrors.line ? `The call at line ${stateErrors.line} is rejected` : 'The call is rejected';
+}
+
+function renderStateErrorSummary(summary: string, stateErrors: StateErrorNavigation): string {
     return /*html*/`
         <div class="diagram-error-summary">
             <p class="diagram-error-text">${summary}</p>

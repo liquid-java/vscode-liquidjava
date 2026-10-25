@@ -309,6 +309,23 @@ describe('webview script', () => {
         expect(root.querySelectorAll('.diagnostic-state-machine-btn')).toHaveLength(1);
     });
 
+    it('steps through state errors the verifier could not mark on the diagram', () => {
+        showDiagnostics([
+            stateError('First state error', { ...errorMachine('First', 'close'), errorContext: null }, 4),
+            stateError('Second state error', { ...errorMachine('Second', 'reset'), errorContext: null }, 9),
+        ]);
+        click('[data-tab="fsm"]');
+        expect(root.querySelector('.diagram-error-text')?.textContent).toBe('The call at line 5 is rejected');
+        expect(root.querySelector('.state-error-position')?.textContent).toBe('1 of 2');
+
+        click('.state-error-step-btn[data-step="1"]');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
+        expect(root.querySelector('.diagram-error-text')?.textContent).toBe('The call at line 10 is rejected');
+
+        click('#state-error-reveal-btn');
+        expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('diagnostics');
+    });
+
     it('follows the state error at the cursor without overriding a later choice', () => {
         const first = stateError('First state error', errorMachine('First', 'close'), 4);
         const second = stateError('Second state error', errorMachine('Second', 'reset'), 9);
