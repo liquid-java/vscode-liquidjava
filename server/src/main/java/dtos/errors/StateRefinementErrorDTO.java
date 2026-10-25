@@ -1,6 +1,7 @@
 package dtos.errors;
 
 import java.io.File;
+import java.util.List;
 
 import dtos.diagnostics.SourcePositionDTO;
 import dtos.diagnostics.VCSimplificationResultDTO;
@@ -19,7 +20,7 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
     public final VCSimplificationResultDTO found;
     public final String customMessage;
     public final SourcePositionDTO declarationPosition;
-    public final StateMachineDTO stateMachine;
+    public final List<StateMachineDTO> stateMachines;
 
     public StateRefinementErrorDTO(StateRefinementError error) {
         super("state-refinement-error", error);
@@ -28,8 +29,9 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
         this.customMessage = error.getCustomMessage();
         this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
         StateErrorContext context = error.getContext();
-        this.stateMachine = declarationPosition == null || declarationPosition.file() == null ? null
-                : StateMachineDTO.from(StateMachineParser.parse(new File(declarationPosition.file()).toURI().toString(),
+        this.stateMachines = declarationPosition == null || declarationPosition.file() == null ? List.of()
+                : StateMachineDTO.from(StateMachineParser.parseAll(
+                        new File(declarationPosition.file()).toURI().toString(),
                         context == null ? null : context.receiverClass()), context);
     }
 

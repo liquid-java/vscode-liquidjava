@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -93,8 +94,8 @@ public class LJLanguageServer implements LanguageServer {
     }
 
     @JsonRequest("liquidjava/fsm")
-    public CompletableFuture<StateMachine> fsm(Uri uri) {
-        return CompletableFuture.supplyAsync(() -> StateMachineParser.parse(uri.uri()), stateMachineExecutor);
+    public CompletableFuture<List<StateMachine>> fsm(Uri uri) {
+        return CompletableFuture.supplyAsync(() -> StateMachineParser.parseAll(uri.uri()), stateMachineExecutor);
     }
 
     @JsonNotification("liquidjava/verify")
