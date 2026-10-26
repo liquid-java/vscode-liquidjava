@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { LiquidJavaWebviewProvider } from "../webview/provider";
 import { extension } from "../state";
 import type { DiagnosticRevealTarget } from "../types/diagnostics";
+import type { NavTab } from "../webview/views/sections";
 
 /**
  * Initializes the webview panel for the extension
@@ -9,7 +10,7 @@ import type { DiagnosticRevealTarget } from "../types/diagnostics";
  */
 export function registerWebview(context: vscode.ExtensionContext) {
     extension.webview = new LiquidJavaWebviewProvider(context.extensionUri);
-    let pendingDiagnosticReveal: DiagnosticRevealTarget | undefined;
+    let pendingDiagnosticReveal: { diagnostic: DiagnosticRevealTarget, tab?: NavTab } | undefined;
 
     // webview provider
     context.subscriptions.push(
@@ -18,15 +19,16 @@ export function registerWebview(context: vscode.ExtensionContext) {
     );
     // show view command
     context.subscriptions.push(
-        vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget) => {
+        // shows the diagnostic in the Verification tab, or a state error in the State Machine tab when tab is 'fsm'
+        vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget, tab?: NavTab) => {
             const isVisible = extension.webview?.isVisible();
             await vscode.commands.executeCommand("liquidJavaView.focus");
             if (!diagnostic) return; 
             
             if (isVisible) {
-                extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic });
+                extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic, tab });
             } else {
-                pendingDiagnosticReveal = diagnostic;
+                pendingDiagnosticReveal = { diagnostic, tab };
             }
         })
     );
@@ -40,7 +42,7 @@ export function registerWebview(context: vscode.ExtensionContext) {
                 if (extension.stateMachine !== undefined) extension.webview?.sendMessage({ type: "fsm", sm: extension.stateMachine });
                 if (extension.status) extension.webview?.sendMessage({ type: "status", status: extension.status });
                 if (pendingDiagnosticReveal) {
-                    extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic: pendingDiagnosticReveal });
+                    extension.webview?.sendMessage({ type: "revealDiagnostic", ...pendingDiagnosticReveal });
                     pendingDiagnosticReveal = undefined;
                 }
             }

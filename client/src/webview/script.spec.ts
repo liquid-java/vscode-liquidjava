@@ -57,10 +57,10 @@ const stateMachine: LJStateMachine = {
     errorContext: null,
 };
 
-function stateError(title: string, sm: LJStateMachine, line = position.lineStart): LJDiagnostic {
-    const errorPosition = { ...position, lineStart: line, lineEnd: line };
+function stateError(title: string, sm: LJStateMachine, line = position.lineStart, file = currentFile): LJDiagnostic {
+    const errorPosition = { ...position, file, lineStart: line, lineEnd: line };
     return {
-        title, message: `${title} message`, hint: null, file: currentFile, position: errorPosition,
+        title, message: `${title} message`, hint: null, file, position: errorPosition,
         category: 'error', type: 'state-refinement-error', translationTable: {}, expected: 'Open(counter)',
         found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
         customMessage: '', declarationPosition: null, stateMachine: sm,
@@ -186,12 +186,12 @@ describe('webview script', () => {
         expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
         expect(Array.from(root.querySelectorAll('.mermaid .lj-dimmed-method'), node => node.textContent)).toEqual(['close()', 'reopen()']);
 
-        // the general diagram of the file has no error to focus on
+        // the tab keeps the error after visiting another tab
         click('[data-tab="diagnostics"]');
         receive({ type: 'fsm', sm: stateMachine });
         click('[data-tab="fsm"]');
-        expect(root.querySelector('#diagram-focus-btn')).toBeNull();
-        expect(root.querySelector('.mermaid')?.textContent).not.toContain('ljState');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
     });
 
     it('keeps the zoom when toggling the dimming and resets it for a new error', async () => {
@@ -262,6 +262,139 @@ describe('webview script', () => {
         };
         expect(mouseDown('.diagram-error-text code')).toBe(false);
         expect(mouseDown('#diagram-wrapper')).toBe(true);
+    });
+
+    it('steps through the state errors of the file in source order', () => {
+        showDiagnostics([
+            stateError('Second state error', errorMachine('Second', 'reset'), 9),
+            stateError('First state error', errorMachine('First', 'close'), 4),
+        ]);
+        expect(root.querySelector('[data-tab="fsm"] .nav-badge')?.textContent).toBe('2');
+
+        click('.diagnostic-state-machine-btn[data-error-index="1"]');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('First');
+        expect(root.querySelector('.state-error-position')?.textContent).toBe('1 of 2');
+
+        click('.state-error-step-btn[data-step="1"]');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
+        expect(root.querySelector('.state-error-position')?.textContent).toBe('2 of 2');
+        expect(root.querySelector('.diagram-error-text')?.textContent).toContain('counter.reset()');
+        expect(root.querySelector<HTMLButtonElement>('.state-error-step-btn[data-step="1"]')?.disabled).toBe(true);
+
+        click('.state-error-step-btn[data-step="-1"]');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('First');
+    });
+
+    it('opens on the first state error of the file, focused', () => {
+        showDiagnostics([
+            stateError('Second state error', errorMachine('Second', 'reset'), 9),
+            stateError('First state error', errorMachine('First', 'close'), 4),
+        ]);
+        receive({ type: 'fsm', sm: stateMachine });
+        click('[data-tab="fsm"]');
+
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('First');
+        expect(root.querySelector('.state-error-position')?.textContent).toBe('1 of 2');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+        expect(root.querySelector('.mermaid')?.textContent).toContain('ljStateDimmed');
+    });
+
+    it('counts only the state errors of the current file, as listed in the Verification tab', () => {
+        showDiagnostics([
+            stateError('State refinement error', errorMachine('Counter', 'close'), 4),
+            stateError('Other file error', errorMachine('Counter', 'close'), 2, otherFile),
+        ]);
+
+        expect(root.querySelector('[data-tab="fsm"] .nav-badge')?.textContent).toBe('1');
+        expect(root.querySelectorAll('.diagnostic-state-machine-btn')).toHaveLength(1);
+    });
+
+    it('follows the state error at the cursor without overriding a later choice', () => {
+        const first = stateError('First state error', errorMachine('First', 'close'), 4);
+        const second = stateError('Second state error', errorMachine('Second', 'reset'), 9);
+        showDiagnostics([first, second]);
+
+        // the error reached by the cursor is shown when the tab opens
+        receive({ type: 'context', context: context(), errorAtCursor: second });
+        expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('diagnostics');
+        click('[data-tab="fsm"]');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
+
+        receive({ type: 'context', context: context(), errorAtCursor: first });
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('First');
+
+        // the same error at the cursor after a new verification keeps the error chosen in the view
+        click('.state-error-step-btn[data-step="1"]');
+        receive({ type: 'context', context: context(), errorAtCursor: { ...first } });
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
+
+        // moving away and back to an error shows it again
+        receive({ type: 'context', context: context(), errorAtCursor: undefined });
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
+        receive({ type: 'context', context: context(), errorAtCursor: first });
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('First');
+    });
+
+    it('goes back to the shown state error in the Verification tab', () => {
+        // the other error is at another position, so only the state error is revealed
+        const error = stateError('State refinement error', errorMachine('Counter', 'close'), 7);
+        showDiagnostics([diagnostic(currentFile, 'Other error'), error]);
+        click('.diagnostic-state-machine-btn');
+
+        click('#state-error-reveal-btn');
+        expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('diagnostics');
+        expect(root.querySelector('.diagnostic-item.revealed h3')?.textContent).toBe('State refinement error');
+    });
+
+    it('opens a state error on the state machine from the editor', () => {
+        const error = stateError('State refinement error', errorMachine('Counter', 'close'), 7);
+        showDiagnostics([error]);
+
+        receive({ type: 'revealDiagnostic', diagnostic: { file: currentFile, position: error.position }, tab: 'fsm' });
+        expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('fsm');
+        expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
+
+        // other diagnostics are still revealed in the Verification tab
+        receive({ type: 'revealDiagnostic', diagnostic: { file: currentFile, position: { ...position, lineStart: 1 } }, tab: 'fsm' });
+        expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('diagnostics');
+    });
+
+    it('keeps the rendered diagram when a new verification does not change it', async () => {
+        const error = stateError('State refinement error', errorMachine('Counter', 'close'));
+        showDiagnostics([error]);
+        click('.diagnostic-state-machine-btn');
+        const rendered = root.querySelector('.diagram-container');
+
+        receive({ type: 'diagnostics', diagnostics: [{ ...error }] });
+        expect(root.querySelector('.diagram-container')).toBe(rendered);
+        expect(runMermaid).toHaveBeenCalledOnce();
+
+        // fixing the error clears it from the view
+        receive({ type: 'diagnostics', diagnostics: [] });
+        expect(root.querySelector('#diagram-focus-btn')).toBeNull();
+        expect(root.querySelector('.nav-badge')).toBeNull();
+    });
+
+    it('labels the state machine action of state errors', () => {
+        showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
+
+        expect(root.querySelector('.diagnostic-state-machine-btn')?.textContent?.trim()).toBe('Show in state machine');
+        expect(root.querySelector('.diagnostic-actions .diagnostic-state-machine-btn')).toBeNull();
+        // right below the error message, before its details
+        const firstSection = root.querySelector('.error-item .section')!;
+        expect(root.querySelector('.diagnostic-state-machine-btn')!.compareDocumentPosition(firstSection)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+
+    it('opens on the first state error of a newly opened file', () => {
+        showDiagnostics([
+            stateError('Main error', errorMachine('Main', 'close'), 4),
+            stateError('Other file error', errorMachine('Other', 'close'), 2, otherFile),
+        ]);
+        click('.diagnostic-state-machine-btn');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Main');
+
+        receive({ type: 'file', file: otherFile });
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Other');
     });
 
     it('toggles between file and workspace errors by clicking scope buttons', () => {

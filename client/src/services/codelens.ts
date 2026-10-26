@@ -16,8 +16,7 @@ export function registerCodeLens(context: vscode.ExtensionContext) {
 
                 const file = normalizeFilePath(document.uri.fsPath);
                 return (extension.diagnostics || [])
-                    .map(diagnostic => createDiagnosticCodeLens(diagnostic, file))
-                    .filter((codeLens): codeLens is vscode.CodeLens => Boolean(codeLens));
+                    .flatMap(diagnostic => createDiagnosticCodeLenses(diagnostic, file));
             }
         })
     );
@@ -27,18 +26,26 @@ export function refreshCodeLenses() {
     codeLensEmitter.fire();
 }
 
-function createDiagnosticCodeLens(diagnostic: LJDiagnostic, file: string): vscode.CodeLens | undefined {
+function createDiagnosticCodeLenses(diagnostic: LJDiagnostic, file: string): vscode.CodeLens[] {
     const targetDiagnostic = getDiagnosticRevealTarget(diagnostic);
-    if (!targetDiagnostic || targetDiagnostic.file !== file) return undefined;
+    if (!targetDiagnostic || targetDiagnostic.file !== file) return [];
 
     const position = targetDiagnostic.position;
     const range = new vscode.Range(
         new vscode.Position(position.lineStart, position.colStart),
         new vscode.Position(position.lineStart, position.colStart)
     );
-    return new vscode.CodeLens(range, {
+    const codeLenses = [new vscode.CodeLens(range, {
         title: diagnostic.title,
         command: "liquidjava.showView",
         arguments: [targetDiagnostic]
-    });
+    })];
+    if (diagnostic.type === 'state-refinement-error' && diagnostic.stateMachine) {
+        codeLenses.push(new vscode.CodeLens(range, {
+            title: "Show in state machine",
+            command: "liquidjava.showView",
+            arguments: [targetDiagnostic, 'fsm']
+        }));
+    }
+    return codeLenses;
 }

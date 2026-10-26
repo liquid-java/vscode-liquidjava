@@ -11,6 +11,7 @@ export function renderDiagnosticsView(
     diagnostics: LJDiagnostic[],
     showAll: boolean,
     currentFile: string | undefined,
+    stateErrorCount = 0,
 ): string {
     const fileDiagnostics = diagnostics.filter(diagnostic => diagnostic.file?.toLowerCase() === currentFile?.toLowerCase() || !diagnostic.file);
     const displayDiagnostics = showAll ? diagnostics : fileDiagnostics;
@@ -32,7 +33,7 @@ export function renderDiagnosticsView(
     
     return /*html*/`
         <div>
-            ${renderMainHeader(hasErrors ? "" : "Passed Verification", 'diagnostics')}
+            ${renderMainHeader(hasErrors ? "" : "Passed Verification", 'diagnostics', stateErrorCount)}
             ${scopeSelector}
             ${!hasErrors ? '<p class="info">No errors were found by the LiquidJava verifier.</p>' : ''}
             ${
