@@ -25,7 +25,7 @@ suite('LiquidJava walkthrough', () => {
         assert.ok(walkthrough);
         assert.equal(walkthrough.title, 'Get Started with LiquidJava');
         assert.deepEqual(walkthrough.steps.map((step: { id: string }) => step.id),
-            ['tutorial', 'annotations', 'verification', 'commands', 'diagnostics', 'context', 'stateMachine', 'logs']);
+            ['tutorial', 'annotations', 'verification', 'commands', 'diagnostics', 'stateMachine', 'context', 'logs']);
         assert.equal(walkthrough.steps[0].title, 'Learn LiquidJava');
         const commands = await vscode.commands.getCommands(true);
         assert.ok(commands.includes('liquidjava.showWalkthrough'));
