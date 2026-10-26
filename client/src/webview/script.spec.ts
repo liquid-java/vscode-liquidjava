@@ -127,6 +127,12 @@ describe('webview script', () => {
         receive({ type: 'status', status: diagnostics.some(d => d.category === 'error') ? 'failed' : 'passed' });
     }
 
+    it('puts the State Machine tab next to Verification, which link to each other', () => {
+        showDiagnostics([]);
+
+        expect(Array.from(root.querySelectorAll('.nav-tab'), tab => tab.getAttribute('data-tab'))).toEqual(['diagnostics', 'fsm', 'context']);
+    });
+
     it('posts ready and renders the initial loading view', () => {
         expect(postMessage.mock.calls).toEqual([[{ type: 'ready' }]]);
         expect(root.querySelector('h2')?.textContent).toBe('Verification Pending');
