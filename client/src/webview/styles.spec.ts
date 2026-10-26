@@ -74,8 +74,18 @@ describe('state error styles', () => {
         render(state('ljStateDimmed') + '<path class="transition lj-dimmed"></path><g class="label lj-dimmed"></g>');
 
         for (const selector of ['.ljStateDimmed', 'path.lj-dimmed', 'g.lj-dimmed']) {
-            expect(style(selector).opacity).toBe('0.25');
+            expect(style(selector).opacity).toBe('var(--lj-dimmed-opacity)');
         }
+    });
+
+    it('fades dimmed parts less in light themes, where they would be hard to read', () => {
+        render('');
+        const dimmedOpacity = (selector: string) => Array.from(document.styleSheets[0].cssRules)
+            .map(rule => rule as CSSStyleRule)
+            .find(rule => rule.selectorText === selector)?.style.getPropertyValue('--lj-dimmed-opacity');
+
+        expect(dimmedOpacity('body')).toBe('0.25');
+        expect(dimmedOpacity('body.vscode-light')).toBe('0.5');
     });
 
     it('dims single methods of a label without dimming a dimmed transition twice', () => {
@@ -84,7 +94,7 @@ describe('state error styles', () => {
         render(label('label', 'send') + label('label lj-dimmed', 'bind'));
 
         const [method, inDimmedTransition] = document.querySelectorAll('.lj-dimmed-method');
-        expect(getComputedStyle(method).opacity).toBe('0.25');
+        expect(getComputedStyle(method).opacity).toBe('var(--lj-dimmed-opacity)');
         expect(getComputedStyle(inDimmedTransition).opacity).toBe('1');
 
         // only the background of a fully dimmed label is cleared

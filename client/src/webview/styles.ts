@@ -45,8 +45,11 @@ export function getStyles(): string {
             --lj-state-valid: var(--vscode-testing-iconPassed, var(--vscode-charts-green, #388a34));
             --lj-state-invalid: var(--vscode-errorForeground);
             --lj-state-accepted: var(--vscode-editorWarning-foreground, #cca700);
+            --lj-dimmed-opacity: 0.25;
         }
         body.vscode-light {
+            /* dark text faded on white is barely readable, so light themes fade it less */
+            --lj-dimmed-opacity: 0.5;
             /* the light warning colour is too faint for a thin dashed outline on white */
             --lj-state-accepted: color-mix(in srgb, var(--vscode-editorWarning-foreground, #bf8803) 75%, black);
             --lj-token-keyword: #0000FF;
@@ -150,13 +153,20 @@ export function getStyles(): string {
             margin-left: 0.2rem;
             padding: 0 0.25rem;
             box-sizing: border-box;
-            color: var(--vscode-editor-background);
-            background: var(--vscode-errorForeground);
             border-radius: 0.5rem;
             font-size: 10px;
             font-weight: 600;
             line-height: 1rem;
             text-align: center;
+        }
+        .nav-badge-error {
+            color: var(--vscode-editor-background);
+            background: var(--vscode-errorForeground);
+        }
+        /* Verification already counts these errors in red */
+        .nav-badge-state-error {
+            color: var(--vscode-badge-foreground);
+            background: var(--vscode-badge-background);
         }
         .container {
             margin: 0;
@@ -1128,7 +1138,7 @@ export function getStyles(): string {
         .diagram-container .mermaid svg .ljStateDimmed,
         .diagram-container .mermaid svg .lj-dimmed,
         .diagram-container .mermaid .edgeLabel .lj-dimmed-method {
-            opacity: 0.25;
+            opacity: var(--lj-dimmed-opacity);
         }
         .diagram-container .mermaid svg .lj-dimmed .lj-dimmed-method {
             opacity: 1;

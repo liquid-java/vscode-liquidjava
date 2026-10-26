@@ -329,6 +329,31 @@ describe('webview script', () => {
         expect(root.querySelector('.mermaid')?.textContent).toContain('ljStateDimmed');
     });
 
+    it('counts the errors of the current file on Verification, and its state errors in a quieter badge', () => {
+        showDiagnostics([
+            diagnostic(currentFile, 'Refinement error'),
+            stateError('State refinement error', errorMachine('Counter', 'close'), 4),
+            diagnostic(otherFile, 'Other file error'),
+        ]);
+        const badge = (tab: string) => root.querySelector(`[data-tab="${tab}"] .nav-badge`);
+
+        expect(badge('diagnostics')?.textContent).toBe('2');
+        expect(badge('diagnostics')?.getAttribute('title')).toBe('2 errors');
+        expect(badge('diagnostics')?.classList.contains('nav-badge-error')).toBe(true);
+        expect(badge('fsm')?.textContent).toBe('1');
+        expect(badge('fsm')?.classList.contains('nav-badge-state-error')).toBe(true);
+        expect(badge('context')).toBeNull();
+
+        // the badges stay up to date on the State Machine tab
+        click('[data-tab="fsm"]');
+        receive({ type: 'diagnostics', diagnostics: [stateError('State refinement error', errorMachine('Counter', 'close'), 4)] });
+        expect(badge('diagnostics')?.textContent).toBe('1');
+
+        receive({ type: 'diagnostics', diagnostics: [] });
+        expect(badge('diagnostics')).toBeNull();
+        expect(badge('fsm')).toBeNull();
+    });
+
     it('counts only the state errors of the current file, as listed in the Verification tab', () => {
         showDiagnostics([
             stateError('State refinement error', errorMachine('Counter', 'close'), 4),

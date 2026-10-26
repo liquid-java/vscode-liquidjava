@@ -4,14 +4,14 @@ import { copyToClipboard } from "../../clipboard";
 import { renderCodiconButton } from "../../icons";
 import { getFileName } from "../../utils";
 import { renderErrors } from "./errors";
-import { renderMainHeader } from "../sections";
+import { NO_NAV_BADGES, renderMainHeader } from "../sections";
 import { renderWarnings } from "./warnings";
 
 export function renderDiagnosticsView(
     diagnostics: LJDiagnostic[],
     showAll: boolean,
     currentFile: string | undefined,
-    stateErrorCount = 0,
+    badges = NO_NAV_BADGES,
 ): string {
     const fileDiagnostics = diagnostics.filter(diagnostic => diagnostic.file?.toLowerCase() === currentFile?.toLowerCase() || !diagnostic.file);
     const displayDiagnostics = showAll ? diagnostics : fileDiagnostics;
@@ -33,7 +33,7 @@ export function renderDiagnosticsView(
     
     return /*html*/`
         <div>
-            ${renderMainHeader(hasErrors ? "" : "Passed Verification", 'diagnostics', stateErrorCount)}
+            ${renderMainHeader(hasErrors ? "" : "Passed Verification", 'diagnostics', badges)}
             ${scopeSelector}
             ${!hasErrors ? '<p class="info">No errors were found by the LiquidJava verifier.</p>' : ''}
             ${
@@ -62,6 +62,12 @@ function renderScopeButton(scope: 'file' | 'workspace', label: string, count: nu
             <span class="diagnostics-scope-count">${count} error${count !== 1 ? 's' : ''}</span>
         </button>
     `;
+}
+
+// the errors of the current file, as counted by the Current file scope, or of the workspace without a current file
+export function getCurrentFileErrorCount(diagnostics: LJDiagnostic[] | undefined, currentFile: string | undefined): number {
+    const errors = (diagnostics ?? []).filter(d => d.category === 'error');
+    return currentFile ? errors.filter(d => d.file?.toLowerCase() === currentFile.toLowerCase() || !d.file).length : errors.length;
 }
 
 export function getDisplayDiagnostics(diagnostics: LJDiagnostic[], showAll: boolean, currentFile: string | undefined): LJDiagnostic[] {

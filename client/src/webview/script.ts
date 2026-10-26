@@ -9,7 +9,7 @@ import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { ExtensionStatus } from "../state";
 import { setHintOpen, type NavTab } from "./views/sections";
-import { copyDiagnosticToClipboard, getDisplayDiagnostics, renderDiagnosticsView } from "./views/diagnostics/diagnostics";
+import { copyDiagnosticToClipboard, getCurrentFileErrorCount, getDisplayDiagnostics, renderDiagnosticsView } from "./views/diagnostics/diagnostics";
 import type { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
 import type { DiagnosticRevealTarget } from "../types/diagnostics";
@@ -421,11 +421,12 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         }
 
         const stateErrors = getCurrentStateErrors();
+        const badges = { errors: getCurrentFileErrorCount(diagnostics, currentFile), stateErrors: stateErrors.length };
         renderedStateMachineView = undefined;
         switch (selectedTab) {
             case 'diagnostics':
                 root.innerHTML = diagnostics
-                    ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, stateErrors.length)
+                    ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, badges)
                     : renderLoading();
                 break;
             case 'fsm': {
@@ -439,13 +440,13 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                     .map(sm => createMermaidDiagram({ ...sm, errorContext: null }, diagramOrientation, showDiagramConditions))
                     .join('\n\n');
                 renderStateMachineView(root, displayedStateMachines, diagrams, diagramOrientation, showDiagramConditions, focusOnError,
-                    { index: shownIndex, count: stateErrors.length, line: getStateErrorLine(shownError) });
+                    { index: shownIndex, count: stateErrors.length, line: getStateErrorLine(shownError) }, badges);
                 renderedStateMachineView = getStateMachineViewKey();
                 if (displayedStateMachines.length > 0) renderMermaidDiagram(document, window);
                 break;
             }
             case 'context':
-                root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor, stateErrors.length);
+                root.innerHTML = renderContextView(context, currentFile, contextSectionState, errorAtCursor, badges);
                 break;
         }
     }
@@ -511,7 +512,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     function getStateMachineViewKey(): string {
         const stateErrors = getCurrentStateErrors();
         const { error: shownError } = getShownStateError(stateErrors);
-        return JSON.stringify([shownError?.stateMachines ?? stateMachines, shownError ? getStateErrorKey(shownError) : null, stateErrors.length]);
+        return JSON.stringify([shownError?.stateMachines ?? stateMachines, shownError ? getStateErrorKey(shownError) : null, stateErrors.length,
+            getCurrentFileErrorCount(diagnostics, currentFile)]);
     }
 
     function revealDiagnostic(target: DiagnosticRevealTarget) {

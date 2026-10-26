@@ -5,9 +5,9 @@ import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diag
 import { renderCodicon, renderCodiconButton } from "../icons";
 import { LJVariable } from "../../types/context";
 
-export const renderMainHeader = (title: string, selectedTab: NavTab, stateErrorCount = 0): string => /*html*/`
+export const renderMainHeader = (title: string, selectedTab: NavTab, badges = NO_NAV_BADGES): string => /*html*/`
     <div class="header">
-        ${renderNav(selectedTab, stateErrorCount)}
+        ${renderNav(selectedTab, badges)}
         <h2>${title}</h2>
     </div>
 `;
@@ -176,14 +176,29 @@ function getFile(position: SourcePosition): string {
 
 export type NavTab = 'diagnostics' | 'fsm' | 'context';
 
-export function renderNav(selectedTab: NavTab, stateErrorCount = 0): string {
-    const stateErrorBadge = stateErrorCount > 0
-        ? ` <span class="nav-badge" title="${stateErrorCount} state error${stateErrorCount === 1 ? '' : 's'}">${stateErrorCount}</span>`
-        : '';
+function renderNavBadge(count: number, noun: string, className: string): string {
+    if (count <= 0) return '';
+    return ` <span class="nav-badge ${className}" title="${count} ${noun}${count === 1 ? '' : 's'}">${count}</span>`;
+}
+
+/**
+ * The counts shown on the tabs: the errors of the current file on Verification, and those of them that are state
+ * errors on State Machine, in a quieter colour since Verification already counts them
+ */
+export type NavBadges = {
+    errors: number;
+    stateErrors: number;
+};
+
+export const NO_NAV_BADGES: NavBadges = { errors: 0, stateErrors: 0 };
+
+export function renderNav(selectedTab: NavTab, badges = NO_NAV_BADGES): string {
+    const errorBadge = renderNavBadge(badges.errors, 'error', 'nav-badge-error');
+    const stateErrorBadge = renderNavBadge(badges.stateErrors, 'state error', 'nav-badge-state-error');
     return /*html*/`
         <nav>
             <ul>
-                <li><button class="nav-tab ${selectedTab === 'diagnostics' ? 'selected' : ''}" data-tab="diagnostics">Verification</button></li>
+                <li><button class="nav-tab ${selectedTab === 'diagnostics' ? 'selected' : ''}" data-tab="diagnostics">Verification${errorBadge}</button></li>
                 <li><button class="nav-tab ${selectedTab === 'fsm' ? 'selected' : ''}" data-tab="fsm">State Machine${stateErrorBadge}</button></li>
                 <li><button class="nav-tab ${selectedTab === 'context' ? 'selected' : ''}" data-tab="context">Context</button></li>
             </ul>
