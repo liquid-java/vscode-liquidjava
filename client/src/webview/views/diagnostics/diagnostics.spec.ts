@@ -8,14 +8,14 @@ const otherFile = 'file:///workspace/Other.java';
 function error(file = currentFile, title = 'Invalid refinement'): CustomError {
     return {
         category: 'error', type: 'custom-error', title,
-        message: 'The refinement does not hold.', hint: null, file, position: null,
+        message: 'The refinement does not hold.', hints: [], file, position: null,
     };
 }
 
 function warning(file = currentFile): CustomWarning {
     return {
         category: 'warning', type: 'custom-warning', title: 'Verification warning',
-        message: 'Some code could not be verified.', hint: null, file, position: null,
+        message: 'Some code could not be verified.', hints: [], file, position: null,
     };
 }
 

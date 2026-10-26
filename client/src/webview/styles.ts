@@ -218,6 +218,36 @@ export function getStyles(): string {
         .hint-section[open] .hint-summary {
             margin-bottom: 0.25rem;
         }
+        .hint-body {
+            padding: 0.5rem;
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            font-family: var(--vscode-editor-font-family, monospace);
+            font-size: var(--vscode-editor-font-size, inherit);
+        }
+        .hint-message {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .hint-options-title {
+            margin: 0 0 0.25rem;
+        }
+        .hint-options ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            list-style: disc;
+        }
+        .hint-options li {
+            display: list-item;
+        }
+        .hint-options li + li {
+            margin-top: 0.4rem;
+        }
+        .hint-body > * + * {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--vscode-panel-border, transparent);
+        }
         .copy-diagnostic-btn,
         .diagnostic-context-btn {
             display: inline-flex;

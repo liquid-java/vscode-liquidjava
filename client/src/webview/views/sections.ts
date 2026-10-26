@@ -1,4 +1,4 @@
-import type { LJDiagnostic, SourcePosition } from "../../types/diagnostics";
+import type { LJDiagnostic, LJHint, SourcePosition } from "../../types/diagnostics";
 import { escapeHtml, getFileName, getSimpleName } from "../utils";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
@@ -30,19 +30,36 @@ export function setHintOpen(key: string, open: boolean) {
 }
 
 /**
- * Renders the hint of a diagnostic, closed until the user opens it
- * @param hint The hint text
- * @param key Identifies the diagnostic, so an opened hint stays open after a new verification
+ * Renders the hints of a diagnostic, closed until the user opens them
+ * Several call sequences are alternatives, so they are listed as options apart from the hints that explain the error
+ * @param hints The hints of the diagnostic
+ * @param key Identifies the diagnostic, so opened hints stay open after a new verification
  */
-export function renderHint(hint: string | null, key?: string): string {
-    if (!hint?.trim()) return '';
+export function renderHints(hints: LJHint[] | undefined, key?: string): string {
+    const shown = (hints ?? []).filter(hint => hint.message.trim());
+    if (shown.length === 0) return '';
+    const options = shown.filter(hint => hint.kind === 'call-sequence');
+    const listsOptions = options.length > 1;
+    const notes = listsOptions ? shown.filter(hint => hint.kind !== 'call-sequence') : shown;
     const open = key !== undefined && openHints.has(key);
     return /*html*/`
         <details class="section hint-section"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
-            <summary class="hint-summary">Hint</summary>
-            <pre>${escapeHtml(hint.trim())}</pre>
+            <summary class="hint-summary">${shown.length === 1 ? 'Hint' : 'Hints'}</summary>
+            <div class="hint-body">
+                ${listsOptions ? /*html*/`
+                    <div class="hint-options">
+                        <p class="hint-options-title">Any one of these:</p>
+                        <ul>${options.map(hint => `<li>${renderHintMessage(hint)}</li>`).join('')}</ul>
+                    </div>
+                ` : ''}
+                ${notes.map(hint => `<div class="hint-note">${renderHintMessage(hint)}</div>`).join('')}
+            </div>
         </details>
     `;
+}
+
+function renderHintMessage(hint: LJHint): string {
+    return `<span class="hint-message">${escapeHtml(hint.message.trim())}</span>`;
 }
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
