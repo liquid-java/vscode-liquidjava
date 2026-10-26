@@ -101,7 +101,7 @@ function getStateErrorSummary(focuses: StateErrorFocus[]): string {
     const actual = focuses.every(focus => focus.unknownState)
         ? 'unknown'
         : renderStateSets(focuses.filter(focus => !focus.unknownState).map(focus => focus.possibleStates));
-    return `${renderInvalidCall(call)} \u00B7 expected ${expected} \u00B7 actual ${actual}`;
+    return `${renderInvalidCall(call)} \u00B7 expected state ${expected} \u00B7 actual state ${actual}`;
 }
 
 // the shown error cannot be marked on the diagrams when the verifier could not tell which states allow the call

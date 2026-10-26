@@ -127,7 +127,7 @@ describe('state machine view', () => {
         renderStateMachineView(document.body, [errorMachine], [diagram], 'TB', false, true);
 
         const summary = document.querySelector('.diagram-error-text')!;
-        expect(summary.textContent).toBe('Invalid method call socket.receive() \u00B7 expected unbound or bound or connected \u00B7 actual bound or closed');
+        expect(summary.textContent).toBe('Invalid method call socket.receive() \u00B7 expected state unbound or bound or connected \u00B7 actual state bound or closed');
         expect(Array.from(summary.querySelectorAll('code'), node => node.textContent)).toEqual(['socket.receive()', 'unbound', 'bound', 'connected', 'bound', 'closed']);
         expect(button('diagram-focus-btn').textContent?.trim()).toBe('Show all');
 
@@ -144,19 +144,19 @@ describe('state machine view', () => {
             },
         })], [diagram], 'TB', false, true);
 
-        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('Invalid method call root.getFirstChild() \u00B7 expected maybeHasChildren \u00B7 actual childrenAllowed');
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('Invalid method call root.getFirstChild() \u00B7 expected state maybeHasChildren \u00B7 actual state childrenAllowed');
     });
 
     it.each([
         [
             'the state of the receiver is unknown',
             ['unbound', 'bound', 'connected', 'closed'],
-            'Invalid method call socket.receive() \u00B7 expected unbound or bound or connected \u00B7 actual unknown',
+            'Invalid method call socket.receive() \u00B7 expected state unbound or bound or connected \u00B7 actual state unknown',
         ],
         [
             'every actual is expected',
             ['bound'],
-            'Invalid method call socket.receive() \u00B7 expected unbound or bound or connected \u00B7 actual bound',
+            'Invalid method call socket.receive() \u00B7 expected state unbound or bound or connected \u00B7 actual state bound',
         ],
     ])('summarizes the error when %s', (_, possibleStates, summary) => {
         renderStateMachineView(document.body, [machine({
@@ -338,7 +338,7 @@ describe('state machine view', () => {
             expect(Array.from(document.querySelectorAll('.diagram-state-set'), node => node.classList.contains('diagram-state-set-dimmed')))
                 .toEqual([false, true]);
             expect(document.querySelector('.diagram-error-text')?.textContent)
-                .toBe('Invalid method call param.setCompressionType() \u00B7 expected compressionExplicit \u00B7 actual startCompression');
+                .toBe('Invalid method call param.setCompressionType() \u00B7 expected state compressionExplicit \u00B7 actual state startCompression');
 
             renderStateMachineView(document.body, sms, ['compression diagram', 'tiling diagram'], 'TB', false, false);
             expect(document.querySelector('.diagram-state-set-dimmed')).toBeNull();
@@ -354,7 +354,7 @@ describe('state machine view', () => {
             renderStateMachineView(document.body, sms, ['tiling diagram', 'compression diagram'], 'TB', false, true);
 
             expect(document.querySelector('.diagram-error-text')?.textContent)
-                .toBe('Invalid method call param.write() \u00B7 expected tilingSet and compressionExplicit \u00B7 actual startTiling and compressionExplicit');
+                .toBe('Invalid method call param.write() \u00B7 expected state tilingSet and compressionExplicit \u00B7 actual state startTiling and compressionExplicit');
             expect(document.querySelector('.diagram-state-set-dimmed')).toBeNull();
             expect(Array.from(document.querySelectorAll('.diagram-error-legend-item'), node => node.textContent))
                 .toEqual(['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state']);
