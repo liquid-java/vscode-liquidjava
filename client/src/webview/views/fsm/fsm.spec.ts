@@ -196,6 +196,29 @@ describe('state machine view', () => {
         expect(document.querySelector('#diagram-focus-btn')).toBeNull();
     });
 
+    it.each([
+        ['without the accepted states', {
+            calledMethod: 'open', receiver: 'counter', possibleStates: ['Closed'],
+            acceptedStates: [], validStates: [], invalidStates: [],
+        }, 'counter.open() is rejected here'],
+        ['without an error context', null, 'The call at line 12 is rejected'],
+    ])('keeps the stepper and View error for a shown error %s', (_, errorContext, text) => {
+        renderStateMachineView(document.body, machine({ errorContext }), diagram, 'TB', false, true, { index: 1, count: 2, line: 12 });
+
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe(text);
+        expect(document.querySelector('.state-error-position')?.textContent).toBe('2 of 2');
+        expect(button('state-error-reveal-btn')).not.toBeNull();
+        // nothing is marked, so there is nothing to explain or dim
+        expect(document.querySelector('.diagram-error-legend')).toBeNull();
+        expect(document.querySelector('#diagram-focus-btn')).toBeNull();
+    });
+
+    it('says the call is rejected without a line when the shown error has no position', () => {
+        renderStateMachineView(document.body, machine(), diagram, 'TB', false, true, { index: -1, count: 0, line: null });
+
+        expect(document.querySelector('.diagram-error-text')?.textContent).toBe('The call is rejected');
+    });
+
     it('clips the panned diagram below the error summary and legend', () => {
         renderStateMachineView(document.body, machine({
             errorContext: {

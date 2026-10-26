@@ -227,22 +227,22 @@
 						]
 					},
 					{
-						"id": "context",
-						"title": "Inspect context",
-						"description": "The **Context** tab shows **Variables**, **Aliases**, and **Ghosts** after verification. Expand or collapse each section.\nLocal variables are filtered by the cursor: only declarations before it and in enclosing scopes appear. Select a range to inspect declarations that overlap it; global variables are also included.\nClick a variable to reveal its source. Variables relevant to a nearby error are highlighted alongside the failing refinement.\n[Open LiquidJava view](command:liquidjava.showView)",
+						"id": "stateMachine",
+						"title": "Explore state machines",
+						"description": "The **State Machine** tab shows object states and method transitions declared with ``@StateSet`` and ``@StateRefinement``.\nPan the diagram; use **Zoom In**, **Zoom Out**, **Reset Zoom**, and **Toggle Orientation** to inspect it.\nUse **Expand Conditions** or **Collapse Conditions** to show or hide preconditions and postconditions. **Copy Mermaid Source** copies the diagram definition.\nFrom a state error, choose **Show in state machine** to see the related states and call. The tab opens on the first state error of the file, keeps the one you choose, and follows the error at the cursor; step through several with the arrows, and use **View error** to go back to it.\n[Open LiquidJava view](command:liquidjava.showView)",
 						"media": {
-							"markdown": "media/walkthrough/context.md"
+							"markdown": "media/walkthrough/state-machine.md"
 						},
 						"completionEvents": [
 							"onStepSelected"
 						]
 					},
 					{
-						"id": "stateMachine",
-						"title": "Explore state machines",
-						"description": "The **State Machine** tab shows object states and method transitions declared with ``@StateSet`` and ``@StateRefinement``.\nPan the diagram; use **Zoom In**, **Zoom Out**, **Reset Zoom**, and **Toggle Orientation** to inspect it.\nUse **Expand Conditions** or **Collapse Conditions** to show or hide preconditions and postconditions. **Copy Mermaid Source** copies the diagram definition.\nFrom a state error, choose **Show in state machine** to see the related states and call. The tab opens on the first state error of the file, keeps the one you choose, and follows the error at the cursor; step through several with the arrows, and use **View error** to go back to it.\n[Open LiquidJava view](command:liquidjava.showView)",
+						"id": "context",
+						"title": "Inspect context",
+						"description": "The **Context** tab shows **Variables**, **Aliases**, and **Ghosts** after verification. Expand or collapse each section.\nLocal variables are filtered by the cursor: only declarations before it and in enclosing scopes appear. Select a range to inspect declarations that overlap it; global variables are also included.\nClick a variable to reveal its source. Variables relevant to a nearby error are highlighted alongside the failing refinement.\n[Open LiquidJava view](command:liquidjava.showView)",
 						"media": {
-							"markdown": "media/walkthrough/state-machine.md"
+							"markdown": "media/walkthrough/context.md"
 						},
 						"completionEvents": [
 							"onStepSelected"
