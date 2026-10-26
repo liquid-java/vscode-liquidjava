@@ -2,7 +2,7 @@ import type { LJStateMachine } from "../../../types/fsm";
 import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectedCallText, getStateErrorFocuses, type StateErrorFocus } from "../../diagram-focus";
 import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
-import { renderMainHeader } from "../sections";
+import { renderMainHeader, type NavBadges } from "../sections";
 
 /**
  * The position of the shown state error among the state errors of the current file
@@ -22,13 +22,13 @@ const NO_STATE_ERROR_NAVIGATION: StateErrorNavigation = { index: -1, count: 0 };
  * @param sms the state machines, one per state set
  * @param diagrams the Mermaid diagram of each state machine
  */
-export function renderStateMachineView(root: HTMLElement, sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError = false, stateErrors = NO_STATE_ERROR_NAVIGATION) {
+export function renderStateMachineView(root: HTMLElement, sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError = false, stateErrors = NO_STATE_ERROR_NAVIGATION, badges: NavBadges = { errors: 0, stateErrors: stateErrors.count }) {
     const previousDiagramContainer = root.querySelector('.diagram-container') as HTMLElement | null;
     const diagramHeight = previousDiagramContainer?.offsetHeight;
-    root.innerHTML = renderStateMachineViewHtml(sms, diagrams, orientation, showConditions, focusOnError, stateErrors, diagramHeight);
+    root.innerHTML = renderStateMachineViewHtml(sms, diagrams, orientation, showConditions, focusOnError, stateErrors, badges, diagramHeight);
 }
 
-function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, stateErrors: StateErrorNavigation, diagramHeight?: number): string {
+function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, stateErrors: StateErrorNavigation, badges: NavBadges, diagramHeight?: number): string {
     const className = sms[0]?.className;
     const errorFocuses = getStateErrorFocuses(sms);
     const hasConditionExpansions = sms.some(sm =>
@@ -40,7 +40,7 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
 
     return /*html*/`
         <div>
-            ${renderMainHeader("", 'fsm', stateErrors.count)}
+            ${renderMainHeader("", 'fsm', badges)}
             ${className !== undefined ? /*html*/`
                 <div class="diagram-section">
                     <div class="diagram-container"${diagramHeight ? ` style="min-height: ${diagramHeight}px"` : ''}>
