@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LJStateMachine, LJStateMachineErrorContext } from '../types/fsm';
 import { createMermaidDiagram, renderMermaidDiagram } from './diagram';
-import { getRelatedStates, getStateErrorFocus } from './diagram-focus';
+import { getRelatedStates, getStateErrorFocus, getStateErrorFocuses, orderStateMachines } from './diagram-focus';
 
 // DefaultMutableTreeNode from the state error focus issue:
 // root.add(...); root.removeAllChildren(); root.getFirstChild(); // state error
@@ -248,5 +248,21 @@ describe('rendered state error focus', () => {
         const dimmed = (selector: string) => Array.from(document.querySelectorAll(selector), node => node.getAttribute('data-id'));
         expect(dimmed('path.transition.lj-dimmed')).toEqual(['edge0', 'edge1', 'edge12']);
         expect(dimmed('g.label.lj-dimmed')).toEqual(['edge0', 'edge1', 'edge12']);
+    });
+});
+
+describe('state errors on several state sets', () => {
+    const tiling: LJStateMachine = { ...treeNode(null), className: 'ImageWriteParam', stateSet: 0 };
+    const compression: LJStateMachine = { ...treeNode(), className: 'ImageWriteParam', stateSet: 1 };
+    const other: LJStateMachine = { ...treeNode(null), className: 'ImageWriteParam', stateSet: 2 };
+
+    it('puts the state sets with the error first, keeping the declaration order otherwise', () => {
+        expect(orderStateMachines([tiling, compression, other])).toEqual([compression, tiling, other]);
+        expect(orderStateMachines([tiling, other])).toEqual([tiling, other]);
+    });
+
+    it('focuses on the error of each state set that has it', () => {
+        expect(getStateErrorFocuses([tiling, compression, other])).toEqual([getStateErrorFocus(compression)]);
+        expect(getStateErrorFocuses([tiling, other])).toEqual([]);
     });
 });

@@ -24,7 +24,7 @@ export function getStateErrors(diagnostics: LJDiagnostic[] | undefined, currentF
  */
 export function getAllStateErrors(diagnostics: LJDiagnostic[] | undefined): StateRefinementError[] {
     return (diagnostics ?? []).filter((diagnostic): diagnostic is StateRefinementError =>
-        diagnostic.type === 'state-refinement-error' && !!diagnostic.stateMachine);
+        diagnostic.type === 'state-refinement-error' && diagnostic.stateMachines.length > 0);
 }
 
 export function getStateErrorKey(error: StateRefinementError): string {

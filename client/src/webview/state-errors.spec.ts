@@ -26,7 +26,7 @@ function stateError(line: number, overrides: Partial<StateRefinementError> = {})
         found: { implication: null as never, origin: null, simplification: null },
         customMessage: '',
         declarationPosition: { file: refinementsFile, lineStart: 21, colStart: 29, lineEnd: 21, colEnd: 51 },
-        stateMachine: machine(),
+        stateMachines: [machine()],
         ...overrides,
     };
 }
@@ -34,7 +34,7 @@ function stateError(line: number, overrides: Partial<StateRefinementError> = {})
 describe('state errors', () => {
     it('keeps only the state errors that carry a state machine', () => {
         const withMachine = stateError(10);
-        const withoutMachine = stateError(14, { stateMachine: null });
+        const withoutMachine = stateError(14, { stateMachines: [] });
         const refinementError = { ...stateError(16), type: 'custom-error' } as unknown as LJDiagnostic;
 
         expect(getAllStateErrors([withMachine, withoutMachine, refinementError])).toEqual([withMachine]);

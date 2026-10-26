@@ -54,10 +54,28 @@ export function getRelatedStates(focus: StateErrorFocus): string[] {
 
 /**
  * Gets the text shown for the rejected call, e.g. root.getFirstChild()
- * @param focus
+ * @param call the called method and receiver of the state error
  * @returns the call text, or null when the called method is unknown
  */
-export function getRejectedCallText(focus: StateErrorFocus): string | null {
-    if (!focus.calledMethod) return null;
-    return `${focus.receiver ? `${focus.receiver}.` : ''}${focus.calledMethod}()`;
+export function getRejectedCallText(call: Pick<StateErrorFocus, 'calledMethod' | 'receiver'>): string | null {
+    if (!call.calledMethod) return null;
+    return `${call.receiver ? `${call.receiver}.` : ''}${call.calledMethod}()`;
+}
+
+/**
+ * Orders the state machines of a class so that those of the state sets with the state error come first
+ * @param sms the state machines, one per state set, in declaration order
+ * @returns the state machines with the state error, then the others, each in declaration order
+ */
+export function orderStateMachines(sms: LJStateMachine[]): LJStateMachine[] {
+    return [...sms.filter(sm => sm.errorContext), ...sms.filter(sm => !sm.errorContext)];
+}
+
+/**
+ * Gets the state error to focus on in each state machine that has one
+ * @param sms the state machines, one per state set
+ * @returns the state error focus of each state set with the error
+ */
+export function getStateErrorFocuses(sms: LJStateMachine[]): StateErrorFocus[] {
+    return sms.map(getStateErrorFocus).filter((focus): focus is StateErrorFocus => !!focus);
 }

@@ -177,7 +177,7 @@ class DiagnosticConverterTest {
         assertEquals("true", dto.found.implication().predicate());
         assertEquals("expected closed", dto.customMessage);
         assertNull(dto.declarationPosition);
-        assertNull(dto.stateMachine);
+        assertEquals(List.of(), dto.stateMachines);
     }
 
     @Test

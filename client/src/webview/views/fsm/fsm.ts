@@ -1,5 +1,5 @@
 import type { LJStateMachine } from "../../../types/fsm";
-import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectedCallText, getStateErrorFocus, type StateErrorFocus } from "../../diagram-focus";
+import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectedCallText, getStateErrorFocuses, type StateErrorFocus } from "../../diagram-focus";
 import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
 import { renderMainHeader } from "../sections";
@@ -17,18 +17,23 @@ export type StateErrorNavigation = {
 
 const NO_STATE_ERROR_NAVIGATION: StateErrorNavigation = { index: -1, count: 0 };
 
-export function renderStateMachineView(root: HTMLElement, sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, focusOnError = false, stateErrors = NO_STATE_ERROR_NAVIGATION) {
+/**
+ * Renders the State Machine view with the diagram of each state set of a class, stacked
+ * @param sms the state machines, one per state set
+ * @param diagrams the Mermaid diagram of each state machine
+ */
+export function renderStateMachineView(root: HTMLElement, sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError = false, stateErrors = NO_STATE_ERROR_NAVIGATION) {
     const previousDiagramContainer = root.querySelector('.diagram-container') as HTMLElement | null;
     const diagramHeight = previousDiagramContainer?.offsetHeight;
-    root.innerHTML = renderStateMachineViewHtml(sm, diagram, orientation, showConditions, focusOnError, stateErrors, diagramHeight);
+    root.innerHTML = renderStateMachineViewHtml(sms, diagrams, orientation, showConditions, focusOnError, stateErrors, diagramHeight);
 }
 
-function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: string, orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, stateErrors: StateErrorNavigation, diagramHeight?: number): string {
-    const errorFocus = getStateErrorFocus(sm);
-    const hasConditionExpansions = sm
-        ? sm.initialTransitions.some(transition => !!transition.toCondition)
-            || sm.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition)
-        : false;
+function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, stateErrors: StateErrorNavigation, diagramHeight?: number): string {
+    const className = sms[0]?.className;
+    const errorFocuses = getStateErrorFocuses(sms);
+    const hasConditionExpansions = sms.some(sm =>
+        sm.initialTransitions.some(transition => !!transition.toCondition)
+            || sm.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition));
     const conditionToggleLabel = !hasConditionExpansions
         ? 'No additional conditions to expand'
         : showConditions ? 'Collapse Conditions' : 'Expand Conditions';
@@ -36,11 +41,11 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
     return /*html*/`
         <div>
             ${renderMainHeader("", 'fsm', stateErrors.count)}
-            ${sm ? /*html*/`
+            ${className !== undefined ? /*html*/`
                 <div class="diagram-section">
                     <div class="diagram-container"${diagramHeight ? ` style="min-height: ${diagramHeight}px"` : ''}>
                         <div class="diagram-header">
-                            <h2 class="diagram-title">${escapeHtml(sm.className)}</h2>
+                            <h2 class="diagram-title">${escapeHtml(className)}</h2>
                             <div class="diagram-controls">
                                 ${renderCodiconButton("zoom-in", { id: "zoom-in-btn", className: "diagram-control-btn", title: "Zoom In" })}
                                 ${renderCodiconButton("zoom-out", { id: "zoom-out-btn", className: "diagram-control-btn", title: "Zoom Out" })}
@@ -50,9 +55,9 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                                 ${renderCodiconButton("copy", { id: "copy-diagram-btn", className: "diagram-control-btn", title: "Copy Mermaid Source" })}
                             </div>
                         </div>
-                        ${errorFocus
-                            ? renderStateErrorSummary(getStateErrorSummary(errorFocus), stateErrors) + renderStateErrorLegend(errorFocus, focusOnError)
-                            : isStateErrorShown(stateErrors) ? renderStateErrorSummary(getUnmarkedStateErrorSummary(sm, stateErrors), stateErrors) : ''}
+                        ${errorFocuses.length > 0
+                            ? renderStateErrorSummary(getStateErrorSummary(errorFocuses), stateErrors) + renderStateErrorLegend(errorFocuses, focusOnError)
+                            : isStateErrorShown(stateErrors) ? renderStateErrorSummary(getUnmarkedStateErrorSummary(sms, stateErrors), stateErrors) : ''}
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
                                 <span class="diagram-condition-legend-pre">Precondition</span>
@@ -61,7 +66,9 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
                         ` : ''}
                         <div class="diagram-viewport">
                             <div id="diagram-wrapper" class="diagram-wrapper">
-                                <pre class="mermaid">${diagram}</pre>
+                                ${sms.length === 1
+                                    ? `<pre class="mermaid">${diagrams[0]}</pre>`
+                                    : sms.map((sm, i) => renderStateSetDiagram(sm, diagrams[i], focusOnError && errorFocuses.length > 0)).join('')}
                             </div>
                         </div>
                     </div>
@@ -71,34 +78,53 @@ function renderStateMachineViewHtml(sm: LJStateMachine | undefined, diagram: str
     `;
 }
 
+// the diagram of one state set, labelled with its states, and dimmed when focusing on an error of another state set
+function renderStateSetDiagram(sm: LJStateMachine, diagram: string, dimUnrelated: boolean): string {
+    const dimmed = dimUnrelated && !sm.errorContext;
+    return /*html*/`
+        <div class="diagram-state-set${dimmed ? ' diagram-state-set-dimmed' : ''}">
+            <h3 class="diagram-state-set-title">${sm.states.map(state => escapeHtml(state)).join(' \u00B7 ')}</h3>
+            <pre class="mermaid">${diagram}</pre>
+        </div>
+    `;
+}
+
 function isStateErrorShown(stateErrors: StateErrorNavigation): boolean {
     return stateErrors.index >= 0 || stateErrors.line !== undefined;
 }
 
-function getStateErrorSummary(focus: StateErrorFocus): string {
+// summarises the error of every state set it involves, which is rejected when the receiver is in any invalid state
+function getStateErrorSummary(focuses: StateErrorFocus[]): string {
+    const focus = focuses[0];
     const call = getRejectedCallText(focus);
     const receiver = focus.receiver ? `<code>${escapeHtml(focus.receiver)}</code>` : 'the receiver';
     const rejected = `${call ? `<code>${escapeHtml(call)}</code>` : 'The call'} is rejected`;
-    const allowedStates = focus.unknownState ? focus.acceptedStates : focus.validStates;
+    const invalidStates = focuses.flatMap(focus => focus.invalidStates);
+    const allowedStates = focuses
+        .map(focus => focus.unknownState ? focus.acceptedStates : focus.validStates)
+        .filter(states => states.length > 0);
     let summary: string;
-    if (focus.unknownState) {
+    if (invalidStates.length > 0) {
+        summary = `${rejected} when ${receiver} is in state ${renderStates(invalidStates)}`;
+    } else if (focuses.every(focus => focus.unknownState)) {
         summary = `${rejected}: the state of ${receiver} is unknown here`;
-    } else if (focus.invalidStates.length > 0) {
-        summary = `${rejected} when ${receiver} is in state ${renderStates(focus.invalidStates)}`;
     } else {
         summary = `${rejected} here`;
     }
-    if (allowedStates.length > 0) summary += ` \u00B7 allowed in state ${renderStates(allowedStates)}`;
+    // the call needs an allowed state of each state set
+    if (allowedStates.length > 0) {
+        summary += ` \u00B7 allowed in state ${allowedStates
+            .map(states => allowedStates.length > 1 && states.length > 1 ? `(${renderStates(states)})` : renderStates(states))
+            .join(' and ')}`;
+    }
     return summary;
 }
 
-// the shown error cannot be marked on the diagram when the verifier could not tell which states allow the call
-function getUnmarkedStateErrorSummary(sm: LJStateMachine, stateErrors: StateErrorNavigation): string {
-    const context = sm.errorContext;
-    if (context?.calledMethod) {
-        const call = `${context.receiver ? `${context.receiver}.` : ''}${context.calledMethod}()`;
-        return `<code>${escapeHtml(call)}</code> is rejected here`;
-    }
+// the shown error cannot be marked on the diagrams when the verifier could not tell which states allow the call
+function getUnmarkedStateErrorSummary(sms: LJStateMachine[], stateErrors: StateErrorNavigation): string {
+    const context = sms.find(sm => sm.errorContext)?.errorContext;
+    const call = context ? getRejectedCallText(context) : null;
+    if (call) return `<code>${escapeHtml(call)}</code> is rejected here`;
     return stateErrors.line ? `The call at line ${stateErrors.line} is rejected` : 'The call is rejected';
 }
 
@@ -125,11 +151,11 @@ function renderStateErrorStepper({ index, count }: StateErrorNavigation): string
 }
 
 // explains the state marks with the same outlines, fills, and icons as the diagram, next to the toggle that dims the rest
-function renderStateErrorLegend(focus: StateErrorFocus, focusOnError: boolean): string {
+function renderStateErrorLegend(focuses: StateErrorFocus[], focusOnError: boolean): string {
     const items = [
-        focus.invalidStates.length > 0 ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Call rejected`) : '',
-        focus.validStates.length > 0 ? renderLegendItem('valid', `${VALID_STATE_ICON} Call allowed`) : '',
-        focus.acceptedStates.some(state => !focus.validStates.includes(state))
+        focuses.some(focus => focus.invalidStates.length > 0) ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Call rejected`) : '',
+        focuses.some(focus => focus.validStates.length > 0) ? renderLegendItem('valid', `${VALID_STATE_ICON} Call allowed`) : '',
+        focuses.some(focus => focus.acceptedStates.some(state => !focus.validStates.includes(state)))
             ? renderLegendItem('accepted', 'Allowed, but not reachable here')
             : '',
     ].filter(Boolean);

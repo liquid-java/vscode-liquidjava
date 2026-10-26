@@ -99,7 +99,8 @@ export type StateRefinementError = BaseDiagnostic & {
     found: VCSimplificationResult;
     customMessage: string;
     declarationPosition: SourcePosition | null;
-    stateMachine: LJStateMachine | null;
+    // one state machine per state set of the receiver's class
+    stateMachines: LJStateMachine[];
 }
 
 export type ArgumentMismatchError = BaseDiagnostic & {

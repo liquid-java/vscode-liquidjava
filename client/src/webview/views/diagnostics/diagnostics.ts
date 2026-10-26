@@ -90,7 +90,7 @@ export async function copyDiagnosticToClipboard(button: any, displayDiagnostics:
 }
 
 export function formatDiagnosticForClipboard(diagnostic: LJDiagnostic): string {
-    const skippedFields = new Set(['category', 'type', 'translationTable', 'position', 'file', 'declarationPosition', 'stateMachine']);
+    const skippedFields = new Set(['category', 'type', 'translationTable', 'position', 'file', 'declarationPosition', 'stateMachines']);
     const lines: string[] = [];
 
     Object.entries(diagnostic).forEach(([key, value]) => {

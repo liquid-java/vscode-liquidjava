@@ -63,7 +63,7 @@ function stateError(title: string, sm: LJStateMachine, line = position.lineStart
         title, message: `${title} message`, hints: [], file, position: errorPosition,
         category: 'error', type: 'state-refinement-error', translationTable: {}, expected: 'Open(counter)',
         found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
-        customMessage: '', declarationPosition: null, stateMachine: sm,
+        customMessage: '', declarationPosition: null, stateMachines: [sm],
     };
 }
 
@@ -142,7 +142,7 @@ describe('webview script', () => {
     it('switches between diagnostics, context, and state machine tabs', async () => {
         showDiagnostics([diagnostic(currentFile, 'Current error')]);
         receive({ type: 'context', context: context() });
-        receive({ type: 'fsm', sm: stateMachine });
+        receive({ type: 'fsm', sms: [stateMachine] });
         postMessage.mockClear();
 
         click('[data-tab="context"]');
@@ -194,7 +194,7 @@ describe('webview script', () => {
 
         // the tab keeps the error after visiting another tab
         click('[data-tab="diagnostics"]');
-        receive({ type: 'fsm', sm: stateMachine });
+        receive({ type: 'fsm', sms: [stateMachine] });
         click('[data-tab="fsm"]');
         expect(root.querySelector('#diagram-focus-btn')?.textContent?.trim()).toBe('Show all');
         expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
@@ -216,11 +216,35 @@ describe('webview script', () => {
         await vi.waitFor(() => expect(transform()).toBe('matrix(1, 0, 0, 1, 0, 0)'));
     });
 
+    it('shows the diagram of the state set with the error first and copies every diagram', async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        vi.stubGlobal('navigator', { clipboard: { writeText } });
+        const other: LJStateMachine = {
+            ...stateMachine, className: 'Counter', stateSet: 0, states: ['Idle', 'Busy'],
+            transitions: [{ from: 'Idle', to: 'Busy', label: 'start()' }],
+        };
+        const withError = { ...errorMachine('Counter', 'close'), stateSet: 1 };
+        showDiagnostics([{ ...stateError('State refinement error', withError), stateMachines: [other, withError] } as LJDiagnostic]);
+        click('.diagnostic-state-machine-btn');
+
+        await vi.waitFor(() => expect(runMermaid).toHaveBeenCalledTimes(1));
+        expect(runMermaid.mock.calls[0][0].nodes).toHaveLength(2);
+        expect(Array.from(root.querySelectorAll('.diagram-state-set-title'), node => node.textContent))
+            .toEqual(['Open \u00B7 Closed \u00B7 Broken', 'Idle \u00B7 Busy']);
+        expect(root.querySelector('.diagram-state-set:last-child')?.classList.contains('diagram-state-set-dimmed')).toBe(true);
+
+        click('#copy-diagram-btn');
+        const copied: string = writeText.mock.calls[0][0];
+        expect(copied.match(/stateDiagram-v2/g)).toHaveLength(2);
+        expect(copied).toContain('Idle --> Busy');
+        expect(copied).not.toMatch(/ljState|lj-dimmed|lj-state-error-method/);
+    });
+
     it('copies the Mermaid source without the error overlay', async () => {
         const writeText = vi.fn().mockResolvedValue(undefined);
         vi.stubGlobal('navigator', { clipboard: { writeText } });
         showDiagnostics([]);
-        receive({ type: 'fsm', sm: { ...errorMachine('Counter', 'close'), errorContext: null } });
+        receive({ type: 'fsm', sms: [{ ...errorMachine('Counter', 'close'), errorContext: null }] });
         click('[data-tab="fsm"]');
         click('#copy-diagram-btn');
         const plain = writeText.mock.calls[0][0];
@@ -296,7 +320,7 @@ describe('webview script', () => {
             stateError('Second state error', errorMachine('Second', 'reset'), 9),
             stateError('First state error', errorMachine('First', 'close'), 4),
         ]);
-        receive({ type: 'fsm', sm: stateMachine });
+        receive({ type: 'fsm', sms: [stateMachine] });
         click('[data-tab="fsm"]');
 
         expect(root.querySelector('.diagram-title')?.textContent).toBe('First');

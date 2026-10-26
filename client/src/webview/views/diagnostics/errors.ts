@@ -87,6 +87,6 @@ function renderDiagnosticContextAction(error: LJError): string {
 }
 
 function renderDiagnosticStateMachineAction(error: LJError, index: number): string {
-    if (error.type !== 'state-refinement-error' || !error.stateMachine) return "";
+    if (error.type !== 'state-refinement-error' || error.stateMachines.length === 0) return "";
     return renderDiagnosticStateMachineButton(index);
 }
