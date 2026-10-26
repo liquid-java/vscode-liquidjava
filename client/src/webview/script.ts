@@ -7,7 +7,7 @@ import type { LJDiagnostic, RefinementMismatchError, StateRefinementError } from
 import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { ExtensionStatus } from "../state";
-import type { NavTab } from "./views/sections";
+import { setHintOpen, type NavTab } from "./views/sections";
 import { copyDiagnosticToClipboard, getDisplayDiagnostics, renderDiagnosticsView } from "./views/diagnostics/diagnostics";
 import type { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
@@ -56,6 +56,13 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     vscode.postMessage({ type: 'ready' });    
     
     // on click
+    // toggle does not bubble, so it is caught on its way down
+    root.addEventListener('toggle', (e: Event) => {
+        const details = e.target as HTMLDetailsElement;
+        const key = details.getAttribute?.('data-hint-key');
+        if (key !== null && key !== undefined) setHintOpen(key, details.open);
+    }, true);
+
     root.addEventListener('click', (e: MouseEvent) => {
         const target = e.target instanceof Element ? e.target : null;
         if (!target) return;

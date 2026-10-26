@@ -402,10 +402,29 @@ describe('webview script', () => {
         showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
 
         expect(root.querySelector('.diagnostic-state-machine-btn')?.textContent?.trim()).toBe('Show in state machine');
-        expect(root.querySelector('.diagnostic-actions .diagnostic-state-machine-btn')).toBeNull();
-        // right below the error message, before its details
-        const firstSection = root.querySelector('.error-item .section')!;
-        expect(root.querySelector('.diagnostic-state-machine-btn')!.compareDocumentPosition(firstSection)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+        // on the line of the title, before the other actions
+        const actions = root.querySelector('.error-item .diagnostic-title-row .diagnostic-actions')!;
+        expect(actions.firstElementChild?.classList.contains('diagnostic-state-machine-btn')).toBe(true);
+        expect(actions.querySelector('.copy-diagnostic-btn')).not.toBeNull();
+    });
+
+    it('keeps hints closed until opened, and open after a new verification', () => {
+        const error = { ...stateError('State refinement error', errorMachine('Counter', 'close')), hint: 'Call open() first' };
+        showDiagnostics([error]);
+        const hint = () => root.querySelector<HTMLDetailsElement>('.error-item .hint-section')!;
+        expect(hint().open).toBe(false);
+        expect(hint().querySelector('summary')?.textContent).toBe('Hint');
+        expect(hint().querySelector('pre')?.textContent).toBe('Call open() first');
+
+        hint().open = true;
+        hint().dispatchEvent(new Event('toggle'));
+        receive({ type: 'diagnostics', diagnostics: [{ ...error }] });
+        expect(hint().open).toBe(true);
+
+        hint().open = false;
+        hint().dispatchEvent(new Event('toggle'));
+        receive({ type: 'diagnostics', diagnostics: [{ ...error }] });
+        expect(hint().open).toBe(false);
     });
 
     it('opens on the first state error of a newly opened file', () => {
