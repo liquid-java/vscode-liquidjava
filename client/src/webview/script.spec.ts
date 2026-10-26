@@ -18,7 +18,7 @@ function diagnostic(file: string, title: string, category: 'error' | 'warning' =
     const details = {
         title,
         message: `${title} message`,
-        hint: null,
+        hints: [],
         file,
         position: { ...position, file },
     };
@@ -60,7 +60,7 @@ const stateMachine: LJStateMachine = {
 function stateError(title: string, sm: LJStateMachine, line = position.lineStart, file = currentFile): LJDiagnostic {
     const errorPosition = { ...position, file, lineStart: line, lineEnd: line };
     return {
-        title, message: `${title} message`, hint: null, file, position: errorPosition,
+        title, message: `${title} message`, hints: [], file, position: errorPosition,
         category: 'error', type: 'state-refinement-error', translationTable: {}, expected: 'Open(counter)',
         found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
         customMessage: '', declarationPosition: null, stateMachine: sm,
@@ -402,10 +402,63 @@ describe('webview script', () => {
         showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
 
         expect(root.querySelector('.diagnostic-state-machine-btn')?.textContent?.trim()).toBe('Show in state machine');
-        expect(root.querySelector('.diagnostic-actions .diagnostic-state-machine-btn')).toBeNull();
-        // right below the error message, before its details
-        const firstSection = root.querySelector('.error-item .section')!;
-        expect(root.querySelector('.diagnostic-state-machine-btn')!.compareDocumentPosition(firstSection)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+        // on the line of the title, before the other actions
+        const actions = root.querySelector('.error-item .diagnostic-title-row .diagnostic-actions')!;
+        expect(actions.firstElementChild?.classList.contains('diagnostic-state-machine-btn')).toBe(true);
+        expect(actions.querySelector('.copy-diagnostic-btn')).not.toBeNull();
+    });
+
+    it('lists several call sequences as separate options, apart from the other hints', () => {
+        showDiagnostics([{
+            ...stateError('State refinement error', errorMachine('Counter', 'close')),
+            hints: [
+                { kind: 'call-sequence', message: 'Call counter.open() before this call to move counter from Closed to Open' },
+                { kind: 'call-sequence', message: 'Call counter.reset() before this call to move counter from Closed to Open' },
+                { kind: 'available-calls', message: 'In state Closed, counter can call: open(), reset()' },
+            ],
+        }]);
+        const hints = root.querySelector('.error-item .hint-section')!;
+
+        expect(hints.querySelector('summary')?.textContent).toBe('Hints');
+        expect(hints.querySelector('.hint-options-title')?.textContent).toBe('Any one of these:');
+        expect(Array.from(hints.querySelectorAll('.hint-options li'), item => item.textContent)).toEqual([
+            'Call counter.open() before this call to move counter from Closed to Open',
+            'Call counter.reset() before this call to move counter from Closed to Open',
+        ]);
+        expect(Array.from(hints.querySelectorAll('.hint-note'), note => note.textContent)).toEqual(['In state Closed, counter can call: open(), reset()']);
+    });
+
+    it('shows a single call sequence as a hint, not as a list of options', () => {
+        showDiagnostics([{
+            ...stateError('State refinement error', errorMachine('Counter', 'close')),
+            hints: [
+                { kind: 'call-sequence', message: 'Call counter.open() before this call to move counter from Closed to Open' },
+                { kind: 'available-calls', message: 'In state Closed, counter can call: open()' },
+            ],
+        }]);
+        const hints = root.querySelector('.error-item .hint-section')!;
+
+        expect(hints.querySelector('.hint-options')).toBeNull();
+        expect(hints.querySelectorAll('.hint-note')).toHaveLength(2);
+    });
+
+    it('keeps hints closed until opened, and open after a new verification', () => {
+        const error = { ...stateError('State refinement error', errorMachine('Counter', 'close')), hints: [{ kind: 'general' as const, message: 'Call open() first' }] };
+        showDiagnostics([error]);
+        const hint = () => root.querySelector<HTMLDetailsElement>('.error-item .hint-section')!;
+        expect(hint().open).toBe(false);
+        expect(hint().querySelector('summary')?.textContent).toBe('Hint');
+        expect(hint().querySelector('.hint-message')?.textContent).toBe('Call open() first');
+
+        hint().open = true;
+        hint().dispatchEvent(new Event('toggle'));
+        receive({ type: 'diagnostics', diagnostics: [{ ...error }] });
+        expect(hint().open).toBe(true);
+
+        hint().open = false;
+        hint().dispatchEvent(new Event('toggle'));
+        receive({ type: 'diagnostics', diagnostics: [{ ...error }] });
+        expect(hint().open).toBe(false);
     });
 
     it('opens on the first state error of a newly opened file', () => {

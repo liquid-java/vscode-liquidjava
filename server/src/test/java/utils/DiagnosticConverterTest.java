@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import dtos.diagnostics.HintDTO;
 import dtos.diagnostics.LJDiagnosticDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import dtos.errors.*;
@@ -55,9 +56,22 @@ class DiagnosticConverterTest {
         assertEquals("custom-error", dto.type);
         assertEquals("Error", dto.title);
         assertEquals("verification failed", dto.message);
-        assertEquals("check the refinement", dto.hint);
+        assertEquals(List.of(new HintDTO("general", "check the refinement")), dto.hints);
         assertEquals(workspace.resolve("Example.java").toRealPath().toString(), dto.file);
         assertEquals(new SourcePositionDTO(dto.file, 1, 8, 1, 18), dto.position);
+    }
+
+    @Test
+    void keepsEachHintWithItsKind() {
+        CustomError error = new CustomError("verification failed", position);
+        error.addHint(new Hint(Hint.Kind.CALL_SEQUENCE, "Call f.open() before this call to move f from created to open"));
+        error.addHint(new Hint(Hint.Kind.CALL_SEQUENCE, "Call f.reopen() before this call to move f from created to open"));
+        error.addHint(new Hint(Hint.Kind.AVAILABLE_CALLS, "In state created, f can call: open(), reopen()"));
+        LJDiagnosticDTO dto = (LJDiagnosticDTO) DiagnosticConverter.convertToDTO(error);
+        assertEquals(List.of(
+                new HintDTO("call-sequence", "Call f.open() before this call to move f from created to open"),
+                new HintDTO("call-sequence", "Call f.reopen() before this call to move f from created to open"),
+                new HintDTO("available-calls", "In state created, f can call: open(), reopen()")), dto.hints);
     }
 
     @Test
@@ -122,7 +136,7 @@ class DiagnosticConverterTest {
         assertEquals("run()", missingMethod.signature);
         assertEquals("example.External", missingMethod.className);
         assertArrayEquals(new String[] { "run(int)", "run(String)" }, missingMethod.overloads);
-        assertEquals("Available overloads:\n  run(int)\n  run(String)", missingMethod.hint);
+        assertEquals(List.of(new HintDTO("general", "Available overloads:\n  run(int)\n  run(String)")), missingMethod.hints);
 
         UnsatisfiableRefinementWarningDTO unsatisfiable = (UnsatisfiableRefinementWarningDTO) DiagnosticConverter.convertToDTO(
                 new UnsatisfiableRefinementWarning(position, "_ > 0 && _ < 0"));

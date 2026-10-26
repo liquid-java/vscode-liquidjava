@@ -1,5 +1,8 @@
 package dtos.errors;
 
+import java.util.List;
+
+import dtos.diagnostics.HintDTO;
 import dtos.diagnostics.LJDiagnosticDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import dtos.diagnostics.TranslationTableDTO;
@@ -22,9 +25,9 @@ public class LJErrorDTO extends LJDiagnosticDTO {
         this.translationTable = TranslationTableDTO.from(error.getTranslationTable());
     }
 
-    public LJErrorDTO(String category, String type, String title, String message, String hint, String file,
+    public LJErrorDTO(String category, String type, String title, String message, List<HintDTO> hints, String file,
             SourcePositionDTO position, TranslationTableDTO translationTable) {
-        super(category, type, title, message, hint, file, position);
+        super(category, type, title, message, hints, file, position);
         this.translationTable = translationTable;
     }
 

@@ -1,5 +1,5 @@
 import type { LJDiagnostic, StateRefinementError } from "../types/diagnostics";
-import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "./diagnostic-reveal";
+import { getDiagnosticKey, getDiagnosticRevealTargetKey } from "./diagnostic-reveal";
 
 /**
  * Gets the state errors reported in the current file, in source order
@@ -28,9 +28,7 @@ export function getAllStateErrors(diagnostics: LJDiagnostic[] | undefined): Stat
 }
 
 export function getStateErrorKey(error: StateRefinementError): string {
-    const target = getDiagnosticRevealTarget(error);
-    // errors without a position never match the position pattern of reveal keys
-    return target ? getDiagnosticRevealTargetKey(target) : `${error.file}#${error.title}#${error.message}`;
+    return getDiagnosticKey(error);
 }
 
 /**

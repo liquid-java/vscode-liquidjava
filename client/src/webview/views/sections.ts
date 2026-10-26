@@ -1,4 +1,4 @@
-import type { LJDiagnostic, SourcePosition } from "../../types/diagnostics";
+import type { LJDiagnostic, LJHint, SourcePosition } from "../../types/diagnostics";
 import { escapeHtml, getFileName, getSimpleName } from "../utils";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
@@ -21,8 +21,46 @@ export const renderSection = (title: string, body: string): string => /*html*/
 export const renderExpressionSection = (title: string, expression: string): string => /*html*/
     renderCustomSection(title, renderHighlightedExpression(expression));
 
-export const renderHint = (hint: string | null): string =>
-    hint?.trim() ? renderCustomSection('Hint', `<pre>${escapeHtml(hint.trim())}</pre>`) : '';
+// hints the user opened, kept open when the diagnostics are rendered again
+const openHints = new Set<string>();
+
+export function setHintOpen(key: string, open: boolean) {
+    if (open) openHints.add(key);
+    else openHints.delete(key);
+}
+
+/**
+ * Renders the hints of a diagnostic, closed until the user opens them
+ * Several call sequences are alternatives, so they are listed as options apart from the hints that explain the error
+ * @param hints The hints of the diagnostic
+ * @param key Identifies the diagnostic, so opened hints stay open after a new verification
+ */
+export function renderHints(hints: LJHint[] | undefined, key?: string): string {
+    const shown = (hints ?? []).filter(hint => hint.message.trim());
+    if (shown.length === 0) return '';
+    const options = shown.filter(hint => hint.kind === 'call-sequence');
+    const listsOptions = options.length > 1;
+    const notes = listsOptions ? shown.filter(hint => hint.kind !== 'call-sequence') : shown;
+    const open = key !== undefined && openHints.has(key);
+    return /*html*/`
+        <details class="section hint-section"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
+            <summary class="hint-summary">${shown.length === 1 ? 'Hint' : 'Hints'}</summary>
+            <div class="hint-body">
+                ${listsOptions ? /*html*/`
+                    <div class="hint-options">
+                        <p class="hint-options-title">Any one of these:</p>
+                        <ul>${options.map(hint => `<li>${renderHintMessage(hint)}</li>`).join('')}</ul>
+                    </div>
+                ` : ''}
+                ${notes.map(hint => `<div class="hint-note">${renderHintMessage(hint)}</div>`).join('')}
+            </div>
+        </details>
+    `;
+}
+
+function renderHintMessage(hint: LJHint): string {
+    return `<span class="hint-message">${escapeHtml(hint.message.trim())}</span>`;
+}
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
     <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
@@ -31,8 +69,13 @@ export const renderToggleSection = (title: string, targetId: string, isExpanded:
     </button>
     `;
 
-export const renderDiagnosticHeader = (title: string, message: string): string => /*html*/
-    `<h3>${title}</h3><div class="diagnostic-header"><p>${message}</p></div>`;
+export const renderDiagnosticHeader = (title: string, message: string, actions = ''): string => /*html*/`
+    <div class="diagnostic-title-row">
+        <h3>${title}</h3>
+        ${actions.trim() ? `<div class="diagnostic-actions">${actions}</div>` : ''}
+    </div>
+    <div class="diagnostic-header"><p>${message}</p></div>
+`;
 
 export function renderDiagnosticDataAttributes(diagnostic: LJDiagnostic): string {
     const target = getDiagnosticRevealTarget(diagnostic);

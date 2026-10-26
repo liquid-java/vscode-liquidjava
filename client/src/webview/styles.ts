@@ -195,12 +195,58 @@ export function getStyles(): string {
             line-height: 1;
             pointer-events: none;
         }
-        .diagnostic-actions {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
+        .diagnostic-title-row {
             display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.25rem 0.75rem;
+        }
+        .diagnostic-title-row h3 {
+            min-width: 0;
+        }
+        .diagnostic-actions {
+            display: flex;
+            align-items: center;
             gap: 0.25rem;
+            margin-left: auto;
+        }
+        .hint-summary {
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .hint-section[open] .hint-summary {
+            margin-bottom: 0.25rem;
+        }
+        .hint-body {
+            padding: 0.5rem;
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            font-family: var(--vscode-editor-font-family, monospace);
+            font-size: var(--vscode-editor-font-size, inherit);
+        }
+        .hint-message {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .hint-options-title {
+            margin: 0 0 0.25rem;
+        }
+        .hint-options ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            list-style: disc;
+        }
+        .hint-options li {
+            display: list-item;
+        }
+        .hint-options li + li {
+            margin-top: 0.4rem;
+        }
+        .hint-body > * + * {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--vscode-panel-border, transparent);
         }
         .copy-diagnostic-btn,
         .diagnostic-context-btn {
@@ -252,8 +298,7 @@ export function getStyles(): string {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            margin: 0 0 1rem;
-            padding: 0.25rem 0.6rem;
+            padding: 0.15rem 0.5rem;
             color: var(--vscode-button-secondaryForeground);
             background-color: var(--vscode-button-secondaryBackground);
             font-size: 0.85rem;

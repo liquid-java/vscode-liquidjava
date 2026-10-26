@@ -20,7 +20,7 @@ function stateError(line: number, overrides: Partial<StateRefinementError> = {})
     const file = overrides.file ?? callerFile;
     return {
         category: 'error', type: 'state-refinement-error', title: 'State Refinement Error',
-        message: 'found childrenAllowed(root¹⁸) but expected maybeHasChildren(root¹⁸)', hint: null,
+        message: 'found childrenAllowed(root¹⁸) but expected maybeHasChildren(root¹⁸)', hints: [],
         file, position: { file, lineStart: line, colStart: 15, lineEnd: line, colEnd: 35 },
         translationTable: {}, expected: 'maybeHasChildren(root¹⁸)',
         found: { implication: null as never, origin: null, simplification: null },

@@ -23,10 +23,19 @@ export type LJError = CustomError | IllegalConstructorTransitionError |
 
 export type LJWarning = CustomWarning | ExternalClassNotFoundWarning | ExternalMethodNotFoundWarning | UnsatisfiableRefinementWarning;
 
+// what a hint is about, as the verifier names it, e.g. 'call-sequence' for calls that bring the object to a state that allows the failing call
+export type LJHintKind = 'general' | 'deciding-argument' | 'call-sequence' | 'available-calls' | 'unreachable-state'
+    | 'path-dependent-state' | 'final-state' | 'reaching-calls';
+
+export type LJHint = {
+    kind: LJHintKind;
+    message: string;
+};
+
 type BaseDiagnostic = {
     title: string;
     message: string;
-    hint: string | null;
+    hints: LJHint[];
     file: string;
     position: SourcePosition | null;
 }
