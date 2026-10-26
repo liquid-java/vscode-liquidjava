@@ -14,6 +14,7 @@ import type {
     SyntaxError,
 } from "../../../types/diagnostics";
 import { renderCopyDiagnosticButton } from "./diagnostics";
+import { getDiagnosticKey } from "../../diagnostic-reveal";
 
 export function renderErrors(errors: LJError[]): string {
     return /*html*/`
@@ -21,11 +22,11 @@ export function renderErrors(errors: LJError[]): string {
             ${errors.map((error, index) => {
                 return /*html*/`
                 <li class="diagnostic-item error-item" ${renderDiagnosticDataAttributes(error)}>
-                    <div class="diagnostic-actions">
+                    ${renderError(error, /*html*/`
+                        ${renderDiagnosticStateMachineAction(error, index)}
                         ${renderDiagnosticContextAction(error)}
                         ${renderCopyDiagnosticButton('error', index)}
-                    </div>
-                    ${renderError(error, renderDiagnosticStateMachineAction(error, index))}
+                    `)}
                 </li>
             `;
             }).join("")}
@@ -69,15 +70,15 @@ const errorContentRenderers: ErrorRendererMap = {
 /**
  * Renders the error content
  * @param error The error to render
- * @param headerActions Actions shown below the error message
+ * @param actions Actions shown on the line of the error title
  */
-export function renderError(error: LJError, headerActions = ''): string {
+export function renderError(error: LJError, actions = ''): string {
     const message = error.type === 'refinement-error' || error.type === 'state-refinement-error' ? error.customMessage : error.message;
-    const header = renderDiagnosticHeader(error.title, message || '');
+    const header = renderDiagnosticHeader(error.title, message || '', actions);
     const content = (errorContentRenderers[error.type] as (error: LJError) => string)?.(error) || '';
-    const hint = renderHint(error.hint);
+    const hint = renderHint(error.hint, getDiagnosticKey(error));
     const location = renderLocation(error);
-    return /*html*/`${header}${headerActions}${content}${hint}${location}`;
+    return /*html*/`${header}${content}${hint}${location}`;
 }
 
 function renderDiagnosticContextAction(error: LJError): string {

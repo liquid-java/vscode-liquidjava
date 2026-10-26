@@ -195,12 +195,28 @@ export function getStyles(): string {
             line-height: 1;
             pointer-events: none;
         }
-        .diagnostic-actions {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
+        .diagnostic-title-row {
             display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.25rem 0.75rem;
+        }
+        .diagnostic-title-row h3 {
+            min-width: 0;
+        }
+        .diagnostic-actions {
+            display: flex;
+            align-items: center;
             gap: 0.25rem;
+            margin-left: auto;
+        }
+        .hint-summary {
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .hint-section[open] .hint-summary {
+            margin-bottom: 0.25rem;
         }
         .copy-diagnostic-btn,
         .diagnostic-context-btn {
@@ -252,8 +268,7 @@ export function getStyles(): string {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
-            margin: 0 0 1rem;
-            padding: 0.25rem 0.6rem;
+            padding: 0.15rem 0.5rem;
             color: var(--vscode-button-secondaryForeground);
             background-color: var(--vscode-button-secondaryBackground);
             font-size: 0.85rem;
