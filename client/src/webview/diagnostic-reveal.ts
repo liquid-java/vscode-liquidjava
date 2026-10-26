@@ -29,3 +29,12 @@ export function getDiagnosticRevealTargetFromKey(value?: string | null): Diagnos
         }
     };
 }
+
+/**
+ * Gets a key that identifies a diagnostic across verifications
+ * This is its reveal key, or, without a position, its file, title, and message, which never match the reveal key pattern
+ */
+export function getDiagnosticKey(diagnostic: LJDiagnostic): string {
+    const target = getDiagnosticRevealTarget(diagnostic);
+    return target ? getDiagnosticRevealTargetKey(target) : `${diagnostic.file}#${diagnostic.title}#${diagnostic.message}`;
+}

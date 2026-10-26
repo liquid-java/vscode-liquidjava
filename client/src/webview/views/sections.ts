@@ -21,8 +21,29 @@ export const renderSection = (title: string, body: string): string => /*html*/
 export const renderExpressionSection = (title: string, expression: string): string => /*html*/
     renderCustomSection(title, renderHighlightedExpression(expression));
 
-export const renderHint = (hint: string | null): string =>
-    hint?.trim() ? renderCustomSection('Hint', `<pre>${escapeHtml(hint.trim())}</pre>`) : '';
+// hints the user opened, kept open when the diagnostics are rendered again
+const openHints = new Set<string>();
+
+export function setHintOpen(key: string, open: boolean) {
+    if (open) openHints.add(key);
+    else openHints.delete(key);
+}
+
+/**
+ * Renders the hint of a diagnostic, closed until the user opens it
+ * @param hint The hint text
+ * @param key Identifies the diagnostic, so an opened hint stays open after a new verification
+ */
+export function renderHint(hint: string | null, key?: string): string {
+    if (!hint?.trim()) return '';
+    const open = key !== undefined && openHints.has(key);
+    return /*html*/`
+        <details class="section hint-section"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
+            <summary class="hint-summary">Hint</summary>
+            <pre>${escapeHtml(hint.trim())}</pre>
+        </details>
+    `;
+}
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
     <button class="context-toggle-btn" data-context-toggle="${targetId}" aria-expanded="${isExpanded ? 'true' : 'false'}" type="button">
@@ -31,8 +52,13 @@ export const renderToggleSection = (title: string, targetId: string, isExpanded:
     </button>
     `;
 
-export const renderDiagnosticHeader = (title: string, message: string): string => /*html*/
-    `<h3>${title}</h3><div class="diagnostic-header"><p>${message}</p></div>`;
+export const renderDiagnosticHeader = (title: string, message: string, actions = ''): string => /*html*/`
+    <div class="diagnostic-title-row">
+        <h3>${title}</h3>
+        ${actions.trim() ? `<div class="diagnostic-actions">${actions}</div>` : ''}
+    </div>
+    <div class="diagnostic-header"><p>${message}</p></div>
+`;
 
 export function renderDiagnosticDataAttributes(diagnostic: LJDiagnostic): string {
     const target = getDiagnosticRevealTarget(diagnostic);
