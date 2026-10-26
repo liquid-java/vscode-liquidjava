@@ -93,39 +93,27 @@ function isStateErrorShown(stateErrors: StateErrorNavigation): boolean {
     return stateErrors.index >= 0 || stateErrors.line !== undefined;
 }
 
-// summarises the error of every state set it involves, which is rejected when the receiver is in any invalid state
+// summarises the error of every state set it involves as a compiler would: the invalid call, then the expected and actual states
 function getStateErrorSummary(focuses: StateErrorFocus[]): string {
-    const focus = focuses[0];
-    const call = getRejectedCallText(focus);
-    const receiver = focus.receiver ? `<code>${escapeHtml(focus.receiver)}</code>` : 'the receiver';
-    const rejected = `${call ? `<code>${escapeHtml(call)}</code>` : 'The call'} is rejected`;
-    const invalidStates = focuses.flatMap(focus => focus.invalidStates);
-    const allowedStates = focuses
-        .map(focus => focus.unknownState ? focus.acceptedStates : focus.validStates)
-        .filter(states => states.length > 0);
-    let summary: string;
-    if (invalidStates.length > 0) {
-        summary = `${rejected} when ${receiver} is in state ${renderStates(invalidStates)}`;
-    } else if (focuses.every(focus => focus.unknownState)) {
-        summary = `${rejected}: the state of ${receiver} is unknown here`;
-    } else {
-        summary = `${rejected} here`;
-    }
-    // the call needs an allowed state of each state set
-    if (allowedStates.length > 0) {
-        summary += ` \u00B7 allowed in state ${allowedStates
-            .map(states => allowedStates.length > 1 && states.length > 1 ? `(${renderStates(states)})` : renderStates(states))
-            .join(' and ')}`;
-    }
-    return summary;
+    const call = getRejectedCallText(focuses[0]);
+    // the call needs an expected state of each state set
+    const expected = renderStateSets(focuses.map(focus => focus.acceptedStates));
+    const actual = focuses.every(focus => focus.unknownState)
+        ? 'unknown'
+        : renderStateSets(focuses.filter(focus => !focus.unknownState).map(focus => focus.possibleStates));
+    return `${renderInvalidCall(call)} \u00B7 expected ${expected} \u00B7 actual ${actual}`;
 }
 
 // the shown error cannot be marked on the diagrams when the verifier could not tell which states allow the call
 function getUnmarkedStateErrorSummary(sms: LJStateMachine[], stateErrors: StateErrorNavigation): string {
     const context = sms.find(sm => sm.errorContext)?.errorContext;
     const call = context ? getRejectedCallText(context) : null;
-    if (call) return `<code>${escapeHtml(call)}</code> is rejected here`;
-    return stateErrors.line ? `The call at line ${stateErrors.line} is rejected` : 'The call is rejected';
+    if (call || !stateErrors.line) return renderInvalidCall(call);
+    return `Invalid method call at line ${stateErrors.line}`;
+}
+
+function renderInvalidCall(call: string | null): string {
+    return call ? `Invalid method call <code>${escapeHtml(call)}</code>` : 'Invalid method call';
 }
 
 function renderStateErrorSummary(summary: string, stateErrors: StateErrorNavigation): string {
@@ -153,10 +141,10 @@ function renderStateErrorStepper({ index, count }: StateErrorNavigation): string
 // explains the state marks with the same outlines, fills, and icons as the diagram, next to the toggle that dims the rest
 function renderStateErrorLegend(focuses: StateErrorFocus[], focusOnError: boolean): string {
     const items = [
-        focuses.some(focus => focus.invalidStates.length > 0) ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Call rejected`) : '',
-        focuses.some(focus => focus.validStates.length > 0) ? renderLegendItem('valid', `${VALID_STATE_ICON} Call allowed`) : '',
+        focuses.some(focus => focus.invalidStates.length > 0) ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Actual state, not expected`) : '',
+        focuses.some(focus => focus.validStates.length > 0) ? renderLegendItem('valid', `${VALID_STATE_ICON} Actual state, expected`) : '',
         focuses.some(focus => focus.acceptedStates.some(state => !focus.validStates.includes(state)))
-            ? renderLegendItem('accepted', 'Allowed, but not reachable here')
+            ? renderLegendItem('accepted', 'Expected state')
             : '',
     ].filter(Boolean);
     return /*html*/`
@@ -171,6 +159,13 @@ function renderStateErrorLegend(focuses: StateErrorFocus[], focusOnError: boolea
 
 function renderLegendItem(kind: string, label: string): string {
     return `<span class="diagram-error-legend-item"><span class="diagram-error-legend-swatch diagram-error-legend-${kind}" aria-hidden="true"></span>${label}</span>`;
+}
+
+// the states of each state set, the call needs one state of each
+function renderStateSets(stateSets: string[][]): string {
+    return stateSets
+        .map(states => stateSets.length > 1 && states.length > 1 ? `(${renderStates(states)})` : renderStates(states))
+        .join(' and ');
 }
 
 function renderStates(states: string[]): string {
