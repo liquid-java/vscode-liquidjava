@@ -278,6 +278,25 @@ describe('webview script', () => {
         expect(root.querySelector('.mermaid')?.textContent).toContain('class Broken ljStateDimmed');
     });
 
+    it('shows the transition conditions right away, also when opening a state error after collapsing them', () => {
+        const conditions = { from: 'Open', to: 'Closed', label: 'close()', fromCondition: 'size(counter) > 0', toCondition: 'size(counter) == 0' };
+        const error = stateError('State refinement error', { ...errorMachine('Counter', 'close'), transitions: [conditions] });
+        showDiagnostics([error]);
+        receive({ type: 'fsm', sms: [{ ...stateMachine, transitions: [conditions] }] });
+
+        click('[data-tab="fsm"]');
+        expect(root.querySelector('#diagram-conditions-btn')?.getAttribute('aria-pressed')).toBe('true');
+        expect(Array.from(root.querySelectorAll('.mermaid .state-cond'), node => node.textContent)).toEqual(['size(counter) > 0', 'size(counter) == 0']);
+
+        click('#diagram-conditions-btn');
+        expect(root.querySelector('.mermaid .state-cond')).toBeNull();
+
+        click('[data-tab="diagnostics"]');
+        click('.diagnostic-state-machine-btn');
+        expect(root.querySelector('#diagram-conditions-btn')?.getAttribute('aria-pressed')).toBe('true');
+        expect(root.querySelectorAll('.mermaid .state-cond')).toHaveLength(2);
+    });
+
     it('keeps the error summary selectable while the diagram pans', async () => {
         showDiagnostics([stateError('State refinement error', errorMachine('Counter', 'close'))]);
         click('.diagnostic-state-machine-btn');

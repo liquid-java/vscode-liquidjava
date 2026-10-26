@@ -41,7 +41,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     let selectedTab: NavTab = 'diagnostics';
     let status: ExtensionStatus = 'loading';
     let diagramOrientation: "LR" | "TB" = "TB";
-    let showDiagramConditions = false;
+    // the pre and postconditions of the transitions are shown unless collapsed
+    let showDiagramConditions = true;
     let focusDiagramOnError = true;
     let currentDiagram: string = '';
     let renderedStateMachineView: string | undefined;
@@ -479,7 +480,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     function showStateError(error: StateRefinementError) {
         selectedTab = 'fsm';
         selectedStateError = error;
-        showDiagramConditions = false;
+        showDiagramConditions = true;
         focusDiagramOnError = true;
         resetZoom(document);
         currentDiagram = '';
