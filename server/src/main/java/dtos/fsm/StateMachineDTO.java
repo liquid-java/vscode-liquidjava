@@ -4,6 +4,7 @@ import java.util.List;
 
 import liquidjava.diagnostics.errors.StateErrorContext;
 import liquidjava.fsm.StateMachine;
+import liquidjava.fsm.StateMachineEntryTransition;
 import liquidjava.fsm.StateMachineInitialTransition;
 import liquidjava.fsm.StateMachineTransition;
 
@@ -11,6 +12,7 @@ import liquidjava.fsm.StateMachineTransition;
  * DTO for serializing the state machine diagram of one state set, with the state error shown on it
  *
  * @param stateSet the index of the state set among the class's StateSet annotations
+ * @param entryTransitions the methods that put an object in an unknown state into a state of this state set
  * @param errorContext the state error on this diagram, or null if the call does not involve this state set
  */
 public record StateMachineDTO(
@@ -19,12 +21,13 @@ public record StateMachineDTO(
         List<String> states,
         List<StateMachineTransition> transitions,
         List<StateMachineInitialTransition> initialTransitions,
+        List<StateMachineEntryTransition> entryTransitions,
         StateErrorContextDTO errorContext) {
 
     public static StateMachineDTO from(StateMachine sm, StateErrorContext context) {
         if (sm == null) return null;
         return new StateMachineDTO(sm.className(), sm.stateSet(), sm.states(), sm.transitions(),
-                sm.initialTransitions(), StateErrorContextDTO.from(context, sm.states(), sm.stateSet()));
+                sm.initialTransitions(), sm.entryTransitions(), StateErrorContextDTO.from(context, sm.states(), sm.stateSet()));
     }
 
     /**

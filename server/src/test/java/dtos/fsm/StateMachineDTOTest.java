@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import liquidjava.diagnostics.errors.StateErrorContext;
 import liquidjava.fsm.StateMachine;
+import liquidjava.fsm.StateMachineEntryTransition;
 import liquidjava.fsm.StateMachineInitialTransition;
 import liquidjava.fsm.StateMachineTransition;
 
@@ -49,6 +50,15 @@ class StateMachineDTOTest {
         List<StateMachineDTO> dtos = StateMachineDTO.from(List.of(TILING, COMPRESSION), call("close()"));
         assertNotNull(dtos.get(0).errorContext());
         assertNotNull(dtos.get(1).errorContext());
+    }
+
+    @Test
+    void keepsTheEntryTransitions() {
+        StateMachine sm = new StateMachine("example.Edit", 0, List.of("start", "endDone"),
+                List.of(new StateMachineTransition("start", "endDone", "end")),
+                List.of(new StateMachineInitialTransition("start")),
+                List.of(new StateMachineEntryTransition("endDone", "canUndo", "return")));
+        assertEquals(sm.entryTransitions(), StateMachineDTO.from(sm, null).entryTransitions());
     }
 
     @Test

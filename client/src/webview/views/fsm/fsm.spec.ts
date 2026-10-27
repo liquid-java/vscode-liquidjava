@@ -91,6 +91,7 @@ describe('state machine view', () => {
         ['initial transition postcondition', machine({ initialTransitions: [{ to: 'Closed', toCondition: 'size == 0' }] })],
         ['method precondition', machine({ transitions: [{ from: 'Closed', to: 'Open', label: 'open', fromCondition: 'size > 0' }] })],
         ['method postcondition', machine({ transitions: [{ from: 'Closed', to: 'Open', label: 'open', toCondition: 'size == 1' }] })],
+        ['entry transition postcondition', machine({ entryTransitions: [{ to: 'Open', label: 'isOpen', toCondition: 'return' }] })],
     ] as const)('enables condition expansion for an %s', (_, stateMachine) => {
         renderStateMachineView(document.body, [stateMachine], [diagram], 'TB', false);
 
