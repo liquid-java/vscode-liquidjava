@@ -1,8 +1,9 @@
+import type { LJHint } from "../../../types/diagnostics";
 import type { LJStateMachine } from "../../../types/fsm";
 import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectedCallText, getStateErrorFocuses, type StateErrorFocus } from "../../diagram-focus";
 import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
-import { renderMainHeader, type NavBadges } from "../sections";
+import { getShownHints, renderHintKey, renderHintList, renderMainHeader, type NavBadges } from "../sections";
 
 /**
  * The position of the shown state error among the state errors of the current file
@@ -18,17 +19,25 @@ export type StateErrorNavigation = {
 const NO_STATE_ERROR_NAVIGATION: StateErrorNavigation = { index: -1, count: 0 };
 
 /**
+ * The verifier's hints of the shown state error, and the key that keeps their section open across renders
+ */
+export type StateErrorHints = {
+    hints: LJHint[];
+    key: string;
+};
+
+/**
  * Renders the State Machine view with the diagram of each state set of a class, stacked
  * @param sms the state machines, one per state set
  * @param diagrams the Mermaid diagram of each state machine
  */
-export function renderStateMachineView(root: HTMLElement, sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError = false, stateErrors = NO_STATE_ERROR_NAVIGATION, badges: NavBadges = { errors: 0, stateErrors: stateErrors.count }) {
+export function renderStateMachineView(root: HTMLElement, sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError = false, stateErrors = NO_STATE_ERROR_NAVIGATION, badges: NavBadges = { errors: 0, stateErrors: stateErrors.count }, hints?: StateErrorHints) {
     const previousDiagramContainer = root.querySelector('.diagram-container') as HTMLElement | null;
     const diagramHeight = previousDiagramContainer?.offsetHeight;
-    root.innerHTML = renderStateMachineViewHtml(sms, diagrams, orientation, showConditions, focusOnError, stateErrors, badges, diagramHeight);
+    root.innerHTML = renderStateMachineViewHtml(sms, diagrams, orientation, showConditions, focusOnError, stateErrors, badges, hints, diagramHeight);
 }
 
-function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, stateErrors: StateErrorNavigation, badges: NavBadges, diagramHeight?: number): string {
+function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], orientation: "LR" | "TB", showConditions: boolean, focusOnError: boolean, stateErrors: StateErrorNavigation, badges: NavBadges, hints: StateErrorHints | undefined, diagramHeight?: number): string {
     const className = sms[0]?.className;
     const errorFocuses = getStateErrorFocuses(sms);
     const hasConditionExpansions = sms.some(sm =>
@@ -59,6 +68,7 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
                         ${errorFocuses.length > 0
                             ? renderStateErrorSummary(getStateErrorSummary(errorFocuses), stateErrors) + renderStateErrorLegend(errorFocuses, focusOnError)
                             : isStateErrorShown(stateErrors) ? renderStateErrorSummary(getUnmarkedStateErrorSummary(sms, stateErrors), stateErrors) : ''}
+                        ${renderWaysToFix(hints)}
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
                                 <span class="diagram-condition-legend-pre">Precondition</span>
@@ -136,6 +146,23 @@ function renderStateErrorStepper({ index, count }: StateErrorNavigation): string
             <span class="state-error-position">${index + 1} of ${count}</span>
             ${renderCodiconButton("chevron-right", { className: "diagram-control-btn state-error-step-btn", title: "Next state error", attributes: 'data-step="1"', disabled: index >= count - 1 })}
         </span>
+    `;
+}
+
+/**
+ * Renders the verifier's hints for the shown state error, collapsed like the hints in the Verification tab
+ */
+function renderWaysToFix(hints: StateErrorHints | undefined): string {
+    const verifierHints = getShownHints(hints?.hints);
+    if (verifierHints.length === 0) return '';
+    return /*html*/`
+        <details class="diagram-fixes"${renderHintKey(hints ? `fsm|${hints.key}` : undefined)}>
+            <summary class="hint-summary">Ways to fix</summary>
+            <div class="diagram-fixes-body">
+                <p class="diagram-fixes-source">From the verifier</p>
+                <div class="hint-body">${renderHintList(verifierHints)}</div>
+            </div>
+        </details>
     `;
 }
 

@@ -136,6 +136,43 @@ describe('state machine view', () => {
         expect(button('diagram-focus-btn').textContent?.trim()).toBe('Focus on error');
     });
 
+    describe('ways to fix', () => {
+        const socket = () => machine({
+            className: 'DatagramSocket', states: ['unbound', 'bound', 'connected', 'closed'],
+            initialTransitions: [{ to: 'bound', constructorSignature: 'new DatagramSocket()' }],
+            transitions: [{ from: 'closed', to: 'unbound', label: 'reset' }], errorContext: socketError(['bound', 'closed']),
+        });
+        const pathDependent = { kind: 'path-dependent-state' as const, message: 'socket can be in bound or closed here, depending on the path taken' };
+
+        it('lists the verifier hints, collapsed', () => {
+            renderStateMachineView(document.body, [socket()], [diagram], 'TB', false, true, undefined, undefined, { hints: [pathDependent], key: 'error' });
+
+            const section = document.querySelector<HTMLDetailsElement>('details.diagram-fixes')!;
+            expect(section.open).toBe(false);
+            expect(section.getAttribute('data-hint-key')).toBe('fsm|error');
+            expect(section.querySelector('.diagram-fixes-source')?.textContent).toBe('From the verifier');
+            expect(section.querySelector('.hint-note')?.textContent).toBe(pathDependent.message);
+            // nothing is read from the diagram, which ignores the conditions and the code
+            expect(section.textContent).not.toContain('socket.reset()');
+        });
+
+        it('shows the verifier hints of an error that cannot be marked on the diagram', () => {
+            const sm = socket();
+            sm.errorContext = { ...sm.errorContext!, acceptedStates: [], validStates: [], invalidStates: [] };
+            renderStateMachineView(document.body, [sm], [diagram], 'TB', false, true, { index: 0, count: 1, line: 4 }, undefined, { hints: [pathDependent], key: 'error' });
+
+            expect(document.querySelector('.diagram-fixes .hint-note')?.textContent).toBe(pathDependent.message);
+        });
+
+        it('has no section without hints', () => {
+            renderStateMachineView(document.body, [socket()], [diagram], 'TB', false, true, undefined, undefined, { hints: [], key: 'error' });
+            expect(document.querySelector('.diagram-fixes')).toBeNull();
+
+            renderStateMachineView(document.body, [socket()], [diagram], 'TB', false, true);
+            expect(document.querySelector('.diagram-fixes')).toBeNull();
+        });
+    });
+
     it('names the expected and actual states when no actual is expected', () => {
         renderStateMachineView(document.body, [machine({
             states: ['childrenAllowed', 'maybeHasChildren'],

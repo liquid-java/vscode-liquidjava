@@ -529,6 +529,23 @@ describe('webview script', () => {
         expect(hint().open).toBe(false);
     });
 
+    it('shows the hints of the shown state error as ways to fix it, open after switching tabs once opened', () => {
+        const error = { ...stateError('State refinement error', errorMachine('Counter', 'close')), hints: [{ kind: 'general' as const, message: 'Call open() first' }] };
+        showDiagnostics([error]);
+        click('.diagnostic-state-machine-btn');
+        const ways = () => root.querySelector<HTMLDetailsElement>('.diagram-fixes')!;
+        expect(ways().open).toBe(false);
+        expect(ways().querySelector('.hint-message')?.textContent).toBe('Call open() first');
+
+        ways().open = true;
+        ways().dispatchEvent(new Event('toggle'));
+        click('[data-tab="diagnostics"]');
+        // the hint of the Verification tab keeps its own state
+        expect(root.querySelector<HTMLDetailsElement>('.error-item .hint-section')!.open).toBe(false);
+        click('[data-tab="fsm"]');
+        expect(ways().open).toBe(true);
+    });
+
     it('opens on the first state error of a newly opened file', () => {
         showDiagnostics([
             stateError('Main error', errorMachine('Main', 'close'), 4),

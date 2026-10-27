@@ -465,8 +465,8 @@ export function registerPanListeners(document: any) {
     const onMouseDown = (e: any) => {
         const target = e.target as any;
         if (target.tagName === 'A' || target.tagName === 'BUTTON') return;
-        // keep the error summary text selectable, and the collapsed labels clickable
-        if (target.closest?.('.diagram-error-summary, .lj-collapsed-methods, .lj-methods-popover')) return;
+        // keep the error summary and the ways to fix it selectable, and the collapsed labels clickable
+        if (target.closest?.('.diagram-error-summary, .diagram-fixes, .lj-collapsed-methods, .lj-methods-popover')) return;
         
         e.preventDefault();
         isPanning = true;
