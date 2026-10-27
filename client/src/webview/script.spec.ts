@@ -389,12 +389,12 @@ describe('webview script', () => {
             stateError('Second state error', { ...errorMachine('Second', 'reset'), errorContext: null }, 9),
         ]);
         click('[data-tab="fsm"]');
-        expect(root.querySelector('.diagram-error-text')?.textContent).toBe('The call at line 5 is rejected');
+        expect(root.querySelector('.diagram-error-text')?.textContent).toBe('Invalid method call at line 5');
         expect(root.querySelector('.state-error-position')?.textContent).toBe('1 of 2');
 
         click('.state-error-step-btn[data-step="1"]');
         expect(root.querySelector('.diagram-title')?.textContent).toBe('Second');
-        expect(root.querySelector('.diagram-error-text')?.textContent).toBe('The call at line 10 is rejected');
+        expect(root.querySelector('.diagram-error-text')?.textContent).toBe('Invalid method call at line 10');
 
         click('#state-error-reveal-btn');
         expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('diagnostics');
