@@ -172,7 +172,7 @@
 		<dependency>
 		  <groupId>io.github.liquid-java</groupId>
 		  <artifactId>liquidjava-fsm</artifactId>
-		  <version>0.2.1</version>
+		  <version>0.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>tools.aqua</groupId>

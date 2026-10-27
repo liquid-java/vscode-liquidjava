@@ -33,6 +33,7 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
     const errorFocuses = getStateErrorFocuses(sms);
     const hasConditionExpansions = sms.some(sm =>
         sm.initialTransitions.some(transition => !!transition.toCondition)
+            || sm.entryTransitions?.some(transition => !!transition.toCondition)
             || sm.transitions.some(transition => !!transition.fromCondition || !!transition.toCondition));
     const conditionToggleLabel = !hasConditionExpansions
         ? 'No additional conditions to expand'

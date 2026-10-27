@@ -6,6 +6,8 @@ export type LJStateMachine = {
     // index of the state set among the class's @StateSet annotations, in declaration order
     stateSet?: number;
     initialTransitions: { to: string; toCondition?: string | null; constructorSignature?: string | null }[];
+    // methods that put an object in an unknown state (a field, a parameter or a getter's result) into a state
+    entryTransitions?: { to: string; label: string; toCondition?: string | null }[];
     states: string[];
     transitions: { from: string; to: string; label: string; fromCondition?: string | null; toCondition?: string | null }[];
     // the state error on this state set, null if the call does not involve it

@@ -56,6 +56,12 @@ export function createMermaidDiagram(
         const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
         addTransition(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`, relatedStates.length > 0);
     });
+
+    // entry transitions of objects in an unknown state, also from the initial pseudo state and dimmed in focus mode
+    sm.entryTransitions?.forEach(transition => {
+        const label = getTransitionLabel(transition.label, null, transition.toCondition, showConditions);
+        addTransition(`    [*] --> ${transition.to} : ${label}`, relatedStates.length > 0);
+    });
     
     // in focus mode, only the failed method and the ways out of the possible states stay bright
     const isUsefulTransition = (from: string, to: string) => !!errorFocus?.possibleStates.includes(from) && from !== to;

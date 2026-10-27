@@ -115,6 +115,17 @@ describe('state error focus', () => {
         expect(full).not.toMatch(/ljStateDimmed|lj-dimmed/);
     });
 
+    it('draws entry transitions from the initial pseudo state, dimmed when focused', () => {
+        // a getter that puts a tree node in an unknown state into maybeHasChildren when it returns false
+        const sm = { ...treeNode(), entryTransitions: [{ to: 'maybeHasChildren', label: 'isLeaf', toCondition: '!return' }] };
+
+        expect(lines(createMermaidDiagram(sm, 'TB', false, false))).toContain('[*] --> maybeHasChildren : isLeaf');
+        expect(lines(createMermaidDiagram(sm, 'TB', true, false))).toContain(
+            '[*] --> maybeHasChildren : isLeaf<br/><span class="state-cond state-cond-post">!return</span>');
+        // the constructor and the entry transition come first
+        expect(dimmedTransitions(createMermaidDiagram(sm, 'TB', false, true))[0]).toMatch(/^%% lj-dimmed-transitions: edge0 edge1\b/);
+    });
+
     it('only keeps the failed method and the ways out of the possible states bright', () => {
         const diagram = lines(createMermaidDiagram(datagramSocket(), 'TB', false, true));
 
