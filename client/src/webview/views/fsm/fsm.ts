@@ -1,5 +1,5 @@
 import type { LJStateMachine } from "../../../types/fsm";
-import { INVALID_STATE_ICON, VALID_STATE_ICON, getConstructorFixStates, getRejectedCallText, getStateErrorFocus, getStateErrorFocuses, getStateFixes, type StateErrorFocus } from "../../diagram-focus";
+import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectedCallText, getStateErrorFocuses, type StateErrorFocus } from "../../diagram-focus";
 import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
 import { renderMainHeader, type NavBadges } from "../sections";
@@ -57,7 +57,7 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
                             </div>
                         </div>
                         ${errorFocuses.length > 0
-                            ? renderStateErrorSummary(getStateErrorSummary(errorFocuses), stateErrors) + renderStateErrorLegend(errorFocuses, focusOnError && hasStateFixes(sms), focusOnError)
+                            ? renderStateErrorSummary(getStateErrorSummary(errorFocuses), stateErrors) + renderStateErrorLegend(errorFocuses, focusOnError)
                             : isStateErrorShown(stateErrors) ? renderStateErrorSummary(getUnmarkedStateErrorSummary(sms, stateErrors), stateErrors) : ''}
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
@@ -139,25 +139,14 @@ function renderStateErrorStepper({ index, count }: StateErrorNavigation): string
     `;
 }
 
-// whether a diagram marks a way from a rejecting state to an accepting one
-function hasStateFixes(sms: LJStateMachine[]): boolean {
-    return sms.some(sm => {
-        const focus = getStateErrorFocus(sm);
-        if (!focus) return false;
-        const fixes = getStateFixes(sm, focus);
-        return fixes.some(fix => fix.steps.length > 0) || getConstructorFixStates(sm, focus, fixes).length > 0;
-    });
-}
-
 // explains the state marks with the same outlines, fills, and icons as the diagram, next to the toggle that collapses the rest
-function renderStateErrorLegend(focuses: StateErrorFocus[], hasFixes: boolean, focusOnError: boolean): string {
+function renderStateErrorLegend(focuses: StateErrorFocus[], focusOnError: boolean): string {
     const items = [
         focuses.some(focus => focus.invalidStates.length > 0) ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Actual state, not expected`) : '',
         focuses.some(focus => focus.validStates.length > 0) ? renderLegendItem('valid', `${VALID_STATE_ICON} Actual state, expected`) : '',
         focuses.some(focus => focus.acceptedStates.some(state => !focus.validStates.includes(state)))
             ? renderLegendItem('accepted', 'Expected state')
             : '',
-        hasFixes ? renderLegendItem('fix', 'Way to an expected state') : '',
     ].filter(Boolean);
     return /*html*/`
         <div class="diagram-error-legend">

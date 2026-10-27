@@ -1,6 +1,7 @@
 import type { LJStateMachine } from "../types/fsm";
 import { copyToClipboard } from "./clipboard";
-import { INVALID_STATE_ICON, VALID_STATE_ICON, getConstructorFixStates, getRelatedStates, getStateErrorFocus, getStateFixes } from "./diagram-focus";
+import { INVALID_STATE_ICON, VALID_STATE_ICON, getRelatedStates, getStateErrorFocus } from "./diagram-focus";
+import { placePopover, type Box, type Point } from "./popover-placement";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -10,11 +11,14 @@ const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
 // Mermaid comment listing the transitions to dim once rendered
 const DIMMED_TRANSITIONS_COMMENT = '%% lj-dimmed-transitions:';
-// Mermaid comment listing the transitions on a way from a rejecting state to an accepting one
-const FIX_TRANSITIONS_COMMENT = '%% lj-fix-transitions:';
 // a focused diagram is shrunk to fit the panel, but never below this scale so that its labels stay readable
 const MIN_FOCUS_SCALE = 0.6;
 const FOCUS_BOTTOM_MARGIN = 16;
+// the list of a collapsed label's methods keeps this distance from the label and from the window's edges
+const POPOVER_GAP = 6;
+const POPOVER_MARGIN = 8;
+// the step between the points of a transition line the list avoids
+const LINE_SAMPLE_STEP = 8;
 
 // state variables
 let zoomLevel = 1;
@@ -46,17 +50,11 @@ export function createMermaidDiagram(
     const isDimmed = (state: string) => relatedStates.length > 0 && !relatedStates.includes(state);
     // focusing collapses the dimmed methods of each label, so the diagram is laid out again around the error
     const collapse = relatedStates.length > 0;
-    // the ways from the invalid states to an accepted state stay bright and are marked
-    const fixes = collapse ? getStateFixes(sm, errorFocus!) : [];
-    const fixEdges = new Set(fixes.flatMap(fix => fix.steps.map(step => `${step.from}|${step.to}`)));
-    const constructorFixStates = collapse ? getConstructorFixStates(sm, errorFocus!, fixes) : [];
     // Mermaid numbers the rendered transitions in the order they are declared
     const dimmedTransitions: string[] = [];
-    const fixTransitions: string[] = [];
     let transitionCount = 0;
-    const addTransition = (line: string, dimmed: boolean, fix = false) => {
+    const addTransition = (line: string, dimmed: boolean) => {
         if (dimmed) dimmedTransitions.push(`edge${transitionCount}`);
-        if (fix) fixTransitions.push(`edge${transitionCount}`);
         transitionCount++;
         lines.push(line);
     };
@@ -64,19 +62,15 @@ export function createMermaidDiagram(
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
     
-    // initial transitions, dimmed in focus mode since the receiver already exists at the call,
-    // unless creating a new object is the only fix
+    // initial transitions, dimmed in focus mode since the receiver already exists at the call
     if (collapse) {
         const targets = [...new Set(sm.initialTransitions.map(transition => transition.to))];
         targets.forEach(to => {
             const signatures = sm.initialTransitions.filter(transition => transition.to === to)
                 .map(transition => transition.constructorSignature ? escapeMermaidLabel(transition.constructorSignature) : '')
                 .filter(Boolean);
-            const fix = constructorFixStates.includes(to);
-            const label = fix
-                ? signatures.join('<br/>')
-                : getCollapsedLabel([], signatures.map(signature => ({ name: signature, label: signature })), 'constructors');
-            addTransition(`    [*] --> ${to}${label ? ` : ${label}` : ''}`, !fix, fix);
+            const label = getCollapsedLabel([], signatures.map(signature => ({ name: signature, label: signature })), 'constructors');
+            addTransition(`    [*] --> ${to}${label ? ` : ${label}` : ''}`, true);
         });
     } else {
         sm.initialTransitions.forEach(transition => {
@@ -110,8 +104,8 @@ export function createMermaidDiagram(
     sm.transitions.forEach(transition => {
         const key = `${transition.from}|${transition.to}`;
         const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
-        // in focus mode, only the failed method and the ways to an accepted state stay bright
-        const dimmed = collapse && !isCalledMethod && !fixEdges.has(key);
+        // in focus mode, only the failed method stays bright
+        const dimmed = collapse && !isCalledMethod;
         const label = getTransitionLabel(
             transition.label,
             transition.fromCondition,
@@ -130,7 +124,7 @@ export function createMermaidDiagram(
     // add transitions, dimming those whose methods are all dimmed
     transitionMap.forEach(({ bright, dimmed }, key) => {
         const [from, to] = key.split('|');
-        addTransition(`    ${from} --> ${to} : ${getCollapsedLabel(bright, dimmed, 'methods')}`, bright.length === 0, fixEdges.has(key));
+        addTransition(`    ${from} --> ${to} : ${getCollapsedLabel(bright, dimmed, 'methods')}`, bright.length === 0);
     });
 
     if (!errorFocus) {
@@ -155,7 +149,6 @@ export function createMermaidDiagram(
         if (states.length > 0) lines.push(`    class ${states.join(',')} ${className}`);
     });
     if (dimmedTransitions.length > 0) lines.push(`${DIMMED_TRANSITIONS_COMMENT} ${dimmedTransitions.join(' ')}`);
-    if (fixTransitions.length > 0) lines.push(`${FIX_TRANSITIONS_COMMENT} ${fixTransitions.join(' ')}`);
 
     return lines.join('\n');
 }
@@ -164,16 +157,16 @@ export function createMermaidDiagram(
 type CollapsibleLabel = { name: string; label: string };
 
 /**
- * Gets the label of a transition whose dimmed methods are collapsed into a count, named in its tooltip
+ * Gets the label of a transition whose dimmed methods are collapsed into a count
  * A single dimmed method keeps its full label, since the count would be no shorter
+ * The full labels are kept hidden in the count, for the list shown on hover
  */
 function getCollapsedLabel(bright: string[], dimmed: CollapsibleLabel[], noun: 'methods' | 'constructors'): string {
     if (dimmed.length === 0) return bright.join('<br/>');
     if (dimmed.length === 1) return [...bright, `<span class="lj-dimmed-method">${dimmed[0].label}</span>`].join('<br/>');
     const count = bright.length > 0 ? `+${dimmed.length} more` : `${dimmed.length} ${noun}`;
-    // the names are already escaped, and a tooltip shows them on hover
-    const names = dimmed.map(method => method.name).join(', ').replace(/'/g, '&#39;');
-    return [...bright, `<span class="lj-dimmed-method lj-collapsed-methods" title='${names}'>${count}</span>`].join('<br/>');
+    const methods = `<span class="lj-collapsed-list">${dimmed.map(method => `<span class="lj-collapsed-item">${method.label}</span>`).join('')}</span>`;
+    return [...bright, `<span class="lj-dimmed-method lj-collapsed-methods">${count}${methods}</span>`].join('<br/>');
 }
 
 function getTransitionLabel(
@@ -227,14 +220,13 @@ export async function renderMermaidDiagram(document: any, window: any) {
 
     try { 
         const dimmedTransitions = Array.from(mermaidElements, (element: any) => getListedTransitions(element.textContent, DIMMED_TRANSITIONS_COMMENT));
-        const fixTransitions = Array.from(mermaidElements, (element: any) => getListedTransitions(element.textContent, FIX_TRANSITIONS_COMMENT));
         await mermaid.run({ nodes: mermaidElements });
         highlightErrorTransitions(document);
         mermaidElements.forEach((element: any, index: number) => {
             markTransitions(element, dimmedTransitions[index], 'lj-dimmed');
-            markTransitions(element, fixTransitions[index], 'lj-fix-transition');
         });
         fitFocusedDiagrams(document, window);
+        registerCollapsedLabels(document);
         applyTransform(document);
         registerPanListeners(document);
         const diagramContainer = document.querySelector('.diagram-container') as HTMLElement | null;
@@ -280,6 +272,101 @@ function fitFocusedDiagrams(document: any, window: any) {
         const height = svg.clientHeight;
         if (!height || height <= available) return;
         svg.style.maxHeight = `${Math.max(available, height * MIN_FOCUS_SCALE)}px`;
+    });
+}
+
+/**
+ * Shows the methods of a collapsed label in a list next to it, without laying out the diagram again
+ * Hovering shows the list, and a click pins it until the next click, a pan, or a zoom
+ */
+function registerCollapsedLabels(document: any) {
+    const container = document.querySelector('.diagram-container') as HTMLElement | null;
+    if (!container) return;
+    let popover: HTMLElement | null = null;
+    let pinned: Element | null = null;
+
+    const hide = () => {
+        popover?.remove();
+        popover = null;
+        pinned = null;
+    };
+    const show = (label: Element) => {
+        popover?.remove();
+        popover = document.createElement('div') as HTMLElement;
+        popover.className = 'lj-methods-popover';
+        popover.innerHTML = label.querySelector('.lj-collapsed-list')?.innerHTML ?? '';
+        container.appendChild(popover);
+        placeMethodsPopover(document, popover, label);
+    };
+
+    container.querySelectorAll('.lj-collapsed-methods').forEach(label => {
+        label.addEventListener('mouseenter', () => {
+            if (!pinned) show(label);
+        });
+        label.addEventListener('mouseleave', () => {
+            if (!pinned) hide();
+        });
+        label.addEventListener('click', (e: Event) => {
+            e.stopPropagation();
+            if (pinned === label) return hide();
+            show(label);
+            pinned = label;
+        });
+    });
+    // the list would no longer be next to its label
+    container.addEventListener('mousedown', (e: Event) => {
+        if (!(e.target as Element).closest?.('.lj-collapsed-methods, .lj-methods-popover')) hide();
+    });
+    container.addEventListener('wheel', hide);
+}
+
+// places the list of a collapsed label's methods where it covers the least of the label's diagram
+function placeMethodsPopover(document: any, popover: HTMLElement, label: Element) {
+    // the visible area, without the scrollbars
+    const page = document.documentElement;
+    const bounds = {
+        left: POPOVER_MARGIN,
+        top: POPOVER_MARGIN,
+        right: page.clientWidth - POPOVER_MARGIN,
+        bottom: page.clientHeight - POPOVER_MARGIN,
+    };
+    popover.style.maxHeight = `${Math.max(bounds.bottom - bounds.top, 0)}px`;
+    const svg = label.closest('svg');
+    const anchor = toBox(label.getBoundingClientRect());
+    const boxes = svg ? Array.from(svg.querySelectorAll('g.node, .edgeLabel'), (element: Element) => toBox(element.getBoundingClientRect())) : [];
+    const position = placePopover(
+        anchor,
+        { width: popover.offsetWidth, height: popover.offsetHeight },
+        bounds,
+        svg ? toBox(svg.getBoundingClientRect()) : anchor,
+        boxes,
+        svg ? getLinePoints(svg) : [],
+        POPOVER_GAP,
+    );
+    popover.style.left = `${position.x}px`;
+    popover.style.top = `${position.y}px`;
+    // the webview may offset fixed elements, so the popover is moved by what it missed
+    const placed = popover.getBoundingClientRect();
+    popover.style.left = `${2 * position.x - placed.left}px`;
+    popover.style.top = `${2 * position.y - placed.top}px`;
+}
+
+function toBox(rect: DOMRect): Box {
+    return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom };
+}
+
+// points along the transition lines of a diagram, in window coordinates
+function getLinePoints(svg: Element): Point[] {
+    return Array.from(svg.querySelectorAll('path.transition')).flatMap((path: any) => {
+        const matrix = path.getScreenCTM?.();
+        if (!matrix || typeof path.getTotalLength !== 'function') return [];
+        const length = path.getTotalLength();
+        const points: Point[] = [];
+        for (let at = 0; at <= length; at += LINE_SAMPLE_STEP) {
+            const { x, y } = path.getPointAtLength(at).matrixTransform(matrix);
+            points.push({ x, y });
+        }
+        return points;
     });
 }
 
@@ -378,8 +465,8 @@ export function registerPanListeners(document: any) {
     const onMouseDown = (e: any) => {
         const target = e.target as any;
         if (target.tagName === 'A' || target.tagName === 'BUTTON') return;
-        // keep the error summary text selectable
-        if (target.closest?.('.diagram-error-summary')) return;
+        // keep the error summary text selectable, and the collapsed labels clickable
+        if (target.closest?.('.diagram-error-summary, .lj-collapsed-methods, .lj-methods-popover')) return;
         
         e.preventDefault();
         isPanning = true;

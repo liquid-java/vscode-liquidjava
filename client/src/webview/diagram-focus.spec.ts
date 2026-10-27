@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LJStateMachine, LJStateMachineErrorContext } from '../types/fsm';
 import { createMermaidDiagram, renderMermaidDiagram } from './diagram';
-import { getConstructorFixStates, getRelatedStates, getStateErrorFocus, getStateErrorFocuses, getStateFixes, orderStateMachines } from './diagram-focus';
+import { getRelatedStates, getStateErrorFocus, getStateErrorFocuses, orderStateMachines } from './diagram-focus';
 
 // DefaultMutableTreeNode from the state error focus issue:
 // root.add(...); root.removeAllChildren(); root.getFirstChild(); // state error
@@ -62,10 +62,10 @@ function lines(diagram: string): string[] {
 }
 
 const dimmedTransitions = (diagram: string) => lines(diagram).filter(line => line.startsWith('%% lj-dimmed-transitions:'));
-const fixTransitions = (diagram: string) => lines(diagram).filter(line => line.startsWith('%% lj-fix-transitions:'));
 const calledMethod = (label: string) => `<span class="lj-state-error-method">${label}</span>`;
 const dimmedMethod = (label: string) => `<span class="lj-dimmed-method">${label}</span>`;
-const collapsedMethods = (names: string[], count: string) => `<span class="lj-dimmed-method lj-collapsed-methods" title='${names.join(', ')}'>${count}</span>`;
+const collapsedMethods = (labels: string[], count: string) =>
+    `<span class="lj-dimmed-method lj-collapsed-methods">${count}<span class="lj-collapsed-list">${labels.map(label => `<span class="lj-collapsed-item">${label}</span>`).join('')}</span></span>`;
 
 describe('state error focus', () => {
     it('splits the possible states into valid and invalid ones', () => {
@@ -103,14 +103,13 @@ describe('state error focus', () => {
         }
     });
 
-    it('dims the states unrelated to the error and the transitions that do not help to fix it when focused', () => {
+    it('dims the states unrelated to the error and the transitions without the failed method when focused', () => {
         const focused = createMermaidDiagram(datagramSocket(), 'TB', false, true);
 
         expect(lines(focused)).toContain('class broken ljStateDimmed');
-        // the constructor without arguments is the way to fix closed, which no call leaves
-        expect(fixTransitions(focused)).toEqual(['%% lj-fix-transitions: edge0']);
-        // the other constructor, then bind, connect, disconnect, every close, repair, and discard
-        expect(dimmedTransitions(focused)).toEqual(['%% lj-dimmed-transitions: edge1 edge2 edge3 edge4 edge8 edge9 edge10 edge11 edge12']);
+        // both constructors, then bind, connect, disconnect, every close, repair, and discard
+        expect(dimmedTransitions(focused)).toEqual(['%% lj-dimmed-transitions: edge0 edge1 edge2 edge3 edge4 edge8 edge9 edge10 edge11 edge12']);
+        expect(focused).not.toContain('lj-fix');
     });
 
     it('draws entry transitions from the initial pseudo state, dimmed when focused', () => {
@@ -130,8 +129,10 @@ describe('state error focus', () => {
             { to: 'maybeHasChildren', label: 'getChildCount', toCondition: 'return > 0' },
         ] };
 
-        expect(lines(createMermaidDiagram(sm, 'TB', true, true)))
-            .toContain(`[*] --> maybeHasChildren : ${collapsedMethods(['isLeaf', 'getChildCount'], '2 methods')}`);
+        expect(lines(createMermaidDiagram(sm, 'TB', true, true))).toContain(`[*] --> maybeHasChildren : ${collapsedMethods([
+            'isLeaf<br/><span class="state-cond state-cond-post">!return</span>',
+            'getChildCount<br/><span class="state-cond state-cond-post">return &gt; 0</span>',
+        ], '2 methods')}`);
     });
 
     it('leaves the full diagram unchanged when showing all', () => {
@@ -145,7 +146,7 @@ describe('state error focus', () => {
         ]));
     });
 
-    it('collapses the dimmed methods of a label into a count, named in its tooltip', () => {
+    it('collapses the dimmed methods of a label into a count, keeping them for the list on hover', () => {
         const sm = datagramSocket();
         sm.transitions.push(
             { from: 'bound', to: 'bound', label: 'getPort' },
@@ -168,45 +169,6 @@ describe('state error focus', () => {
         const diagram = lines(createMermaidDiagram(sm, 'TB', false, true));
         expect(diagram).toContain(`[*] --> childrenAllowed : ${collapsedMethods(['DefaultMutableTreeNode(Object)', 'DefaultMutableTreeNode()'], '2 constructors')}`);
         expect(diagram.filter(line => line.startsWith('[*]'))).toHaveLength(1);
-    });
-
-    it('keeps a shortest way from each invalid state to an accepted state bright', () => {
-        const sm = datagramSocket();
-        sm.transitions.push(
-            { from: 'closed', to: 'broken', label: 'fail' },
-            { from: 'broken', to: 'unbound', label: 'reset' },
-            { from: 'broken', to: 'unbound', label: 'restart' },
-        );
-
-        const diagram = createMermaidDiagram(sm, 'TB', false, true);
-        expect(lines(diagram)).toEqual(expect.arrayContaining([
-            'closed --> broken : fail',
-            // both methods of a step are a way
-            'broken --> unbound : reset<br/>restart',
-            // a constructor is no fix when the invalid state can reach an accepted one
-            `[*] --> bound : ${dimmedMethod('new DatagramSocket()')}`,
-        ]));
-        expect(fixTransitions(diagram)).toEqual(['%% lj-fix-transitions: edge13 edge14']);
-    });
-
-    it('finds a shortest way to an accepted state for each invalid state, or none', () => {
-        const sm = datagramSocket({ possibleStates: ['closed', 'broken'], validStates: [], invalidStates: ['closed', 'broken'] });
-        const focus = getStateErrorFocus(sm)!;
-
-        const fixes = getStateFixes(sm, focus);
-        expect(fixes).toEqual([
-            { from: 'closed', steps: [] },
-            { from: 'broken', steps: [] },
-        ]);
-        expect(getConstructorFixStates(sm, focus, fixes)).toEqual(['bound']);
-
-        sm.transitions.push({ from: 'closed', to: 'unbound', label: 'reopen' }, { from: 'closed', to: 'broken', label: 'fail' });
-        expect(getStateFixes(sm, focus)).toEqual([
-            { from: 'closed', steps: [{ from: 'closed', to: 'unbound', methods: ['reopen'] }] },
-            // through closed, which the call does not accept either
-            { from: 'broken', steps: [{ from: 'broken', to: 'closed', methods: ['discard'] }, { from: 'closed', to: 'unbound', methods: ['reopen'] }] },
-        ]);
-        expect(getConstructorFixStates(sm, focus, getStateFixes(sm, focus))).toEqual([]);
     });
 
     it('dims the conditions of a dimmed method with it', () => {
@@ -246,8 +208,7 @@ describe('state error focus', () => {
         const diagram = createMermaidDiagram(sm, 'TB', false, true);
         expect(lines(diagram)).toContain('class unbound,bound,connected ljStateAccepted');
         expect(diagram).not.toMatch(/ljStateValid|ljStateInvalid|ljStateDimmed|" as /);
-        // no state is known to reject the call, so there is no way to mark and only the failed method stays bright
-        expect(fixTransitions(diagram)).toEqual([]);
+        // only the failed method stays bright
         expect(lines(diagram)).toEqual(expect.arrayContaining([`unbound --> bound : ${dimmedMethod('bind')}`, `broken --> broken : ${dimmedMethod('repair')}`]));
     });
 
@@ -259,14 +220,12 @@ describe('state error focus', () => {
             'class childrenAllowed ljStateInvalid',
             'class maybeHasChildren ljStateAccepted',
             `maybeHasChildren --> maybeHasChildren : ${calledMethod('getFirstChild')}`,
-            // add is the way to the accepted state
-            'childrenAllowed --> maybeHasChildren : add',
+            `childrenAllowed --> maybeHasChildren : ${dimmedMethod('add')}`,
             `maybeHasChildren --> childrenAllowed : ${dimmedMethod('removeAllChildren')}`,
         ]));
         expect(diagram.join('\n')).not.toMatch(/maybeHasChildren" as|ljStateValid|ljStateDimmed/);
         // the constructor is dimmed although it leads to a possible state
-        expect(dimmedTransitions(diagram.join('\n'))).toEqual(['%% lj-dimmed-transitions: edge0 edge2']);
-        expect(fixTransitions(diagram.join('\n'))).toEqual(['%% lj-fix-transitions: edge1']);
+        expect(dimmedTransitions(diagram.join('\n'))).toEqual(['%% lj-dimmed-transitions: edge0 edge1 edge2']);
     });
 
     it('only highlights the possible states when the accepted states are unknown', () => {
@@ -297,7 +256,7 @@ describe('rendered state error focus', () => {
         document.body.innerHTML = '';
     });
 
-    it('dims the rendered path and label of the listed transitions, and marks the ways to fix the error', async () => {
+    it('dims the rendered path and label of the listed transitions', async () => {
         const diagram = createMermaidDiagram(datagramSocket(), 'TB', false, true);
         document.body.innerHTML = '<div class="diagram-container"><div id="diagram-wrapper"><pre class="mermaid"></pre></div></div>';
         const pre = document.querySelector('.mermaid')!;
@@ -311,9 +270,81 @@ describe('rendered state error focus', () => {
         await renderMermaidDiagram(document, { mermaid: { run } });
 
         const dimmed = (selector: string) => Array.from(document.querySelectorAll(selector), node => node.getAttribute('data-id'));
-        expect(dimmed('path.transition.lj-dimmed')).toEqual(['edge1', 'edge12']);
-        expect(dimmed('g.label.lj-dimmed')).toEqual(['edge1', 'edge12']);
-        expect(dimmed('path.transition.lj-fix-transition')).toEqual(['edge0']);
+        expect(dimmed('path.transition.lj-dimmed')).toEqual(['edge0', 'edge1', 'edge12']);
+        expect(dimmed('g.label.lj-dimmed')).toEqual(['edge0', 'edge1', 'edge12']);
+    });
+});
+
+describe('collapsed labels', () => {
+    afterEach(() => {
+        document.body.innerHTML = '';
+    });
+
+    async function render() {
+        const sm = datagramSocket();
+        sm.transitions.push({ from: 'bound', to: 'bound', label: 'getPort' });
+        const label = lines(createMermaidDiagram(sm, 'TB', false, true)).find(line => line.startsWith('bound --> bound'))!.split(' : ')[1];
+        document.body.innerHTML = '<div class="diagram-container"><div id="diagram-wrapper"><pre class="mermaid">x</pre></div></div>';
+        const pre = document.querySelector('.mermaid')!;
+        const run = vi.fn(async () => {
+            pre.innerHTML = `<svg><g class="edgeLabel"><foreignObject><div>${label}</div></foreignObject></g></svg>`;
+        });
+        await renderMermaidDiagram(document, { mermaid: { run } });
+        return document.querySelector('.lj-collapsed-methods')!;
+    }
+    const popover = () => document.querySelector('.lj-methods-popover');
+    const items = () => Array.from(document.querySelectorAll('.lj-methods-popover .lj-collapsed-item'), node => node.textContent);
+
+    it('lists the methods on hover without rendering the diagram again', async () => {
+        const label = await render();
+        expect(popover()).toBeNull();
+
+        label.dispatchEvent(new MouseEvent('mouseenter'));
+        expect(items()).toEqual(['send', 'getPort']);
+        label.dispatchEvent(new MouseEvent('mouseleave'));
+        expect(popover()).toBeNull();
+    });
+
+    it('places the list beside the label, off the states', async () => {
+        const label = await render();
+        const box = (left: number, top: number, width: number, height: number) => ({ left, top, right: left + width, bottom: top + height }) as DOMRect;
+        label.getBoundingClientRect = () => box(100, 100, 60, 20);
+        // a state right of the label
+        document.querySelector('svg')!.insertAdjacentHTML('beforeend', '<g class="node"></g>');
+        document.querySelector<Element>('g.node')!.getBoundingClientRect = () => box(170, 50, 200, 120);
+        const size = (name: 'offsetWidth' | 'offsetHeight', value: number) => vi.spyOn(HTMLElement.prototype, name, 'get').mockReturnValue(value);
+        const spies = [size('offsetWidth', 80), size('offsetHeight', 40)];
+        // a 1000 x 800 page, where fixed elements land where they are put
+        vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1000);
+        vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(800);
+        vi.spyOn(HTMLDivElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLDivElement) {
+            return box(parseFloat(this.style.left) || 0, parseFloat(this.style.top) || 0, 80, 40);
+        });
+
+        label.dispatchEvent(new MouseEvent('mouseenter'));
+        expect((popover() as HTMLElement).style.left).toBe(`${100 - 6 - 80}px`);
+        expect((popover() as HTMLElement).style.top).toBe('90px');
+        spies.forEach(spy => spy.mockRestore());
+        vi.restoreAllMocks();
+    });
+
+    it('keeps the list after a click until the next click, a pan, or a zoom', async () => {
+        const label = await render();
+
+        label.dispatchEvent(new MouseEvent('mouseenter'));
+        label.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        label.dispatchEvent(new MouseEvent('mouseleave'));
+        expect(items()).toEqual(['send', 'getPort']);
+        label.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(popover()).toBeNull();
+
+        label.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        document.querySelector('svg')!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        expect(popover()).toBeNull();
+
+        label.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        document.querySelector('.diagram-container')!.dispatchEvent(new WheelEvent('wheel'));
+        expect(popover()).toBeNull();
     });
 });
 
