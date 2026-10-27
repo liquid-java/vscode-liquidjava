@@ -1135,6 +1135,15 @@ export function getStyles(): string {
             stroke-width: 1px !important;
             stroke-dasharray: 4 3;
         }
+        /* a way from a rejecting state to an expected one, dashed like the expected states */
+        .diagram-container .mermaid svg path.lj-fix-transition {
+            stroke: var(--lj-state-accepted) !important;
+            stroke-width: 1.5px !important;
+            stroke-dasharray: 6 4 !important;
+        }
+        .diagram-container .mermaid .edgeLabel .lj-collapsed-methods {
+            font-style: italic;
+        }
         .diagram-container .mermaid svg .ljStateDimmed,
         .diagram-container .mermaid svg .lj-dimmed,
         .diagram-container .mermaid .edgeLabel .lj-dimmed-method {
@@ -1226,6 +1235,12 @@ export function getStyles(): string {
         }
         .diagram-error-legend-accepted {
             border: 1px dashed;
+            border-color: var(--lj-state-accepted);
+        }
+        .diagram-error-legend-fix {
+            height: 0;
+            border-radius: 0;
+            border-top: 2px dashed;
             border-color: var(--lj-state-accepted);
         }
     `;

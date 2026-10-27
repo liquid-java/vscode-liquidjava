@@ -1,6 +1,6 @@
 import type { LJStateMachine } from "../types/fsm";
 import { copyToClipboard } from "./clipboard";
-import { INVALID_STATE_ICON, VALID_STATE_ICON, getRelatedStates, getStateErrorFocus } from "./diagram-focus";
+import { INVALID_STATE_ICON, VALID_STATE_ICON, getConstructorFixStates, getRelatedStates, getStateErrorFocus, getStateFixes } from "./diagram-focus";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -8,8 +8,13 @@ const MAX_ZOOM = 5;
 const ZOOM_BUTTON_FACTOR = 1.5;
 const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
-// Mermaid comment listing the transitions to dim once rendered, which leaves the layout unchanged
+// Mermaid comment listing the transitions to dim once rendered
 const DIMMED_TRANSITIONS_COMMENT = '%% lj-dimmed-transitions:';
+// Mermaid comment listing the transitions on a way from a rejecting state to an accepting one
+const FIX_TRANSITIONS_COMMENT = '%% lj-fix-transitions:';
+// a focused diagram is shrunk to fit the panel, but never below this scale so that its labels stay readable
+const MIN_FOCUS_SCALE = 0.6;
+const FOCUS_BOTTOM_MARGIN = 16;
 
 // state variables
 let zoomLevel = 1;
@@ -24,7 +29,7 @@ let startY = 0;
  * @param sm 
  * @param orientation
  * @param showConditions
- * @param focusOnError whether to dim the states and transitions unrelated to the selected state error
+ * @param focusOnError whether to dim the states unrelated to the selected state error and collapse the unrelated methods
  * @returns Mermaid diagram string
  */
 export function createMermaidDiagram(
@@ -39,11 +44,19 @@ export function createMermaidDiagram(
     const errorFocus = getStateErrorFocus(sm);
     const relatedStates = focusOnError && errorFocus ? getRelatedStates(errorFocus) : [];
     const isDimmed = (state: string) => relatedStates.length > 0 && !relatedStates.includes(state);
+    // focusing collapses the dimmed methods of each label, so the diagram is laid out again around the error
+    const collapse = relatedStates.length > 0;
+    // the ways from the invalid states to an accepted state stay bright and are marked
+    const fixes = collapse ? getStateFixes(sm, errorFocus!) : [];
+    const fixEdges = new Set(fixes.flatMap(fix => fix.steps.map(step => `${step.from}|${step.to}`)));
+    const constructorFixStates = collapse ? getConstructorFixStates(sm, errorFocus!, fixes) : [];
     // Mermaid numbers the rendered transitions in the order they are declared
     const dimmedTransitions: string[] = [];
+    const fixTransitions: string[] = [];
     let transitionCount = 0;
-    const addTransition = (line: string, dimmed: boolean) => {
+    const addTransition = (line: string, dimmed: boolean, fix = false) => {
         if (dimmed) dimmedTransitions.push(`edge${transitionCount}`);
+        if (fix) fixTransitions.push(`edge${transitionCount}`);
         transitionCount++;
         lines.push(line);
     };
@@ -51,26 +64,54 @@ export function createMermaidDiagram(
     lines.push('stateDiagram-v2');
     lines.push(`    direction ${orientation}`);
     
-    // initial transitions, dimmed in focus mode since the receiver already exists at the call
-    sm.initialTransitions.forEach(transition => {
-        const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
-        addTransition(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`, relatedStates.length > 0);
-    });
+    // initial transitions, dimmed in focus mode since the receiver already exists at the call,
+    // unless creating a new object is the only fix
+    if (collapse) {
+        const targets = [...new Set(sm.initialTransitions.map(transition => transition.to))];
+        targets.forEach(to => {
+            const signatures = sm.initialTransitions.filter(transition => transition.to === to)
+                .map(transition => transition.constructorSignature ? escapeMermaidLabel(transition.constructorSignature) : '')
+                .filter(Boolean);
+            const fix = constructorFixStates.includes(to);
+            const label = fix
+                ? signatures.join('<br/>')
+                : getCollapsedLabel([], signatures.map(signature => ({ name: signature, label: signature })), 'constructors');
+            addTransition(`    [*] --> ${to}${label ? ` : ${label}` : ''}`, !fix, fix);
+        });
+    } else {
+        sm.initialTransitions.forEach(transition => {
+            const label = getInitialTransitionLabel(transition.constructorSignature, transition.toCondition, showConditions);
+            addTransition(`    [*] --> ${transition.to}${label ? ` : ${label}` : ''}`, false);
+        });
+    }
 
-    // entry transitions of objects in an unknown state, also from the initial pseudo state and dimmed in focus mode
-    sm.entryTransitions?.forEach(transition => {
-        const label = getTransitionLabel(transition.label, null, transition.toCondition, showConditions);
-        addTransition(`    [*] --> ${transition.to} : ${label}`, relatedStates.length > 0);
-    });
-    
-    // in focus mode, only the failed method and the ways out of the possible states stay bright
-    const isUsefulTransition = (from: string, to: string) => !!errorFocus?.possibleStates.includes(from) && from !== to;
+    // entry transitions of objects in an unknown state, also from the initial pseudo state,
+    // dimmed and collapsed in focus mode like the constructors
+    const entryTransitions = sm.entryTransitions ?? [];
+    if (collapse) {
+        [...new Set(entryTransitions.map(transition => transition.to))].forEach(to => {
+            const methods: CollapsibleLabel[] = [];
+            entryTransitions.filter(transition => transition.to === to).forEach(transition => {
+                const name = escapeMermaidLabel(transition.label);
+                const label = getTransitionLabel(transition.label, null, transition.toCondition, showConditions);
+                if (!methods.some(method => method.name === name)) methods.push({ name, label });
+            });
+            addTransition(`    [*] --> ${to} : ${getCollapsedLabel([], methods, 'methods')}`, true);
+        });
+    } else {
+        entryTransitions.forEach(transition => {
+            const label = getTransitionLabel(transition.label, null, transition.toCondition, showConditions);
+            addTransition(`    [*] --> ${transition.to} : ${label}`, false);
+        });
+    }
 
     // group transitions by from/to states and merge labels
-    const transitionMap = new Map<string, { labels: string[], dimmed: boolean }>();
+    const transitionMap = new Map<string, { bright: string[], dimmed: CollapsibleLabel[] }>();
     sm.transitions.forEach(transition => {
+        const key = `${transition.from}|${transition.to}`;
         const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
-        const dimmed = relatedStates.length > 0 && !isCalledMethod && !isUsefulTransition(transition.from, transition.to);
+        // in focus mode, only the failed method and the ways to an accepted state stay bright
+        const dimmed = collapse && !isCalledMethod && !fixEdges.has(key);
         const label = getTransitionLabel(
             transition.label,
             transition.fromCondition,
@@ -78,18 +119,18 @@ export function createMermaidDiagram(
             showConditions,
             isCalledMethod,
         );
-        const key = `${transition.from}|${transition.to}`;
-        if (!transitionMap.has(key)) transitionMap.set(key, { labels: [], dimmed: true });
+        if (!transitionMap.has(key)) transitionMap.set(key, { bright: [], dimmed: [] });
         const group = transitionMap.get(key)!;
-        // wrapping the label keeps its text, so the layout stays the same
-        group.labels.push(dimmed ? `<span class="lj-dimmed-method">${label}</span>` : label);
-        group.dimmed &&= dimmed;
+        const name = escapeMermaidLabel(transition.label);
+        // overloads share a name, so it is counted once
+        if (!dimmed) group.bright.push(label);
+        else if (!group.dimmed.some(method => method.name === name)) group.dimmed.push({ name, label });
     });
 
     // add transitions, dimming those whose methods are all dimmed
-    transitionMap.forEach(({ labels, dimmed }, key) => {
+    transitionMap.forEach(({ bright, dimmed }, key) => {
         const [from, to] = key.split('|');
-        addTransition(`    ${from} --> ${to} : ${labels.join('<br/>')}`, dimmed);
+        addTransition(`    ${from} --> ${to} : ${getCollapsedLabel(bright, dimmed, 'methods')}`, bright.length === 0, fixEdges.has(key));
     });
 
     if (!errorFocus) {
@@ -114,8 +155,25 @@ export function createMermaidDiagram(
         if (states.length > 0) lines.push(`    class ${states.join(',')} ${className}`);
     });
     if (dimmedTransitions.length > 0) lines.push(`${DIMMED_TRANSITIONS_COMMENT} ${dimmedTransitions.join(' ')}`);
+    if (fixTransitions.length > 0) lines.push(`${FIX_TRANSITIONS_COMMENT} ${fixTransitions.join(' ')}`);
 
     return lines.join('\n');
+}
+
+// a method of a transition label that focus mode may collapse, by its name and its full label
+type CollapsibleLabel = { name: string; label: string };
+
+/**
+ * Gets the label of a transition whose dimmed methods are collapsed into a count, named in its tooltip
+ * A single dimmed method keeps its full label, since the count would be no shorter
+ */
+function getCollapsedLabel(bright: string[], dimmed: CollapsibleLabel[], noun: 'methods' | 'constructors'): string {
+    if (dimmed.length === 0) return bright.join('<br/>');
+    if (dimmed.length === 1) return [...bright, `<span class="lj-dimmed-method">${dimmed[0].label}</span>`].join('<br/>');
+    const count = bright.length > 0 ? `+${dimmed.length} more` : `${dimmed.length} ${noun}`;
+    // the names are already escaped, and a tooltip shows them on hover
+    const names = dimmed.map(method => method.name).join(', ').replace(/'/g, '&#39;');
+    return [...bright, `<span class="lj-dimmed-method lj-collapsed-methods" title='${names}'>${count}</span>`].join('<br/>');
 }
 
 function getTransitionLabel(
@@ -168,10 +226,15 @@ export async function renderMermaidDiagram(document: any, window: any) {
     if (mermaidElements.length === 0) return;
 
     try { 
-        const dimmedTransitions = Array.from(mermaidElements, (element: any) => getDimmedTransitions(element.textContent));
+        const dimmedTransitions = Array.from(mermaidElements, (element: any) => getListedTransitions(element.textContent, DIMMED_TRANSITIONS_COMMENT));
+        const fixTransitions = Array.from(mermaidElements, (element: any) => getListedTransitions(element.textContent, FIX_TRANSITIONS_COMMENT));
         await mermaid.run({ nodes: mermaidElements });
         highlightErrorTransitions(document);
-        mermaidElements.forEach((element: any, index: number) => dimTransitions(element, dimmedTransitions[index]));
+        mermaidElements.forEach((element: any, index: number) => {
+            markTransitions(element, dimmedTransitions[index], 'lj-dimmed');
+            markTransitions(element, fixTransitions[index], 'lj-fix-transition');
+        });
+        fitFocusedDiagrams(document, window);
         applyTransform(document);
         registerPanListeners(document);
         const diagramContainer = document.querySelector('.diagram-container') as HTMLElement | null;
@@ -195,15 +258,28 @@ function highlightErrorTransitions(document: any) {
     });
 }
 
-function getDimmedTransitions(diagram: string | null): string[] {
-    const comment = diagram?.split('\n').find(line => line.startsWith(DIMMED_TRANSITIONS_COMMENT));
-    return comment?.slice(DIMMED_TRANSITIONS_COMMENT.length).trim().split(/\s+/) ?? [];
+function getListedTransitions(diagram: string | null, prefix: string): string[] {
+    const comment = diagram?.split('\n').find(line => line.startsWith(prefix));
+    return comment?.slice(prefix.length).trim().split(/\s+/) ?? [];
 }
 
-function dimTransitions(element: any, edgeIds: string[]) {
+function markTransitions(element: any, edgeIds: string[], className: string) {
     edgeIds.forEach(edgeId => {
         element.querySelectorAll(`path.transition[data-id="${edgeId}"], g.label[data-id="${edgeId}"]`)
-            .forEach((part: any) => part.classList.add('lj-dimmed'));
+            .forEach((part: any) => part.classList.add(className));
+    });
+}
+
+// shrinks the focused diagrams with a state error so that they fit below the summary, keeping them readable
+function fitFocusedDiagrams(document: any, window: any) {
+    const viewport = document.querySelector('.diagram-viewport.diagram-focused') as HTMLElement | null;
+    if (!viewport) return;
+    const available = window.innerHeight - viewport.getBoundingClientRect().top - FOCUS_BOTTOM_MARGIN;
+    viewport.querySelectorAll('.mermaid svg').forEach((svg: any) => {
+        if (!svg.querySelector('.ljStateInvalid, .ljStateValid, .ljStateAccepted')) return;
+        const height = svg.clientHeight;
+        if (!height || height <= available) return;
+        svg.style.maxHeight = `${Math.max(available, height * MIN_FOCUS_SCALE)}px`;
     });
 }
 

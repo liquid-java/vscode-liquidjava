@@ -358,7 +358,20 @@ describe('state machine view', () => {
                 .toBe('Invalid method call param.write() \u00B7 expected state tilingSet and compressionExplicit \u00B7 actual state startTiling and compressionExplicit');
             expect(document.querySelector('.diagram-state-set-dimmed')).toBeNull();
             expect(Array.from(document.querySelectorAll('.diagram-error-legend-item'), node => node.textContent))
-                .toEqual(['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state']);
+                .toEqual(['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state', 'Way to an expected state']);
+        });
+
+        it('only explains the ways to an expected state when focusing on the error', () => {
+            const sm = { ...tiling, errorContext: { calledMethod: 'write', receiver: 'param', possibleStates: ['startTiling'], acceptedStates: ['tilingSet'], validStates: [], invalidStates: ['startTiling'] } };
+            const legend = () => Array.from(document.querySelectorAll('.diagram-error-legend-item'), node => node.textContent);
+
+            renderStateMachineView(document.body, [sm], ['tiling diagram'], 'TB', false, true);
+            expect(legend()).toContain('Way to an expected state');
+            expect(document.querySelector('.diagram-viewport.diagram-focused')).not.toBeNull();
+
+            renderStateMachineView(document.body, [sm], ['tiling diagram'], 'TB', false, false);
+            expect(legend()).not.toContain('Way to an expected state');
+            expect(document.querySelector('.diagram-focused')).toBeNull();
         });
 
         it('names the call of the state set with the error when it cannot be marked', () => {
