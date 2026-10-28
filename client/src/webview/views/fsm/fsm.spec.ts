@@ -361,6 +361,16 @@ describe('state machine view', () => {
                 .toEqual(['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state']);
         });
 
+        it('fits the diagram to the panel only when focusing on the error', () => {
+            const sm = { ...tiling, errorContext: { calledMethod: 'write', receiver: 'param', possibleStates: ['startTiling'], acceptedStates: ['tilingSet'], validStates: [], invalidStates: ['startTiling'] } };
+
+            renderStateMachineView(document.body, [sm], ['tiling diagram'], 'TB', false, true);
+            expect(document.querySelector('.diagram-viewport.diagram-focused')).not.toBeNull();
+
+            renderStateMachineView(document.body, [sm], ['tiling diagram'], 'TB', false, false);
+            expect(document.querySelector('.diagram-focused')).toBeNull();
+        });
+
         it('names the call of the state set with the error when it cannot be marked', () => {
             const unmarked = { ...compressionError, acceptedStates: [], invalidStates: [] };
             renderStateMachineView(document.body, [{ ...compression, errorContext: unmarked }, tiling],

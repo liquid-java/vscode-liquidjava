@@ -1135,6 +1135,51 @@ export function getStyles(): string {
             stroke-width: 1px !important;
             stroke-dasharray: 4 3;
         }
+        .diagram-container .mermaid .edgeLabel .lj-collapsed-methods {
+            font-style: italic;
+        }
+        /* hovering shows the collapsed methods, and a click keeps them shown */
+        .diagram-container .mermaid .edgeLabel .lj-collapsed-methods {
+            cursor: pointer;
+        }
+        .diagram-container .mermaid .edgeLabel .lj-collapsed-methods:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        .lj-collapsed-list {
+            display: none;
+        }
+        .lj-methods-popover {
+            position: fixed;
+            z-index: 10;
+            overflow-y: auto;
+            padding: 0.35rem 0.6rem;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--vscode-editorHoverWidget-foreground, var(--vscode-foreground));
+            background: var(--vscode-editorHoverWidget-background, var(--vscode-editor-background));
+            border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-panel-border));
+            border-radius: 4px;
+            box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
+            cursor: default;
+            user-select: text;
+        }
+        .lj-methods-popover .lj-collapsed-item {
+            display: block;
+        }
+        .lj-methods-popover .lj-collapsed-item + .lj-collapsed-item {
+            margin-top: 0.2rem;
+        }
+        .lj-methods-popover .state-cond {
+            display: block;
+            font-size: 0.9em;
+        }
+        .lj-methods-popover .state-cond-pre {
+            color: var(--lj-state-cond-pre);
+        }
+        .lj-methods-popover .state-cond-post {
+            color: var(--lj-state-cond-post);
+        }
         .diagram-container .mermaid svg .ljStateDimmed,
         .diagram-container .mermaid svg .lj-dimmed,
         .diagram-container .mermaid .edgeLabel .lj-dimmed-method {

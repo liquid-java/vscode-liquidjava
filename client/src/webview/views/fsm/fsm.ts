@@ -65,7 +65,7 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
                                 <span class="diagram-condition-legend-post">Postcondition</span>
                             </div>
                         ` : ''}
-                        <div class="diagram-viewport">
+                        <div class="diagram-viewport${focusOnError && errorFocuses.length > 0 ? ' diagram-focused' : ''}">
                             <div id="diagram-wrapper" class="diagram-wrapper">
                                 ${sms.length === 1
                                     ? `<pre class="mermaid">${diagrams[0]}</pre>`
@@ -139,7 +139,7 @@ function renderStateErrorStepper({ index, count }: StateErrorNavigation): string
     `;
 }
 
-// explains the state marks with the same outlines, fills, and icons as the diagram, next to the toggle that dims the rest
+// explains the state marks with the same outlines, fills, and icons as the diagram, next to the toggle that collapses the rest
 function renderStateErrorLegend(focuses: StateErrorFocus[], focusOnError: boolean): string {
     const items = [
         focuses.some(focus => focus.invalidStates.length > 0) ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Actual state, not expected`) : '',
