@@ -36,25 +36,42 @@ export function setHintOpen(key: string, open: boolean) {
  * @param key Identifies the diagnostic, so opened hints stay open after a new verification
  */
 export function renderHints(hints: LJHint[] | undefined, key?: string): string {
-    const shown = (hints ?? []).filter(hint => hint.message.trim());
+    const shown = getShownHints(hints);
     if (shown.length === 0) return '';
-    const options = shown.filter(hint => hint.kind === 'call-sequence');
-    const listsOptions = options.length > 1;
-    const notes = listsOptions ? shown.filter(hint => hint.kind !== 'call-sequence') : shown;
-    const open = key !== undefined && openHints.has(key);
     return /*html*/`
-        <details class="section hint-section"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
+        <details class="section hint-section"${renderHintKey(key)}>
             <summary class="hint-summary">${shown.length === 1 ? 'Hint' : 'Hints'}</summary>
-            <div class="hint-body">
-                ${listsOptions ? /*html*/`
-                    <div class="hint-options">
-                        <p class="hint-options-title">Any one of these:</p>
-                        <ul>${options.map(hint => `<li>${renderHintMessage(hint)}</li>`).join('')}</ul>
-                    </div>
-                ` : ''}
-                ${notes.map(hint => `<div class="hint-note">${renderHintMessage(hint)}</div>`).join('')}
-            </div>
+            <div class="hint-body">${renderHintList(shown)}</div>
         </details>
+    `;
+}
+
+export function getShownHints(hints: LJHint[] | undefined): LJHint[] {
+    return (hints ?? []).filter(hint => hint.message.trim());
+}
+
+// the attributes that keep a hint section open across renders
+export function renderHintKey(key: string | undefined): string {
+    if (key === undefined) return '';
+    return ` data-hint-key="${escapeHtml(key)}"${openHints.has(key) ? ' open' : ''}`;
+}
+
+/**
+ * Renders hints with the calls to add as options, when there are several, followed by the other hints
+ * @param hints the hints with a message
+ */
+export function renderHintList(hints: LJHint[]): string {
+    const options = hints.filter(hint => hint.kind === 'call-sequence');
+    const listsOptions = options.length > 1;
+    const notes = listsOptions ? hints.filter(hint => hint.kind !== 'call-sequence') : hints;
+    return /*html*/`
+        ${listsOptions ? /*html*/`
+            <div class="hint-options">
+                <p class="hint-options-title">Any one of these:</p>
+                <ul>${options.map(hint => `<li>${renderHintMessage(hint)}</li>`).join('')}</ul>
+            </div>
+        ` : ''}
+        ${notes.map(hint => `<div class="hint-note">${renderHintMessage(hint)}</div>`).join('')}
     `;
 }
 

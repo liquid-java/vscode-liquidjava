@@ -1273,5 +1273,20 @@ export function getStyles(): string {
             border: 1px dashed;
             border-color: var(--lj-state-accepted);
         }
+        .diagram-fixes {
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+            cursor: default;
+            user-select: text;
+        }
+        .diagram-fixes[open] .hint-summary {
+            margin-bottom: 0.25rem;
+        }
+        .diagram-fixes-source {
+            margin: 0.5rem 0 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--vscode-descriptionForeground);
+        }
     `;
 }

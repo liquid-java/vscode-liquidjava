@@ -441,7 +441,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                     .map(sm => createMermaidDiagram({ ...sm, errorContext: null }, diagramOrientation, showDiagramConditions))
                     .join('\n\n');
                 renderStateMachineView(root, displayedStateMachines, diagrams, diagramOrientation, showDiagramConditions, focusOnError,
-                    { index: shownIndex, count: stateErrors.length, line: getStateErrorLine(shownError) }, badges);
+                    { index: shownIndex, count: stateErrors.length, line: getStateErrorLine(shownError) }, badges,
+                    shownError ? { hints: shownError.hints, key: getStateErrorKey(shownError) } : undefined);
                 renderedStateMachineView = getStateMachineViewKey();
                 if (displayedStateMachines.length > 0) renderMermaidDiagram(document, window);
                 break;
