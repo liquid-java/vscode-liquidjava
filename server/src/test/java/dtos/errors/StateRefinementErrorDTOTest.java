@@ -61,8 +61,13 @@ class StateRefinementErrorDTOTest {
 
     @Test
     void readsTheSpecsOfTheStateSetsAndOfTheMethodsWithoutStateSet() {
-        CommandLineLauncher.cmdArgs.lspMode = true;
-        CommandLineLauncher.launch(HIERARCHY.toString());
+        boolean lspMode = CommandLineLauncher.cmdArgs.lspMode;
+        CommandLineLauncher.cmdArgs.lspMode = true; // the verifier only keeps its context history in the IDE
+        try {
+            CommandLineLauncher.launch(HIERARCHY.toString());
+        } finally {
+            CommandLineLauncher.cmdArgs.lspMode = lspMode;
+        }
         assertTrue(StateRefinementErrorDTO.specFiles().containsAll(List.of(WINDOW, FRAME, JFRAME)),
                 StateRefinementErrorDTO.specFiles().toString());
     }
