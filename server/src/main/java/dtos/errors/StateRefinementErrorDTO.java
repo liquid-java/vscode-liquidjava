@@ -14,6 +14,7 @@ import liquidjava.fsm.StateMachine;
 import liquidjava.fsm.StateMachineParser;
 import liquidjava.processor.context.ContextHistory;
 import liquidjava.processor.context.GhostState;
+import liquidjava.processor.context.RefinedFunction;
 import liquidjava.rj_language.ast.formatter.ExpressionFormatter;
 import utils.PathUtils;
 
@@ -35,7 +36,7 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
         this.customMessage = error.getCustomMessage();
         this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
         this.stateMachines = declarationPosition == null || declarationPosition.file() == null ? List.of()
-                : stateMachines(declarationPosition.file(), stateSetFiles(), error.getContext());
+                : stateMachines(declarationPosition.file(), specFiles(), error.getContext());
     }
 
     public static StateRefinementErrorDTO from(StateRefinementError error) {
@@ -45,21 +46,26 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
     /**
      * The diagrams of the receiver's class, which may inherit the state sets and methods of its supertypes' specs
      * @param declarationFile the file of the spec of the called method
-     * @param stateSetFiles the files that declare state sets, where the specs of the supertypes may be
+     * @param specFiles the files of the other specs, where those of the supertypes may be
      * @param context the state error, or null if the verifier gives no states, in which case the diagrams are those of
      *                the first class of the declaration's file
      */
-    static List<StateMachineDTO> stateMachines(String declarationFile, Collection<String> stateSetFiles,
+    static List<StateMachineDTO> stateMachines(String declarationFile, Collection<String> specFiles,
             StateErrorContext context) {
         String declarationUri = PathUtils.toFileUri(declarationFile);
         List<StateMachine> sms = context == null ? StateMachineParser.parseAll(declarationUri)
                 : StateMachineParser.parseAll(Stream.concat(Stream.of(declarationUri),
-                        stateSetFiles.stream().map(PathUtils::toFileUri)).toList(), context.receiverClass());
+                        specFiles.stream().map(PathUtils::toFileUri)).toList(), context.receiverClass());
         return StateMachineDTO.from(sms, context);
     }
 
-    private static List<String> stateSetFiles() {
-        return ContextHistory.getInstance().getGhosts().stream().map(GhostState::getFile).filter(Objects::nonNull)
-                .distinct().toList();
+    /** The files of the state sets and state refinements of the last verification */
+    static List<String> specFiles() {
+        ContextHistory history = ContextHistory.getInstance();
+        Stream<String> stateSets = history.getGhosts().stream().map(GhostState::getFile);
+        Stream<String> stateRefinements = history.getMethods().stream().filter(RefinedFunction::hasStateChange)
+                .map(method -> SourcePositionDTO.from(method.getPlacementInCode().getPosition()))
+                .filter(Objects::nonNull).map(SourcePositionDTO::file);
+        return Stream.concat(stateSets, stateRefinements).filter(Objects::nonNull).distinct().toList();
     }
 }
