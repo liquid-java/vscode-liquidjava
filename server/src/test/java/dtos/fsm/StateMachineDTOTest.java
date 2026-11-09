@@ -53,12 +53,14 @@ class StateMachineDTOTest {
     }
 
     @Test
-    void keepsTheEntryTransitions() {
-        StateMachine sm = new StateMachine("example.Edit", 0, List.of("start", "endDone"),
+    void keepsTheStateSetNameAndEntryTransitions() {
+        StateMachine sm = new StateMachine("example.Edit", 0, "phase", List.of("start", "endDone"),
                 List.of(new StateMachineTransition("start", "endDone", "end")),
                 List.of(new StateMachineInitialTransition("start")),
                 List.of(new StateMachineEntryTransition("endDone", "canUndo", "return")));
-        assertEquals(sm.entryTransitions(), StateMachineDTO.from(sm, null).entryTransitions());
+        StateMachineDTO dto = StateMachineDTO.from(sm, null);
+        assertEquals("phase", dto.stateSetName());
+        assertEquals(sm.entryTransitions(), dto.entryTransitions());
     }
 
     @Test

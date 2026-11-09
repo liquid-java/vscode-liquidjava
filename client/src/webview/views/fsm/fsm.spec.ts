@@ -325,6 +325,15 @@ describe('state machine view', () => {
             expect(document.querySelectorAll('#diagram-wrapper')).toHaveLength(1);
         });
 
+        it('labels a named state set with its name, even when it is the only one', () => {
+            renderStateMachineView(document.body, [{ ...tiling, stateSetName: 'tiling' }, compression], ['tiling diagram', 'compression diagram'], 'TB', false);
+            expect(Array.from(document.querySelectorAll('.diagram-state-set-title'), node => node.textContent))
+                .toEqual(['tiling', 'startCompression \u00B7 compressionExplicit']);
+
+            renderStateMachineView(document.body, [{ ...tiling, stateSetName: 'tiling' }], [diagram], 'TB', false);
+            expect(document.querySelector('.diagram-state-set-title')?.textContent).toBe('tiling');
+        });
+
         it('keeps a single state set without a state set label', () => {
             renderStateMachineView(document.body, [tiling], [diagram], 'TB', false);
 
