@@ -15,13 +15,24 @@ import dtos.context.GhostDTO;
 import dtos.context.VariableDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.processor.context.ContextHistory;
+import liquidjava.processor.context.GhostFunction;
+import liquidjava.processor.context.GhostState;
 import liquidjava.processor.context.RefinedVariable;
+import liquidjava.rj_language.ast.BinaryExpression;
+import liquidjava.rj_language.ast.Expression;
+import liquidjava.rj_language.ast.LiteralInt;
 import liquidjava.utils.GeneratedNames;
 
 /**
  * Utility class for converting LiquidJava context objects to DTOs.
  */
 public class ContextHistoryConverter {
+
+    // the ghosts first, then the states of each set together, in the order they are declared
+    private static final Comparator<GhostState> GHOST_ORDER = Comparator
+        .comparing(ContextHistoryConverter::setOf)
+        .thenComparingInt(ContextHistoryConverter::stateIndex)
+        .thenComparing(GhostState::getName);
 
     /**
      * Converts a ContextHistory to its DTO type.
@@ -33,15 +44,23 @@ public class ContextHistoryConverter {
         return new ContextHistoryDTO(
             convertVariables(contextHistory.getLocalVars(), display),
             convertVariables(contextHistory.getGlobalVars(), display),
-            // the states of a set together, in the order they are declared
-            contextHistory.getGhosts().stream().map(GhostDTO::from)
-                .sorted(Comparator.comparing(GhostDTO::refinement, Comparator.nullsFirst(Comparator.naturalOrder()))
-                    .thenComparing(GhostDTO::name))
-                .collect(Collectors.toList()),
+            contextHistory.getGhosts().stream().sorted(GHOST_ORDER).map(GhostDTO::from).collect(Collectors.toList()),
             contextHistory.getAliases().stream().map(AliasDTO::from).collect(Collectors.toList()),
             contextHistory.getMethods().stream().map(MethodDTO::from).filter(f -> f != null).collect(Collectors.toList()),
             parseFileScopes(contextHistory.getFileScopes())
         );
+    }
+
+    private static String setOf(GhostState ghost) {
+        GhostFunction set = ghost.getParent();
+        return set == null ? "" : set.getPrefix() + "." + set.getName();
+    }
+
+    // a state of a set is refined as set(_) == index
+    private static int stateIndex(GhostState ghost) {
+        Expression refinement = ghost.getRefinement() == null ? null : ghost.getRefinement().getExpression();
+        return refinement instanceof BinaryExpression b && b.getSecondOperand() instanceof LiteralInt index
+            ? index.getValue() : -1;
     }
 
     // the values the verifier introduces are not variables of the program

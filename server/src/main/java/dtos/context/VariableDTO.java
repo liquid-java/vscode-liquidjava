@@ -43,7 +43,8 @@ public record VariableDTO(
             refinedVariable.getName(),
             ContextHistoryDTO.stringifyType(refinedVariable.getType()),
             format.apply(refinedVariable.getRefinement()),
-            format.apply(refinedVariable.getMainRefinement()),
+            // the annotation as it is written in code, for hovers and completions
+            ExpressionFormatter.format(refinedVariable.getMainRefinement()),
             SourcePositionDTO.from(placement.getPosition()),
             SourcePositionDTO.from(placement.getAnnotationPosition())
         );
