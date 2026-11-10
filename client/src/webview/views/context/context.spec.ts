@@ -5,10 +5,10 @@ import { renderContextView } from './context';
 const currentFile = 'file:///workspace/Current.java';
 const sectionState = { aliases: true, ghosts: true, vars: true };
 
-function ghost(name: string, file = currentFile, isState = false): LJGhost {
+function ghost(name: string, file = currentFile, stateSet: string | null = null): LJGhost {
     return {
-        name, qualifiedName: `Example.${name}`, returnType: isState ? 'boolean' : 'int',
-        parameterTypes: ['Example'], refinement: '', isState, file,
+        name, qualifiedName: `Example.${name}`, returnType: stateSet ? 'boolean' : 'int',
+        parameterTypes: ['Example'], refinement: '', isState: stateSet !== null, stateSet, file,
     };
 }
 
@@ -29,9 +29,9 @@ describe('context view', () => {
     it('renders aliases, current-file ghosts and states, and variables', () => {
         document.body.innerHTML = renderContextView(context({
             aliases: [{ name: 'Positive', parameters: ['x'], types: ['int'], predicate: 'x > 0' }],
-            ghosts: [ghost('size'), ghost('open', currentFile, true), ghost('other', 'file:///workspace/Other.java')],
+            ghosts: [ghost('size'), ghost('open', currentFile, 'phase'), ghost('other', 'file:///workspace/Other.java')],
             allVars: [{
-                name: 'count', internalName: 'count#1', type: 'int', refinement: 'count > 0',
+                name: 'count', displayName: 'count@3', internalName: '#count_1', type: 'int', refinement: 'count@3 > 0',
                 mainRefinement: 'count > 0', position: null, annotationPosition: null,
             }],
         }), currentFile, sectionState);
@@ -42,9 +42,10 @@ describe('context view', () => {
         expect(document.querySelectorAll('#context-ghosts tr')).toHaveLength(2);
         expect(text('#context-ghosts tr:first-child td:first-child')).toBe('int size(Example)');
         expect(text('#context-ghosts tr:first-child td:last-child')).toBe('ghost');
+        expect(text('#context-ghosts tr:last-child td:first-child')).toBe('phase(Example) == open');
         expect(text('#context-ghosts tr:last-child td:last-child')).toBe('state');
-        expect(text('#context-vars tbody td:first-child')).toBe('count');
-        expect(text('#context-vars tbody td:last-child')).toBe('count > 0');
+        expect(text('#context-vars tbody td:first-child')).toBe('count@3');
+        expect(text('#context-vars tbody td:last-child')).toBe('count@3 > 0');
         expect(Array.from(document.querySelectorAll('.context-toggle-btn'), node => node.getAttribute('aria-expanded'))).toEqual(['true', 'true', 'true']);
         expect(document.querySelectorAll('.context-section-content.collapsed')).toHaveLength(0);
     });

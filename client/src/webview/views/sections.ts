@@ -1,5 +1,5 @@
 import type { LJDiagnostic, LJHint, SourcePosition } from "../../types/diagnostics";
-import { escapeHtml, getFileName, getSimpleName } from "../utils";
+import { escapeHtml, getFileName } from "../utils";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
 import { renderCodicon, renderCodiconButton } from "../icons";
@@ -98,7 +98,7 @@ export const renderLocation = (diagnostic: LJDiagnostic): string => {
 };
 
 export function renderVariableHighlightButton(variable: LJVariable): string {
-    const displayName = getSimpleName(variable.name);
+    const displayName = variable.displayName;
     const position = variable.position;
     if (!position || !position.file) return `<code>${displayName}</code>`;
     return renderSourceHighlightButton(
