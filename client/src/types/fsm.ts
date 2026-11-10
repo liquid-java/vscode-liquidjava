@@ -5,6 +5,8 @@ export type LJStateMachine = {
     className: string;
     // index of the state set among the class's @StateSet annotations, in declaration order
     stateSet?: number;
+    // the name given to the state set, as the verifier's messages use it, e.g. phase(this) == open; null if it has none
+    stateSetName?: string | null;
     initialTransitions: { to: string; toCondition?: string | null; constructorSignature?: string | null }[];
     // methods that put an object in an unknown state (a field, a parameter or a getter's result) into a state
     entryTransitions?: { to: string; label: string; toCondition?: string | null }[];

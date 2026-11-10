@@ -67,7 +67,7 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
                         ` : ''}
                         <div class="diagram-viewport${focusOnError && errorFocuses.length > 0 ? ' diagram-focused' : ''}">
                             <div id="diagram-wrapper" class="diagram-wrapper">
-                                ${sms.length === 1
+                                ${sms.length === 1 && !sms[0].stateSetName
                                     ? `<pre class="mermaid">${diagrams[0]}</pre>`
                                     : sms.map((sm, i) => renderStateSetDiagram(sm, diagrams[i], focusOnError && errorFocuses.length > 0)).join('')}
                             </div>
@@ -79,12 +79,14 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
     `;
 }
 
-// the diagram of one state set, labelled with its states, and dimmed when focusing on an error of another state set
+// the diagram of one state set, labelled with its name, or its states if it has none,
+// and dimmed when focusing on an error of another state set
 function renderStateSetDiagram(sm: LJStateMachine, diagram: string, dimUnrelated: boolean): string {
     const dimmed = dimUnrelated && !sm.errorContext;
+    const title = sm.stateSetName ?? sm.states.join(' \u00B7 ');
     return /*html*/`
         <div class="diagram-state-set${dimmed ? ' diagram-state-set-dimmed' : ''}">
-            <h3 class="diagram-state-set-title">${sm.states.map(state => escapeHtml(state)).join(' \u00B7 ')}</h3>
+            <h3 class="diagram-state-set-title">${escapeHtml(title)}</h3>
             <pre class="mermaid">${diagram}</pre>
         </div>
     `;
