@@ -439,6 +439,11 @@ describe('a state error on several state sets', () => {
         // the unmet condition stays when conditions are collapsed
         expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms)))
             .toEqual(expect.arrayContaining([`closed --> opened : open ${guard(unmet('lockState: unlocked'))}`, 'closed --> closed : lock']));
+        // only the clauses the actual state does not meet are marked
+        sms[0].transitions[0].fromCondition = 'lockState(this) != jammed && lockState(this) == unlocked';
+        sms[1].states.push('jammed');
+        expect(lines(createMermaidDiagram(sms[0], 'TB', true, false, sms)))
+            .toContain(`closed --> opened : open ${guard(`lockState: unlocked or locked, ${unmet('lockState: unlocked')}`)}`);
         // without a condition on the state set in a wrong state, the call stays marked
         sms[0].transitions[0].fromCondition = 'size(this) > 0';
         expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms))).toContain(`closed --> opened : ${calledMethod('open')}`);
@@ -449,7 +454,7 @@ describe('a state error on several state sets', () => {
         const pre = document.querySelector('.mermaid')!;
         pre.textContent = createMermaidDiagram(door()[1], 'TB');
         // ELK's curl on the left side of the state, from its top to its bottom
-        const points = [{ x: 100, y: 10 }, { x: 80, y: 15 }, { x: 100, y: 20 }];
+        const points = [{ x: 100, y: 10 }, { x: 85, y: 15 }, { x: 100, y: 20 }];
         const run = vi.fn(async () => {
             pre.innerHTML = '<svg><path class="transition" data-id="edge1"></path></svg>';
             Object.assign(pre.querySelector('path')!, {
@@ -462,6 +467,7 @@ describe('a state error on several state sets', () => {
 
         const loop = document.querySelector('path.lj-self-loop')!;
         expect(loop.getAttribute('data-id')).toBe('edge1');
-        expect(loop.getAttribute('d')).toBe('M100,10 C68,-6 68,36 100,20');
+        // as far out as the curl
+        expect(loop.getAttribute('d')).toBe('M100,10 C80,0 80,30 100,20');
     });
 });

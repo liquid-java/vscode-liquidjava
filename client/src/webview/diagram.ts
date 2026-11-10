@@ -14,8 +14,6 @@ const SCROLL_ZOOM_OUT_FACTOR = 0.95;
 const DIMMED_TRANSITIONS_COMMENT = '%% lj-dimmed-transitions:';
 // Mermaid comment listing the transitions that keep their state, drawn as round loops once rendered
 const SELF_LOOPS_COMMENT = '%% lj-self-loops:';
-// how far the control points of a round loop are from its ends
-const SELF_LOOP_RADIUS = 32;
 // a focused diagram is shrunk to fit the panel, but never below this scale so that its labels stay readable
 const MIN_FOCUS_SCALE = 0.6;
 const FOCUS_BOTTOM_MARGIN = 16;
@@ -218,7 +216,12 @@ function hasUnmetCondition(transition: LJStateMachine['transitions'][number], sm
     if (rejectingStateSets.length === 0 || !transition.fromCondition || transition.label !== sm.errorContext?.calledMethod
         || !sm.errorContext.possibleStates.includes(transition.from)) return false;
     const conditions = parseStateConditions(transition.fromCondition, stateSets);
-    return !!conditions?.some(condition => rejectingStateSets.includes(condition.stateSet));
+    return !!conditions?.some(condition => isUnmetCondition(condition, rejectingStateSets));
+}
+
+// a condition on a state set whose state rejects the call, which some of its possible states do not meet
+function isUnmetCondition({ stateSet, states }: StateCondition, rejectingStateSets: LJStateMachine[]): boolean {
+    return rejectingStateSets.includes(stateSet) && !!stateSet.errorContext?.possibleStates.some(state => !states.includes(state));
 }
 
 /**
@@ -235,7 +238,7 @@ function getFromConditionLabel(condition: string | null | undefined, stateSets: 
     if (!conditions) return { label: getConditionLabel('pre', condition), isGuard: false };
     const guards = conditions.map(stateCondition => {
         const text = escapeMermaidLabel(getStateConditionText(stateCondition));
-        return rejectingStateSets?.includes(stateCondition.stateSet) ? `<span class="lj-unmet-condition">${text}</span>` : text;
+        return rejectingStateSets && isUnmetCondition(stateCondition, rejectingStateSets) ? `<span class="lj-unmet-condition">${text}</span>` : text;
     });
     return { label: `<span class="state-cond state-cond-pre">[${guards.join(', ')}]</span>`, isGuard: true };
 }
@@ -325,8 +328,8 @@ function markTransitions(element: any, edgeIds: string[], className: string) {
     });
 }
 
-// the layout draws a transition that keeps its state as a curl no bigger than its arrowhead,
-// so it is drawn again as a round loop between the same ends, bulging out on the same side
+// the layout draws a transition that keeps its state as a flat curl no bigger than its arrowhead,
+// so it is drawn again as a round loop between the same ends, as far out on the same side, within the laid out bounds
 function roundSelfLoops(element: any, edgeIds: string[]) {
     edgeIds.forEach(edgeId => {
         const path = element.querySelector(`path.transition[data-id="${edgeId}"]`);
@@ -339,11 +342,14 @@ function roundSelfLoops(element: any, edgeIds: string[]) {
 }
 
 function getSelfLoopPath(start: Point, middle: Point, end: Point): string {
-    const out = unit({ x: middle.x - (start.x + end.x) / 2, y: middle.y - (start.y + end.y) / 2 });
+    const depth = { x: middle.x - (start.x + end.x) / 2, y: middle.y - (start.y + end.y) / 2 };
+    const out = unit(depth);
     const along = unit({ x: end.x - start.x, y: end.y - start.y });
+    // a cubic curve reaches 3/4 of the way to its control points
+    const reach = Math.hypot(depth.x, depth.y) * 4 / 3;
     const control = (point: Point, sign: number) => ({
-        x: point.x + SELF_LOOP_RADIUS * (out.x + sign * along.x / 2),
-        y: point.y + SELF_LOOP_RADIUS * (out.y + sign * along.y / 2),
+        x: point.x + reach * (out.x + sign * along.x / 2),
+        y: point.y + reach * (out.y + sign * along.y / 2),
     });
     const [first, second] = [control(start, -1), control(end, 1)];
     return `M${start.x},${start.y} C${first.x},${first.y} ${second.x},${second.y} ${end.x},${end.y}`;
