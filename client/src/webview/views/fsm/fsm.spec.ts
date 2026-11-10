@@ -385,6 +385,12 @@ describe('state machine view', () => {
 
             expect(document.querySelector('.diagram-error-text')?.textContent)
                 .toBe('Invalid method call d.open() \u00B7 expected doorState closed, lockState unlocked \u00B7 actual lockState locked');
+
+            // with no set in a wrong state, the call is rejected by the combination of states, so every set is named
+            sms[0].errorContext = { ...open, possibleStates: ['locked'], acceptedStates: ['unlocked', 'locked'], validStates: [], invalidStates: [] };
+            renderStateMachineView(document.body, sms, ['lock diagram', 'door diagram', 'mode diagram'], 'TB', false, true);
+            expect(document.querySelector('.diagram-error-text')?.textContent)
+                .toBe('Invalid method call d.open() \u00B7 expected doorState closed, lockState unlocked or locked, mode quiet or loud \u00B7 actual doorState closed, lockState locked, mode quiet');
         });
 
         it('fits the diagram to the panel only when focusing on the error', () => {

@@ -107,9 +107,11 @@ function getStateErrorSummary(sms: LJStateMachine[]): string {
         return focus ? [{ sm, focus }] : [];
     }).sort((a, b) => (a.sm.stateSet ?? 0) - (b.sm.stateSet ?? 0));
     const call = getRejectedCallText(errors[0].focus);
-    // a state set in which every state allows the call does not constrain it, so it is left out
+    // a state set in which every state allows the call is left out when another set is in a wrong state,
+    // otherwise the call is rejected by a combination of states, which every set is part of
+    const hasWrongState = errors.some(({ focus }) => focus.invalidStates.length > 0);
     const constraining = errors.filter(({ sm, focus }) => focus.acceptedStates.length < sm.states.length);
-    const shownErrors = constraining.length > 0 ? constraining : errors;
+    const shownErrors = hasWrongState && constraining.length > 0 ? constraining : errors;
     const knownErrors = shownErrors.filter(({ focus }) => !focus.unknownState);
     if (errors.every(({ sm }) => sm.stateSetName)) {
         return `${renderInvalidCall(call)} \u00B7 expected ${renderNamedStateSets(shownErrors, focus => focus.acceptedStates)} \u00B7 actual ${getNamedActualStates(knownErrors)}`;
