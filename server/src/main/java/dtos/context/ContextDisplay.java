@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -41,7 +42,7 @@ public final class ContextDisplay {
         this.names = names;
         this.states = states;
         // the verifier also passes its other ghost functions, which the context history does not keep
-        this.stateSets = states.stream().map(GhostState::getParent).filter(set -> set != null).distinct().toList();
+        this.stateSets = states.stream().map(GhostState::getParent).filter(Objects::nonNull).distinct().toList();
         this.generatedValues = generatedValues;
         this.unconstrained = unconstrained;
     }
