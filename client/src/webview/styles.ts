@@ -232,8 +232,19 @@ export function getStyles(): string {
             padding: 0.5rem;
             background-color: var(--vscode-editor-background);
             border-radius: 4px;
+        }
+        /* code that a message marks with backticks, set apart from its prose */
+        .lj-code {
+            padding: 0 0.2em;
+            border-radius: 3px;
             font-family: var(--vscode-editor-font-family, monospace);
             font-size: var(--vscode-editor-font-size, inherit);
+            color: var(--vscode-textPreformat-foreground);
+            background-color: var(--vscode-textPreformat-background);
+            overflow-wrap: break-word;
+        }
+        .message-note {
+            margin: 0 0 0.25rem;
         }
         .hint-message {
             white-space: pre-wrap;

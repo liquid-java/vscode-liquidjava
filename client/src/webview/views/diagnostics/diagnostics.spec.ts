@@ -9,14 +9,14 @@ const otherFile = 'file:///workspace/Other.java';
 function error(file = currentFile, title = 'Invalid refinement'): CustomError {
     return {
         category: 'error', type: 'custom-error', title,
-        message: 'The refinement does not hold.', hints: [], file, position: null,
+        message: 'The refinement does not hold.', hints: [], messageNotes: [], references: [], file, position: null,
     };
 }
 
 function warning(file = currentFile): CustomWarning {
     return {
         category: 'warning', type: 'custom-warning', title: 'Verification warning',
-        message: 'Some code could not be verified.', hints: [], file, position: null,
+        message: 'Some code could not be verified.', hints: [], messageNotes: [], references: [], file, position: null,
     };
 }
 
@@ -85,6 +85,22 @@ describe('diagnostics view', () => {
         expect(document.querySelector('.diagnostics-scopes')).toBeNull();
         expect(document.querySelectorAll('.diagnostic-item')).toHaveLength(0);
         expect(document.querySelector('#show-all-button')).toBeNull();
+    });
+
+    it('shows the code of notes and hints in the editor font, and links the lines they name', () => {
+        const note = 'Origin: line 134, `new BufferedInputStream(stream)` makes `markState(b) == unmarked`';
+        const position = { file: '/workspace/Reader.java', lineStart: 133, colStart: 8, lineEnd: 133, colEnd: 8 };
+        document.body.innerHTML = renderDiagnosticsView([{
+            ...error(), messageNotes: [note], references: [{ message: note, text: 'line 134', start: 8, position }],
+            hints: [{ kind: 'general', message: "Call `` b.f('`') `` first" }],
+        }], false, currentFile);
+
+        const link = document.querySelector('.message-note a.location-link');
+        expect(link?.textContent).toBe('line 134');
+        expect([link?.getAttribute('data-file'), link?.getAttribute('data-line')]).toEqual(['/workspace/Reader.java', '133']);
+        expect(text('.message-note')).toBe('Origin: line 134, new BufferedInputStream(stream) makes markState(b) == unmarked');
+        expect(Array.from(document.querySelectorAll('.lj-code')).map(code => code.textContent))
+            .toEqual(['new BufferedInputStream(stream)', 'markState(b) == unmarked', "b.f('`')"]);
     });
 
     it('shows every declaration of a refinement with their notes under them', () => {

@@ -18,7 +18,7 @@ function diagnostic(file: string, title: string, category: 'error' | 'warning' =
     const details = {
         title,
         message: `${title} message`,
-        hints: [],
+        hints: [], messageNotes: [], references: [],
         file,
         position: { ...position, file },
     };
@@ -60,7 +60,7 @@ const stateMachine: LJStateMachine = {
 function stateError(title: string, sm: LJStateMachine, line = position.lineStart, file = currentFile): LJDiagnostic {
     const errorPosition = { ...position, file, lineStart: line, lineEnd: line };
     return {
-        title, message: `${title} message`, hints: [], file, position: errorPosition,
+        title, message: `${title} message`, hints: [], messageNotes: [], references: [], file, position: errorPosition,
         category: 'error', type: 'state-refinement-error', translationTable: {}, expected: 'Open(counter)',
         found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
         customMessage: '', declarationPosition: null, declarationPositions: [], declarationNotes: [], stateMachines: [sm],

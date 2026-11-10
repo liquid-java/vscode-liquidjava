@@ -5,6 +5,7 @@ import { getSelectionContextVariables } from './context';
 import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
 import { definitionMatchesClass, getDefinitions } from './definition';
 import { isExtensionRunning } from '../extension';
+import { formatDiagnosticNotes } from './diagnostic-hover';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -27,6 +28,12 @@ export function registerHover() {
                     const link = formatMethodLocationLink(method);
                     if (link) hoverContent.appendMarkdown(`\n\n${link}`);
                 }
+            }
+
+            const notes = formatDiagnosticNotes(document, position);
+            if (notes) {
+                if (hoverContent.value.length > 0) hoverContent.appendMarkdown('\n\n---\n\n');
+                hoverContent.appendMarkdown(notes);
             }
 
             if (hoverContent.value.length === 0) return null;

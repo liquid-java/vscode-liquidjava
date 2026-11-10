@@ -1,4 +1,4 @@
-import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderCustomSection, renderLocation, renderDiagnosticContextButton, renderDiagnosticStateMachineButton, renderHints } from "../sections";
+import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderCustomSection, renderLocation, renderDiagnosticContextButton, renderDiagnosticStateMachineButton, renderHints, renderMessageNotes } from "../sections";
 import { renderCounterexample } from "./counterexample";
 import { renderVCImplication } from "./vc-implications";
 import type {
@@ -76,9 +76,10 @@ export function renderError(error: LJError, actions = ''): string {
     const message = error.type === 'refinement-error' || error.type === 'state-refinement-error' ? error.customMessage : error.message;
     const header = renderDiagnosticHeader(error.title, message || '', actions);
     const content = (errorContentRenderers[error.type] as (error: LJError) => string)?.(error) || '';
-    const hint = renderHints(error.hints, getDiagnosticKey(error));
+    const notes = renderMessageNotes(error);
+    const hint = renderHints(error.hints, getDiagnosticKey(error), error.references);
     const location = renderLocation(error);
-    return /*html*/`${header}${content}${hint}${location}`;
+    return /*html*/`${header}${content}${notes}${hint}${location}`;
 }
 
 function renderDiagnosticContextAction(error: LJError): string {
