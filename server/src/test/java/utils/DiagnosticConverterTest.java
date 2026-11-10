@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -151,7 +152,8 @@ class DiagnosticConverterTest {
         VCSimplificationResult found = new VCSimplificationResult(
                 new VCImplication(new Predicate(new LiteralBoolean(false))), origin, "constant folding");
         RefinementErrorDTO dto = (RefinementErrorDTO) DiagnosticConverter.convertToDTO(
-                new RefinementError(position, position, new Predicate(), found, null, null, "expected true"));
+                new RefinementError(position, position, new Predicate(), found, null, null, "expected true",
+                        List.of()));
         assertEquals("error", dto.category);
         assertEquals("refinement-error", dto.type);
         assertEquals("true", dto.expected);
@@ -170,7 +172,7 @@ class DiagnosticConverterTest {
         StateRefinementErrorDTO dto = (StateRefinementErrorDTO) DiagnosticConverter.convertToDTO(
                 new StateRefinementError(position, null, new Predicate(new LiteralBoolean(false)),
                         new VCSimplificationResult(new VCImplication(new Predicate())), null, "expected closed",
-                        List.of(), null, null));
+                        List.of(), null, null, UnaryOperator.identity()));
         assertEquals("error", dto.category);
         assertEquals("state-refinement-error", dto.type);
         assertEquals("false", dto.expected);
@@ -181,7 +183,7 @@ class DiagnosticConverterTest {
     }
 
     @Test
-    void convertsTranslationTablePlacementsAndDisplayNames() {
+    void convertsTranslationTablePlacementsWithNamesAsInCode() {
         TranslationTable table = new TranslationTable();
         table.put("#value_12", PlacementInCode.createPlacement(field));
         ArgumentMismatchErrorDTO dto = (ArgumentMismatchErrorDTO) DiagnosticConverter.convertToDTO(
@@ -190,7 +192,7 @@ class DiagnosticConverterTest {
         assertEquals("argument-mismatch-error", dto.type);
         assertEquals(1, dto.translationTable.size());
         assertFalse(dto.translationTable.containsKey("#value_12"));
-        assertEquals("int value = 0;", dto.translationTable.get("value¹²").text());
-        assertEquals(dto.position, dto.translationTable.get("value¹²").position());
+        assertEquals("int value = 0;", dto.translationTable.get("value").text());
+        assertEquals(dto.position, dto.translationTable.get("value").position());
     }
 }
