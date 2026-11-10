@@ -76,7 +76,7 @@ export function orderStateMachines(sms: LJStateMachine[]): LJStateMachine[] {
 /**
  * Whether the receiver may be in a state of this state set that does not allow the call
  */
-export function hasWrongState(sm: LJStateMachine): boolean {
+function hasWrongState(sm: LJStateMachine): boolean {
     return (getStateErrorFocus(sm)?.invalidStates.length ?? 0) > 0;
 }
 
