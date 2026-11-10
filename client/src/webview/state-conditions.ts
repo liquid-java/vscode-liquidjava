@@ -24,17 +24,32 @@ export type ConditionPart = {
 };
 
 /**
- * Splits a transition's condition into its parts joined by &&, reading each one as the states it needs
+ * Splits a transition's condition into its parts joined by a top-level &&, reading each one as the states it needs
  * @param condition the condition as written in the spec, e.g. lockState(this) != locked && size(this) > 0
  * @param sms the state machines of the class, one per state set
- * @returns the parts, or a single part without states when the condition has an ||
+ * @returns the parts, a part with an || is not read as states
  */
 export function getConditionParts(condition: string, sms: LJStateMachine[]): ConditionPart[] {
-    if (condition.includes('||')) return [{ text: condition, stateCondition: null }];
-    return condition.split('&&').map(part => {
-        const text = part.trim();
-        return { text, stateCondition: parseStateCondition(unwrap(text), sms) };
-    });
+    return splitTopLevelAnd(condition).map(text => ({
+        text,
+        stateCondition: text.includes('||') ? null : parseStateCondition(unwrap(text), sms),
+    }));
+}
+
+// splits on the && outside parentheses, so a parenthesised || stays in one part
+function splitTopLevelAnd(condition: string): string[] {
+    const parts: string[] = [];
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < condition.length; i++) {
+        if (condition[i] === '(') depth++;
+        else if (condition[i] === ')') depth--;
+        else if (depth === 0 && condition.startsWith('&&', i)) {
+            parts.push(condition.slice(start, i).trim());
+            start = i + 2;
+        }
+    }
+    return [...parts, condition.slice(start).trim()];
 }
 
 function parseStateCondition(text: string, sms: LJStateMachine[]): StateCondition | null {

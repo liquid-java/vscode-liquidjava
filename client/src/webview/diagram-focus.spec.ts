@@ -439,9 +439,9 @@ describe('a state error on several state sets', () => {
         expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms)))
             .toEqual(expect.arrayContaining([`closed --> opened : ${guard(unmet('lockState(this) == unlocked'))} open`, 'closed --> closed : lock']));
         // only the clauses the actual state does not meet are marked
-        sms[0].transitions[0].fromCondition = 'lockState(this) == unlocked && size(this) > 0';
+        sms[0].transitions[0].fromCondition = 'lockState(this) == unlocked && (size(this) > 0 || ready(this))';
         expect(lines(createMermaidDiagram(sms[0], 'TB', true, false, sms)))
-            .toContain(`closed --> opened : ${guard(`${unmet('lockState(this) == unlocked')} &amp;&amp; size(this) &gt; 0`)} open`);
+            .toContain(`closed --> opened : ${guard(`${unmet('lockState(this) == unlocked')} &amp;&amp; (size(this) &gt; 0 || ready(this))`)} open`);
         // without a condition on the state set in a wrong state, the call stays marked
         sms[0].transitions[0].fromCondition = 'size(this) > 0';
         expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms))).toContain(`closed --> opened : ${calledMethod('open')}`);
