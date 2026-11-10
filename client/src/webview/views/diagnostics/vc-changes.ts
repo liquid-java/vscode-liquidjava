@@ -51,12 +51,12 @@ function renderBinder(binder: string, type: string, translationTable?: Translati
 
 /**
  * Renders a line of a VC chain, its predicate on the lines of getExpressionLines
- * @param renderText renders the text of each of those lines, highlighted by default
+ * @param renderText renders the text of the line at an index, highlighted by default
  */
 export function renderVCLine(
     line: string,
     className = "",
-    renderText?: (text: string) => string,
+    renderText?: (text: string, index: number) => string,
     translationTable?: TranslationTable,
 ): string {
     const { binder, type, predicate, hasNext } = parseImplicationLine(line);
@@ -193,6 +193,18 @@ function alignChangedLines(removed: string[], added: string[]): Array<[string | 
     return lines;
 }
 
+// each line of a changed predicate, diffed against the line of the old predicate it replaces, or all marked if none
+function renderChangedPredicateLines(before: string, after: string): string[] {
+    const lines = (predicate: string) => getExpressionLines(predicate).map(line => line.text);
+    return alignChangedLines(lines(before), lines(after))
+        .flatMap(([beforeLine, afterLine]) => {
+            if (afterLine === undefined) return [];
+            return [beforeLine === undefined
+                ? renderChangedFragment(afterLine)
+                : renderDestinationTokenDiff(beforeLine, afterLine).content];
+        });
+}
+
 function renderChangedDestinationLines(
     removed: string[],
     added: string[],
@@ -205,11 +217,13 @@ function renderChangedDestinationLines(
             if (after === undefined) return "";
             if (before === undefined) return renderVCLine(after, "vc-change-line", undefined, translationTable);
             const beforePredicate = parseImplicationLine(before).predicate;
-            const change = renderDestinationTokenDiff(beforePredicate, parseImplicationLine(after).predicate);
+            const afterPredicate = parseImplicationLine(after).predicate;
+            const change = renderDestinationTokenDiff(beforePredicate, afterPredicate);
+            const lines = renderChangedPredicateLines(beforePredicate, afterPredicate);
             return renderVCLine(
                 after,
                 change.hasAddedContent ? "" : "vc-change-line",
-                text => renderDestinationTokenDiff(beforePredicate, text).content,
+                (_text, index) => lines[index],
                 translationTable,
             );
         })

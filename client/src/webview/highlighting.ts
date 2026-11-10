@@ -171,17 +171,17 @@ export function getExpressionLines(expression: string): ExpressionLine[] {
 
 /**
  * Renders the lines of an expression, each of which wraps with a hanging indent
- * @param renderText renders the text of a line, highlighted by default
+ * @param renderText renders the text of the line at an index, highlighted by default
  * @param trailing html shown at the end of the last line
  */
 export function renderExpressionLines(
     lines: ExpressionLine[],
-    renderText: (text: string) => string = renderHighlightedContent,
+    renderText: (text: string, index: number) => string = renderHighlightedContent,
     trailing = "",
 ): string {
     return lines.map((line, index) => {
         const end = index === lines.length - 1 ? trailing : "";
-        return `<span class="lj-line${line.branch ? " lj-line-branch" : ""}">${renderText(line.text)}${end}</span>`;
+        return `<span class="lj-line${line.branch ? " lj-line-branch" : ""}">${renderText(line.text, index)}${end}</span>`;
     }).join("");
 }
 

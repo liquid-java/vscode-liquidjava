@@ -41,14 +41,14 @@ describe('verification implications', () => {
             ['p && q', false], ['? d(h) == on', true], [": (c == ':' ? d(h) == off : d(h) == on)", true],
         ]);
     });
-    it('keeps a conjunct per line in a predicate that a simplification changed', () => {
+    it('keeps a conjunct per line in a predicate that a simplification changed, marking a repeated conjunct it adds', () => {
         document.body.innerHTML = renderImplicationChange(
-            { ...conclusion, predicate: 'x > 0 && y > 0' }, { ...conclusion, predicate: 'x > 0 && y == 1' },
+            { ...conclusion, predicate: 'x > 0' }, { ...conclusion, predicate: 'x > 0 && x > 0' },
         );
 
-        expect(Array.from(document.querySelectorAll('.lj-line')).map(line => line.textContent))
-            .toEqual(['x > 0 &&', 'y == 1']);
-        expect(document.querySelector('.lj-line:last-child .vc-change-fragment')?.textContent).toBe('==');
+        expect(Array.from(document.querySelectorAll('.lj-line')).map(line => line.textContent)).toEqual(['x > 0 &&', 'x > 0']);
+        expect(Array.from(document.querySelectorAll('.vc-change-fragment')).map(fragment => fragment.textContent))
+            .toEqual(['x > 0 &&']);
     });
     it.each([
         ['initial rendering', () => renderImplication({ ...implication, next: null })],
