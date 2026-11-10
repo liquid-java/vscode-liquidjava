@@ -107,15 +107,15 @@ function getStateErrorSummary(sms: LJStateMachine[]): string {
         return focus ? [{ sm, focus }] : [];
     }).sort((a, b) => (a.sm.stateSet ?? 0) - (b.sm.stateSet ?? 0));
     const call = getRejectedCallText(errors[0].focus);
-    // a state set in which every state allows the call does not constrain it
+    // a state set in which every state allows the call does not constrain it, so it is left out
     const constraining = errors.filter(({ sm, focus }) => focus.acceptedStates.length < sm.states.length);
-    const expectedErrors = constraining.length > 0 ? constraining : errors;
-    const knownErrors = errors.filter(({ focus }) => !focus.unknownState);
+    const shownErrors = constraining.length > 0 ? constraining : errors;
+    const knownErrors = shownErrors.filter(({ focus }) => !focus.unknownState);
     if (errors.every(({ sm }) => sm.stateSetName)) {
-        return `${renderInvalidCall(call)} \u00B7 expected ${renderNamedStateSets(expectedErrors, focus => focus.acceptedStates)} \u00B7 actual ${getNamedActualStates(knownErrors)}`;
+        return `${renderInvalidCall(call)} \u00B7 expected ${renderNamedStateSets(shownErrors, focus => focus.acceptedStates)} \u00B7 actual ${getNamedActualStates(knownErrors)}`;
     }
     // the call needs an expected state of each state set
-    const expected = renderStateSets(expectedErrors.map(({ focus }) => focus.acceptedStates));
+    const expected = renderStateSets(shownErrors.map(({ focus }) => focus.acceptedStates));
     const actual = knownErrors.length === 0 ? 'unknown' : renderStateSets(knownErrors.map(({ focus }) => focus.possibleStates));
     return `${renderInvalidCall(call)} \u00B7 expected state ${expected} \u00B7 actual state ${actual}`;
 }
