@@ -105,6 +105,14 @@ describe('state error styles', () => {
         }
     });
 
+    it('breaks a Found line inside a name only when the name alone is wider than the line', () => {
+        render('');
+        document.body.insertAdjacentHTML('beforeend', '<div class="vc-binder-cell"></div><div class="vc-predicate-cell"></div>');
+
+        expect(style('.vc-binder-cell').overflowWrap).toBe('break-word');
+        expect(style('.vc-predicate-cell').overflowWrap).toBe('break-word');
+    });
+
     it('keeps other states with the default outline', () => {
         render(state(''));
 

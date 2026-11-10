@@ -1,6 +1,6 @@
 import type { VCImplication } from "../../../types/vc-implications";
 import type { TranslationTable } from "../../../types/diagnostics";
-import { renderHighlightedInlineExpression } from "../../highlighting";
+import { renderHighlightedInlineExpression, renderHighlightedLines } from "../../highlighting";
 import { escapeHtml } from "../../utils";
 import { renderSourceHighlightButton } from "../sections";
 
@@ -56,10 +56,13 @@ export function renderVCLine(
     translationTable?: TranslationTable,
 ): string {
     const { binder, type, predicate, hasNext } = parseImplicationLine(line);
+    const arrow = hasNext ? ' <span class="vc-arrow">→</span>' : "";
     return /*html*/`
         <div class="vc-line ${className}">
             ${binder ? /*html*/`<div class="vc-binder-cell">${renderBinder(binder, type, translationTable)}</div>` : ""}
-            <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span>${hasNext ? ' <span class="vc-arrow">→</span>' : ""}</div>
+            <div class="vc-predicate-cell">${predicateContent === undefined
+                ? `<span class="vc-node">${renderHighlightedLines(predicate, false, arrow)}</span>`
+                : `<span class="vc-node">${predicateContent}</span>${arrow}`}</div>
         </div>
     `;
 }

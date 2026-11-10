@@ -98,6 +98,91 @@ export function renderHighlightedExpression(expression: string): string {
     return renderExpression(expression, true);
 }
 
+const WEAKER_THAN_AND = ["||", "-->", "?"];
+
+// the positions of the characters outside parentheses and string literals
+function topLevelIndices(expression: string): number[] {
+    const indices: number[] = [];
+    let depth = 0;
+    let inString = false;
+    for (let i = 0; i < expression.length; i++) {
+        if (inString) {
+            if (expression[i] === "\\") i++;
+            else if (expression[i] === '"') inString = false;
+        }
+        else if (expression[i] === '"') inString = true;
+        else if (expression[i] === "(") depth++;
+        else if (expression[i] === ")") depth--;
+        else if (depth === 0) indices.push(i);
+    }
+    return indices;
+}
+
+/**
+ * Splits an expression at its top-level &&, keeping the && at the end of each conjunct but the last. An && inside
+ * parentheses or a string literal stays in its conjunct, and nothing is split when a weaker operator (||, -->, ?:)
+ * outside them would make the parts look like conjuncts of the whole expression
+ */
+function splitConjuncts(expression: string): string[] {
+    const indices = topLevelIndices(expression);
+    if (indices.some(i => WEAKER_THAN_AND.some(operator => expression.startsWith(operator, i)))) return [expression.trim()];
+
+    const conjuncts: string[] = [];
+    let start = 0;
+    for (const i of indices) {
+        if (i < start || !expression.startsWith("&&", i)) continue;
+        conjuncts.push(expression.slice(start, i + 2).trim());
+        start = i + 2;
+    }
+    const last = expression.slice(start).trim();
+    return last ? [...conjuncts, last] : conjuncts;
+}
+
+// the condition and the two branches of an expression that is a conditional outside parentheses, or null
+function splitConditional(expression: string): [string, string, string] | null {
+    const indices = topLevelIndices(expression);
+    const question = indices.find(i => expression[i] === "?");
+    if (question === undefined) return null;
+
+    let nested = 0;
+    for (const i of indices.filter(i => i > question)) {
+        if (expression[i] === "?") nested++;
+        else if (expression[i] === ":" && nested-- === 0)
+            return [expression.slice(0, question), expression.slice(question + 1, i), expression.slice(i + 1)]
+                .map(part => part.trim()) as [string, string, string];
+    }
+    return null;
+}
+
+/**
+ * The lines an expression is shown on: one per top-level conjunct, and a conditional's condition with each branch
+ * on a line of its own, indented
+ */
+function getExpressionLines(expression: string): { text: string; branch: boolean }[] {
+    return splitConjuncts(expression).flatMap(conjunct => {
+        const conditional = splitConditional(conjunct);
+        if (!conditional) return [{ text: conjunct, branch: false }];
+        const [condition, then, otherwise] = conditional;
+        return [{ text: condition, branch: false }, { text: `? ${then}`, branch: true }, { text: `: ${otherwise}`, branch: true }];
+    });
+}
+
+/**
+ * Renders an expression on the lines of getExpressionLines, each of which wraps with a hanging indent
+ * @param wrap whether to wrap the lines in an expression block, as renderHighlightedExpression does
+ * @param trailing html shown at the end of the last line
+ */
+export function renderHighlightedLines(expression: string, wrap = true, trailing = ""): string {
+    if (!expression) return "";
+
+    const lines = getExpressionLines(expression);
+    const html = lines.map((line, index) => {
+        const end = index === lines.length - 1 ? trailing : "";
+        return `<span class="lj-line${line.branch ? " lj-line-branch" : ""}">${renderHighlightedContent(line.text)}${end}</span>`;
+    }).join("");
+    return wrap ? `<pre class="lj-expression-block"><code class="lj-expression-code">${html}</code></pre>` : html;
+}
+
 export function renderHighlightedInlineExpression(expression: string): string {
     return renderExpression(expression, false);
 }

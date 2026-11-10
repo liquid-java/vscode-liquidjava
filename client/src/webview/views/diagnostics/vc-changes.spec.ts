@@ -25,7 +25,21 @@ describe('verification implications', () => {
         expect(document.querySelector('.vc-line:last-child')?.textContent?.trim()).toBe('x > 0');
         expect(Array.from(document.querySelectorAll('.vc-predicate-cell')).map(cell => cell.textContent?.trim()))
             .toEqual(['x == 1 →', 'y == 2 →', 'x > 0']);
-        expect(document.querySelectorAll('.vc-predicate-cell > .vc-arrow')).toHaveLength(2);
+        expect(document.querySelectorAll('.vc-predicate-cell .vc-arrow')).toHaveLength(2);
+    });
+    it('puts each top-level conjunct and each branch of a conditional on a line of its own', () => {
+        document.body.innerHTML = renderImplication({
+            name: 'h', type: 'Frame', predicate: 'a > 0 && (b || c) && s == "x && y"',
+            next: { ...conclusion, predicate: 'p && q ? d(h) == on : (p ? d(h) == off : d(h) == on)' },
+        });
+
+        const lines = (cell: Element) => Array.from(cell.querySelectorAll('.lj-line'))
+            .map(line => [line.textContent, line.classList.contains('lj-line-branch')]);
+        const [fact, conditional] = document.querySelectorAll('.vc-predicate-cell');
+        expect(lines(fact)).toEqual([['a > 0 &&', false], ['(b || c) &&', false], ['s == "x && y" →', false]]);
+        expect(lines(conditional)).toEqual([
+            ['p && q', false], ['? d(h) == on', true], [': (p ? d(h) == off : d(h) == on)', true],
+        ]);
     });
     it.each([
         ['initial rendering', () => renderImplication({ ...implication, next: null })],
