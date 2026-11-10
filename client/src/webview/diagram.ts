@@ -51,12 +51,9 @@ export function createMermaidDiagram(
     
     const lines: string[] = [];
     const errorFocus = getStateErrorFocus(sm);
-    // when the call's condition here names another state set whose state rejects it,
-    // the call is drawn as usual and that condition is marked instead
+    // when a transition of the call needs a state of another state set whose state rejects it,
+    // it is drawn as usual and that condition is marked instead
     const rejectingStateSets = getRejectingStateSets(sm, stateSets);
-    const isUnmet = (transition: LJStateMachine['transitions'][number]) =>
-        hasUnmetCondition(transition, sm, stateSets, rejectingStateSets);
-    const hasUnmetCall = sm.transitions.some(isUnmet);
     const relatedStates = focusOnError && errorFocus ? getRelatedStates(errorFocus) : [];
     const isDimmed = (state: string) => relatedStates.length > 0 && !relatedStates.includes(state);
     // focusing collapses the dimmed methods of each label, so the diagram is laid out again around the error
@@ -119,12 +116,13 @@ export function createMermaidDiagram(
         const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
         // in focus mode, only the failed method stays bright
         const dimmed = collapse && !isCalledMethod;
+        const unmet = hasUnmetCondition(transition, sm, stateSets, rejectingStateSets);
         const label = getTransitionLabel(
             transition.label,
-            getFromConditionLabel(transition.fromCondition, stateSets, isUnmet(transition) ? rejectingStateSets : null, showConditions),
+            getFromConditionLabel(transition.fromCondition, stateSets, unmet ? rejectingStateSets : null, showConditions),
             transition.toCondition,
             showConditions,
-            isCalledMethod && !hasUnmetCall,
+            isCalledMethod && !unmet,
         );
         if (!transitionMap.has(key)) transitionMap.set(key, { bright: [], dimmed: [] });
         const group = transitionMap.get(key)!;
