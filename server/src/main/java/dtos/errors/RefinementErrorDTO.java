@@ -1,5 +1,7 @@
 package dtos.errors;
 
+import java.util.List;
+
 import dtos.diagnostics.CounterexampleDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import dtos.diagnostics.VCSimplificationResultDTO;
@@ -16,6 +18,10 @@ public class RefinementErrorDTO extends LJErrorDTO {
     public final String customMessage;
     public final CounterexampleDTO counterexample;
     public final SourcePositionDTO declarationPosition;
+    /** Where each part of the refinement is declared, the first being declarationPosition */
+    public final List<SourcePositionDTO> declarationPositions;
+    /** Lines that explain the declaration, such as what the states it names mean */
+    public final List<String> declarationNotes;
 
     public RefinementErrorDTO(RefinementError error) {
         super("refinement-error", error);
@@ -24,6 +30,8 @@ public class RefinementErrorDTO extends LJErrorDTO {
         this.customMessage = error.getCustomMessage();
         this.counterexample = CounterexampleDTO.from(error.getCounterexample());
         this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
+        this.declarationPositions = error.getDeclarationPositions().stream().map(SourcePositionDTO::from).toList();
+        this.declarationNotes = error.getDeclarationNotes();
     }
 
     public static RefinementErrorDTO from(RefinementError error) {

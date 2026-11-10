@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { CustomError, CustomWarning } from '../../../types/diagnostics';
+import type { CustomError, CustomWarning, StateRefinementError } from '../../../types/diagnostics';
+import { renderLocation } from '../sections';
 import { renderDiagnosticsView } from './diagnostics';
 
 const currentFile = 'file:///workspace/Current.java';
@@ -84,6 +85,22 @@ describe('diagnostics view', () => {
         expect(document.querySelector('.diagnostics-scopes')).toBeNull();
         expect(document.querySelectorAll('.diagnostic-item')).toHaveLength(0);
         expect(document.querySelector('#show-all-button')).toBeNull();
+    });
+
+    it('shows every declaration of a refinement with their notes under them', () => {
+        const declaredAt = (lineStart: number) =>
+            ({ file: '/workspace/DoorRefinements.java', lineStart, colStart: 29, lineEnd: lineStart, colEnd: 58 });
+        document.body.innerHTML = renderLocation({
+            ...error(), type: 'state-refinement-error', declarationPosition: declaredAt(12),
+            declarationPositions: [declaredAt(12), declaredAt(13)],
+            declarationNotes: ['where closed(this) means doorState(this) == closed', 'where ajar(this) means doorState(this) == ajar'],
+        } as unknown as StateRefinementError);
+
+        expect(Array.from(document.querySelectorAll('pre > *')).map(element => element.textContent)).toEqual([
+            'DoorRefinements.java:13', 'DoorRefinements.java:14',
+            'where closed(this) means doorState(this) == closed', 'where ajar(this) means doorState(this) == ajar',
+        ]);
+        expect(document.querySelector('pre > :last-child')?.className).toBe('location-note');
     });
 
     it.each([false, true])('keeps warnings in the passed state (showAll=%s)', showAll => {

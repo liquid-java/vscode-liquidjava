@@ -73,6 +73,10 @@ export type RefinementError = BaseDiagnostic & {
     customMessage: string;
     counterexample: Counterexample;
     declarationPosition: SourcePosition | null;
+    // where each part of the refinement is declared, the first being declarationPosition
+    declarationPositions: SourcePosition[];
+    // lines that explain the declaration, shown under its locations
+    declarationNotes: string[];
 }
 
 export type Counterexample = {
@@ -99,6 +103,10 @@ export type StateRefinementError = BaseDiagnostic & {
     found: VCSimplificationResult;
     customMessage: string;
     declarationPosition: SourcePosition | null;
+    // where each entry state that makes up expected is declared, the first being declarationPosition
+    declarationPositions: SourcePosition[];
+    // lines that explain the declaration, shown under its locations
+    declarationNotes: string[];
     // one state machine per state set of the receiver's class
     stateMachines: LJStateMachine[];
 }

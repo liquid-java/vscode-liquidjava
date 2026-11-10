@@ -159,6 +159,7 @@ class DiagnosticConverterTest {
         assertEquals("true", dto.expected);
         assertEquals("expected true", dto.customMessage);
         assertEquals(dto.position, dto.declarationPosition);
+        assertEquals(List.of(dto.position), dto.declarationPositions);
         assertEquals("false", dto.found.implication().predicate());
         assertEquals("constant folding", dto.found.simplification());
         assertEquals("true", dto.found.origin().implication().predicate());
@@ -170,15 +171,18 @@ class DiagnosticConverterTest {
     @Test
     void preservesStateRefinementDetailsWithoutDeclarationFile() {
         StateRefinementErrorDTO dto = (StateRefinementErrorDTO) DiagnosticConverter.convertToDTO(
-                new StateRefinementError(position, null, new Predicate(new LiteralBoolean(false)),
+                new StateRefinementError(position, List.of(), new Predicate(new LiteralBoolean(false)),
                         new VCSimplificationResult(new VCImplication(new Predicate())), null, "expected closed",
-                        List.of(), null, null, UnaryOperator.identity()));
+                        List.of(), null, null, UnaryOperator.identity(),
+                        List.of("where closed(this) means doorState(this) == closed")));
         assertEquals("error", dto.category);
         assertEquals("state-refinement-error", dto.type);
         assertEquals("false", dto.expected);
         assertEquals("true", dto.found.implication().predicate());
         assertEquals("expected closed", dto.customMessage);
         assertNull(dto.declarationPosition);
+        assertEquals(List.of(), dto.declarationPositions);
+        assertEquals(List.of("where closed(this) means doorState(this) == closed"), dto.declarationNotes);
         assertEquals(List.of(), dto.stateMachines);
     }
 

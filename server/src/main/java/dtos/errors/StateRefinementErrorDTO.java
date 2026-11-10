@@ -27,6 +27,10 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
     public final VCSimplificationResultDTO found;
     public final String customMessage;
     public final SourcePositionDTO declarationPosition;
+    /** Where each part of the refinement is declared, the first being declarationPosition */
+    public final List<SourcePositionDTO> declarationPositions;
+    /** Lines that explain the declaration, such as what the states it names mean */
+    public final List<String> declarationNotes;
     public final List<StateMachineDTO> stateMachines;
 
     public StateRefinementErrorDTO(StateRefinementError error) {
@@ -35,6 +39,8 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
         this.found = VCSimplificationResultDTO.from(error.getFoundSimplification());
         this.customMessage = error.getCustomMessage();
         this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
+        this.declarationPositions = error.getDeclarationPositions().stream().map(SourcePositionDTO::from).toList();
+        this.declarationNotes = error.getDeclarationNotes();
         this.stateMachines = declarationPosition == null || declarationPosition.file() == null ? List.of()
                 : stateMachines(declarationPosition.file(), specFiles(), error.getContext());
     }
