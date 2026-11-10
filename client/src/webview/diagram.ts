@@ -2,7 +2,7 @@ import type { LJStateMachine } from "../types/fsm";
 import { copyToClipboard } from "./clipboard";
 import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectingStateSets, getRelatedStates, getStateErrorFocus } from "./diagram-focus";
 import { placePopover, type Box, type Point } from "./popover-placement";
-import { parseStateConditions, type StateCondition } from "./state-conditions";
+import { getConditionParts, type StateCondition } from "./state-conditions";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -182,13 +182,14 @@ function getCollapsedLabel(bright: string[], dimmed: CollapsibleLabel[], noun: '
 }
 
 /**
- * Gets the label of a transition: its method with the condition it needs before, and the one it sets after
+ * Gets the label of a transition: the condition it needs before its method, and the one it sets after,
+ * e.g. [lockState(this) == unlocked] open [doorState(this) == opened]
  * @param fromCondition the condition before, from getFromConditionLabel
  * @param isFailedCall whether to mark the method as the rejected call
  */
 function getTransitionLabel(
     label: string,
-    fromCondition: FromConditionLabel | null,
+    fromCondition: string | null,
     toCondition?: string | null,
     showConditions = false,
     isFailedCall = false,
@@ -197,13 +198,11 @@ function getTransitionLabel(
     const methodLabel = isFailedCall
         ? `<span class="lj-state-error-method">${escapedLabel}</span>`
         : escapedLabel;
-    // a condition written as states reads as a guard of the method, on its line
-    const guard = fromCondition?.isGuard ? fromCondition.label : '';
     return [
-        guard ? '' : fromCondition?.label,
-        guard ? `${methodLabel} ${guard}` : methodLabel,
+        fromCondition,
+        methodLabel,
         showConditions ? getConditionLabel('post', toCondition) : '',
-    ].filter(Boolean).join('<br/>');
+    ].filter(Boolean).join(' ');
 }
 
 /**
@@ -213,8 +212,8 @@ function hasUnmetCondition(transition: LJStateMachine['transitions'][number], sm
     stateSets: LJStateMachine[], rejectingStateSets: LJStateMachine[]): boolean {
     if (rejectingStateSets.length === 0 || !transition.fromCondition || transition.label !== sm.errorContext?.calledMethod
         || !sm.errorContext.possibleStates.includes(transition.from)) return false;
-    const conditions = parseStateConditions(transition.fromCondition, stateSets);
-    return !!conditions?.some(condition => isUnmetCondition(condition, rejectingStateSets));
+    return getConditionParts(transition.fromCondition, stateSets)
+        .some(({ stateCondition }) => !!stateCondition && isUnmetCondition(stateCondition, rejectingStateSets));
 }
 
 // a condition on a state set whose state rejects the call, which some of its possible states do not meet
@@ -223,31 +222,20 @@ function isUnmetCondition({ stateSet, states }: StateCondition, rejectingStateSe
 }
 
 /**
- * Gets the label of the condition a transition needs of the other state sets,
- * written as their states when it is only about them, e.g. [lockState: unlocked]
+ * Gets the label of the condition a transition needs before, as written in the spec, e.g. [lockState(this) == unlocked]
  * @param rejectingStateSets the state sets whose state rejects the call, to mark their conditions as unmet,
  *                           or null when the transition does not need their state
  * @returns the label, null when there is no condition or conditions are hidden, an unmet one is always shown
  */
 function getFromConditionLabel(condition: string | null | undefined, stateSets: LJStateMachine[],
-    rejectingStateSets: LJStateMachine[] | null, showConditions: boolean): FromConditionLabel | null {
+    rejectingStateSets: LJStateMachine[] | null, showConditions: boolean): string | null {
     if (!condition || (!showConditions && !rejectingStateSets)) return null;
-    const conditions = parseStateConditions(condition, stateSets);
-    if (!conditions) return { label: getConditionLabel('pre', condition), isGuard: false };
-    const guards = conditions.map(stateCondition => {
-        const text = escapeMermaidLabel(getStateConditionText(stateCondition));
-        return rejectingStateSets && isUnmetCondition(stateCondition, rejectingStateSets) ? `<span class="lj-unmet-condition">${text}</span>` : text;
+    const parts = getConditionParts(condition, stateSets).map(({ text, stateCondition }) => {
+        const escaped = escapeMermaidLabel(text);
+        const unmet = rejectingStateSets && stateCondition && isUnmetCondition(stateCondition, rejectingStateSets);
+        return unmet ? `<span class="lj-unmet-condition">${escaped}</span>` : escaped;
     });
-    return { label: `<span class="state-cond state-cond-pre">[${guards.join(', ')}]</span>`, isGuard: true };
-}
-
-// the label of a transition's condition before, and whether it is written as the states it needs
-type FromConditionLabel = { label: string; isGuard: boolean };
-
-// the states a condition allows, after the name of their state set if it has one, e.g. lockState: unlocked
-function getStateConditionText({ stateSet, states }: StateCondition): string {
-    const allowed = states.join(' or ');
-    return stateSet.stateSetName ? `${stateSet.stateSetName}: ${allowed}` : allowed;
+    return getConditionLabel('pre', parts.join(escapeMermaidLabel(' && ')), false);
 }
 
 function getInitialTransitionLabel(constructorSignature?: string | null, toCondition?: string | null,
@@ -255,13 +243,13 @@ function getInitialTransitionLabel(constructorSignature?: string | null, toCondi
     return [
         constructorSignature ? escapeMermaidLabel(constructorSignature) : '',
         showConditions ? getConditionLabel('post', toCondition) : '',
-    ].filter(Boolean).join('<br/>');
+    ].filter(Boolean).join(' ');
 }
 
-function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
+// a condition in brackets, escaped unless it is already
+function getConditionLabel(kind: 'pre' | 'post', cond?: string | null, escape = true): string {
     if (!cond) return '';
-    
-    return `<span class="state-cond state-cond-${kind}">${escapeMermaidLabel(cond)}</span>`;
+    return `<span class="state-cond state-cond-${kind}">[${escape ? escapeMermaidLabel(cond) : cond}]</span>`;
 }
 
 function escapeMermaidLabel(label: string): string {

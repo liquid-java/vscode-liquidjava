@@ -1080,6 +1080,12 @@ export function getStyles(): string {
             color: var(--vscode-foreground) !important;
             background: var(--vscode-editor-background) !important;
         }
+        /* a label reads as [condition before] method [condition after], so Mermaid must not wrap it */
+        .diagram-container .mermaid .edgeLabel div {
+            white-space: nowrap !important;
+            width: auto !important;
+            max-width: none !important;
+        }
         .diagram-container .mermaid .edgeLabel .state-cond {
             color: var(--vscode-descriptionForeground) !important;
             display: inline-block !important;

@@ -118,7 +118,7 @@ describe('state error focus', () => {
 
         expect(lines(createMermaidDiagram(sm, 'TB', false, false))).toContain('[*] --> maybeHasChildren : isLeaf');
         expect(lines(createMermaidDiagram(sm, 'TB', true, false))).toContain(
-            '[*] --> maybeHasChildren : isLeaf<br/><span class="state-cond state-cond-post">!return</span>');
+            '[*] --> maybeHasChildren : isLeaf <span class="state-cond state-cond-post">[!return]</span>');
         // the constructor and the entry transition come first
         expect(dimmedTransitions(createMermaidDiagram(sm, 'TB', false, true))[0]).toMatch(/^%% lj-dimmed-transitions: edge0 edge1\b/);
     });
@@ -130,8 +130,8 @@ describe('state error focus', () => {
         ] };
 
         expect(lines(createMermaidDiagram(sm, 'TB', true, true))).toContain(`[*] --> maybeHasChildren : ${collapsedMethods([
-            'isLeaf<br/><span class="state-cond state-cond-post">!return</span>',
-            'getChildCount<br/><span class="state-cond state-cond-post">return &gt; 0</span>',
+            'isLeaf <span class="state-cond state-cond-post">[!return]</span>',
+            'getChildCount <span class="state-cond state-cond-post">[return &gt; 0]</span>',
         ], '2 methods')}`);
     });
 
@@ -176,7 +176,7 @@ describe('state error focus', () => {
         sm.transitions[0] = { ...sm.transitions[0], fromCondition: 'unbound(this)' };
 
         expect(lines(createMermaidDiagram(sm, 'TB', true, true))).toContain(
-            `unbound --> bound : ${dimmedMethod('<span class="state-cond state-cond-pre">unbound(this)</span><br/>bind')}`);
+            `unbound --> bound : ${dimmedMethod('<span class="state-cond state-cond-pre">[unbound(this)]</span> bind')}`);
     });
 
     it('only colours labels that match the called method exactly', () => {
@@ -432,18 +432,16 @@ describe('a state error on several state sets', () => {
         const sms = door();
         const [doorState, lockState] = sms.map(sm => lines(createMermaidDiagram(sm, 'TB', true, false, sms)));
 
-        expect(lockState).toContain(`unlocked --> unlocked : ${calledMethod('open')} ${guard('doorState: closed')}`);
-        expect(doorState).toContain(`closed --> opened : open ${guard(unmet('lockState: unlocked'))}`);
-        // a != on a state set with two states is its other state
-        expect(doorState).toContain(`closed --> closed : lock ${guard('lockState: unlocked')}`);
+        expect(lockState).toContain(`unlocked --> unlocked : ${guard('doorState(this) == closed')} ${calledMethod('open')}`);
+        expect(doorState).toContain(`closed --> opened : ${guard(unmet('lockState(this) == unlocked'))} open`);
+        expect(doorState).toContain(`closed --> closed : ${guard('lockState(this) != locked')} lock`);
         // the unmet condition stays when conditions are collapsed
         expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms)))
-            .toEqual(expect.arrayContaining([`closed --> opened : open ${guard(unmet('lockState: unlocked'))}`, 'closed --> closed : lock']));
+            .toEqual(expect.arrayContaining([`closed --> opened : ${guard(unmet('lockState(this) == unlocked'))} open`, 'closed --> closed : lock']));
         // only the clauses the actual state does not meet are marked
-        sms[0].transitions[0].fromCondition = 'lockState(this) != jammed && lockState(this) == unlocked';
-        sms[1].states.push('jammed');
+        sms[0].transitions[0].fromCondition = 'lockState(this) == unlocked && size(this) > 0';
         expect(lines(createMermaidDiagram(sms[0], 'TB', true, false, sms)))
-            .toContain(`closed --> opened : open ${guard(`lockState: unlocked or locked, ${unmet('lockState: unlocked')}`)}`);
+            .toContain(`closed --> opened : ${guard(`${unmet('lockState(this) == unlocked')} &amp;&amp; size(this) &gt; 0`)} open`);
         // without a condition on the state set in a wrong state, the call stays marked
         sms[0].transitions[0].fromCondition = 'size(this) > 0';
         expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms))).toContain(`closed --> opened : ${calledMethod('open')}`);

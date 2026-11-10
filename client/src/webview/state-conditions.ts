@@ -16,15 +16,25 @@ const STATE_FIRST = /^(\w+)\s*(==|!=)\s*(\w+)\(this\)$/;
 const STATE_ONLY = /^(\w+)\(this\)$/;
 
 /**
- * Reads a transition's condition as the states it needs of the class's state sets
- * @param condition the condition as written in the spec, e.g. lockState(this) != locked && mode(this) == fast
- * @param sms the state machines of the class, one per state set
- * @returns the condition on each state set, or null when a part of it is not about a state
+ * A part of a transition's condition joined by &&, as written in the spec, with the states it needs if it is about a state
  */
-export function parseStateConditions(condition: string, sms: LJStateMachine[]): StateCondition[] | null {
-    if (condition.includes('||')) return null;
-    const conditions = condition.split('&&').map(part => parseStateCondition(unwrap(part.trim()), sms));
-    return conditions.every(Boolean) ? conditions as StateCondition[] : null;
+export type ConditionPart = {
+    text: string;
+    stateCondition: StateCondition | null;
+};
+
+/**
+ * Splits a transition's condition into its parts joined by &&, reading each one as the states it needs
+ * @param condition the condition as written in the spec, e.g. lockState(this) != locked && size(this) > 0
+ * @param sms the state machines of the class, one per state set
+ * @returns the parts, or a single part without states when the condition has an ||
+ */
+export function getConditionParts(condition: string, sms: LJStateMachine[]): ConditionPart[] {
+    if (condition.includes('||')) return [{ text: condition, stateCondition: null }];
+    return condition.split('&&').map(part => {
+        const text = part.trim();
+        return { text, stateCondition: parseStateCondition(unwrap(text), sms) };
+    });
 }
 
 function parseStateCondition(text: string, sms: LJStateMachine[]): StateCondition | null {

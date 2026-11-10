@@ -286,7 +286,7 @@ describe('webview script', () => {
 
         click('[data-tab="fsm"]');
         expect(root.querySelector('#diagram-conditions-btn')?.getAttribute('aria-pressed')).toBe('true');
-        expect(Array.from(root.querySelectorAll('.mermaid .state-cond'), node => node.textContent)).toEqual(['size(counter) > 0', 'size(counter) == 0']);
+        expect(Array.from(root.querySelectorAll('.mermaid .state-cond'), node => node.textContent)).toEqual(['[size(counter) > 0]', '[size(counter) == 0]']);
 
         click('#diagram-conditions-btn');
         expect(root.querySelector('.mermaid .state-cond')).toBeNull();
