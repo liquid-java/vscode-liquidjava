@@ -30,7 +30,7 @@ describe('verification implications', () => {
     it('puts each top-level conjunct and each branch of a conditional on a line of its own', () => {
         document.body.innerHTML = renderImplication({
             name: 'h', type: 'Frame', predicate: 'a > 0 && (b || c) && s == "x && y"',
-            next: { ...conclusion, predicate: 'p && q ? d(h) == on : (p ? d(h) == off : d(h) == on)' },
+            next: { ...conclusion, predicate: "p && q ? d(h) == on : (c == ':' ? d(h) == off : d(h) == on)" },
         });
 
         const lines = (cell: Element) => Array.from(cell.querySelectorAll('.lj-line'))
@@ -38,8 +38,17 @@ describe('verification implications', () => {
         const [fact, conditional] = document.querySelectorAll('.vc-predicate-cell');
         expect(lines(fact)).toEqual([['a > 0 &&', false], ['(b || c) &&', false], ['s == "x && y" →', false]]);
         expect(lines(conditional)).toEqual([
-            ['p && q', false], ['? d(h) == on', true], [': (p ? d(h) == off : d(h) == on)', true],
+            ['p && q', false], ['? d(h) == on', true], [": (c == ':' ? d(h) == off : d(h) == on)", true],
         ]);
+    });
+    it('keeps a conjunct per line in a predicate that a simplification changed', () => {
+        document.body.innerHTML = renderImplicationChange(
+            { ...conclusion, predicate: 'x > 0 && y > 0' }, { ...conclusion, predicate: 'x > 0 && y == 1' },
+        );
+
+        expect(Array.from(document.querySelectorAll('.lj-line')).map(line => line.textContent))
+            .toEqual(['x > 0 &&', 'y == 1']);
+        expect(document.querySelector('.lj-line:last-child .vc-change-fragment')?.textContent).toBe('==');
     });
     it.each([
         ['initial rendering', () => renderImplication({ ...implication, next: null })],
