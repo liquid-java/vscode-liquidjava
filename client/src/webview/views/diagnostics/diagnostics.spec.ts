@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { CustomError, CustomWarning, StateRefinementError } from '../../../types/diagnostics';
 import { renderLocation } from '../sections';
-import { renderDiagnosticsView } from './diagnostics';
+import { formatDiagnosticForClipboard, renderDiagnosticsView } from './diagnostics';
 
 const currentFile = 'file:///workspace/Current.java';
 const otherFile = 'file:///workspace/Other.java';
@@ -90,17 +90,21 @@ describe('diagnostics view', () => {
     it('shows every declaration of a refinement with their notes under them', () => {
         const declaredAt = (lineStart: number) =>
             ({ file: '/workspace/DoorRefinements.java', lineStart, colStart: 29, lineEnd: lineStart, colEnd: 58 });
-        document.body.innerHTML = renderLocation({
+        const stateError = {
             ...error(), type: 'state-refinement-error', declarationPosition: declaredAt(12),
             declarationPositions: [declaredAt(12), declaredAt(13)],
             declarationNotes: ['where closed(this) means doorState(this) == closed', 'where ajar(this) means doorState(this) == ajar'],
-        } as unknown as StateRefinementError);
+        } as unknown as StateRefinementError;
+        document.body.innerHTML = renderLocation(stateError);
 
         expect(Array.from(document.querySelectorAll('pre > *')).map(element => element.textContent)).toEqual([
             'DoorRefinements.java:13', 'DoorRefinements.java:14',
             'where closed(this) means doorState(this) == closed', 'where ajar(this) means doorState(this) == ajar',
         ]);
         expect(document.querySelector('pre > :last-child')?.className).toBe('location-note');
+        // the copied error keeps the notes but not the raw positions
+        expect(formatDiagnosticForClipboard(stateError)).toContain('Declaration Notes: where closed(this) means');
+        expect(formatDiagnosticForClipboard(stateError)).not.toContain('Declaration Positions');
     });
 
     it.each([false, true])('keeps warnings in the passed state (showAll=%s)', showAll => {
