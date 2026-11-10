@@ -1,8 +1,9 @@
-import type { LJDiagnostic, LJHint, SourcePosition } from "../../types/diagnostics";
+import type { LJDiagnostic, LJHint, LJSourceReference, SourcePosition } from "../../types/diagnostics";
 import { escapeHtml, getFileName } from "../utils";
 import { renderHighlightedExpression, renderHighlightedInlineExpression } from "../highlighting";
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
 import { renderCodicon, renderCodiconButton } from "../icons";
+import { renderMessageText } from "../message-text";
 import { LJVariable } from "../../types/context";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab, badges = NO_NAV_BADGES): string => /*html*/`
@@ -34,8 +35,9 @@ export function setHintOpen(key: string, open: boolean) {
  * Several call sequences are alternatives, so they are listed as options apart from the hints that explain the error
  * @param hints The hints of the diagnostic
  * @param key Identifies the diagnostic, so opened hints stay open after a new verification
+ * @param references The places in the source the hints name
  */
-export function renderHints(hints: LJHint[] | undefined, key?: string): string {
+export function renderHints(hints: LJHint[] | undefined, key?: string, references: LJSourceReference[] = []): string {
     const shown = (hints ?? []).filter(hint => hint.message.trim());
     if (shown.length === 0) return '';
     const options = shown.filter(hint => hint.kind === 'call-sequence');
@@ -49,17 +51,26 @@ export function renderHints(hints: LJHint[] | undefined, key?: string): string {
                 ${listsOptions ? /*html*/`
                     <div class="hint-options">
                         <p class="hint-options-title">Any one of these:</p>
-                        <ul>${options.map(hint => `<li>${renderHintMessage(hint)}</li>`).join('')}</ul>
+                        <ul>${options.map(hint => `<li>${renderHintMessage(hint, references)}</li>`).join('')}</ul>
                     </div>
                 ` : ''}
-                ${notes.map(hint => `<div class="hint-note">${renderHintMessage(hint)}</div>`).join('')}
+                ${notes.map(hint => `<div class="hint-note">${renderHintMessage(hint, references)}</div>`).join('')}
             </div>
         </details>
     `;
 }
 
-function renderHintMessage(hint: LJHint): string {
-    return `<span class="hint-message">${escapeHtml(hint.message.trim())}</span>`;
+function renderHintMessage(hint: LJHint, references: LJSourceReference[]): string {
+    return `<span class="hint-message">${renderMessageText(hint.message, references)}</span>`;
+}
+
+/**
+ * Renders the notes under the message of a diagnostic, such as where a value comes from, with their links
+ */
+export function renderMessageNotes(diagnostic: LJDiagnostic): string {
+    if (diagnostic.messageNotes.length === 0) return '';
+    return /*html*/`<div class="section message-notes">${diagnostic.messageNotes
+        .map(note => `<p class="message-note">${renderMessageText(note, diagnostic.references)}</p>`).join('')}</div>`;
 }
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
@@ -74,7 +85,7 @@ export const renderDiagnosticHeader = (title: string, message: string, actions =
         <h3>${title}</h3>
         ${actions.trim() ? `<div class="diagnostic-actions">${actions}</div>` : ''}
     </div>
-    <div class="diagnostic-header"><p>${message}</p></div>
+    <div class="diagnostic-header"><p>${renderMessageText(message)}</p></div>
 `;
 
 export function renderDiagnosticDataAttributes(diagnostic: LJDiagnostic): string {
@@ -97,7 +108,7 @@ export const renderLocation = (diagnostic: LJDiagnostic): string => {
     const links = positions.map(renderLocationLink).join("\n");
     // the notes explain the declarations, so they are shown only under their links
     const notes = declarationPositions.length > 0 ? declaration?.declarationNotes ?? [] : [];
-    const noteLines = notes.map(note => `<span class="location-note">${escapeHtml(note)}</span>`).join("");
+    const noteLines = notes.map(note => `<span class="location-note">${renderMessageText(note)}</span>`).join("");
     return renderCustomSection(title, /*html*/`<pre>${links}${noteLines}</pre>`);
 };
 

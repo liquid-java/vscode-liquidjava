@@ -32,12 +32,25 @@ export type LJHint = {
     message: string;
 };
 
+// a place in the source that a line of a diagnostic, a message note or a hint, names, such as `line 134`
+export type LJSourceReference = {
+    message: string;
+    text: string;
+    // where text starts in message
+    start: number;
+    position: SourcePosition;
+};
+
 type BaseDiagnostic = {
     title: string;
     message: string;
     hints: LJHint[];
     file: string;
     position: SourcePosition | null;
+    // lines under the message that explain it, such as where a value comes from
+    messageNotes: string[];
+    // the places the message notes and the hints name
+    references: LJSourceReference[];
 }
 
 export type CustomError = BaseDiagnostic & {
