@@ -53,8 +53,12 @@ export function createMermaidDiagram(
     
     const lines: string[] = [];
     const errorFocus = getStateErrorFocus(sm);
-    // when the state of another state set rejects the call, the call is drawn as usual here and its condition is marked instead
+    // when the call's condition here names another state set whose state rejects it,
+    // the call is drawn as usual and that condition is marked instead
     const rejectingStateSets = getRejectingStateSets(sm, stateSets);
+    const isUnmet = (transition: LJStateMachine['transitions'][number]) =>
+        hasUnmetCondition(transition, sm, stateSets, rejectingStateSets);
+    const hasUnmetCall = sm.transitions.some(isUnmet);
     const relatedStates = focusOnError && errorFocus ? getRelatedStates(errorFocus) : [];
     const isDimmed = (state: string) => relatedStates.length > 0 && !relatedStates.includes(state);
     // focusing collapses the dimmed methods of each label, so the diagram is laid out again around the error
@@ -117,14 +121,12 @@ export function createMermaidDiagram(
         const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
         // in focus mode, only the failed method stays bright
         const dimmed = collapse && !isCalledMethod;
-        const rejectedByOthers = isCalledMethod && rejectingStateSets.length > 0;
-        const unmet = rejectedByOthers && !!errorFocus?.possibleStates.includes(transition.from);
         const label = getTransitionLabel(
             transition.label,
-            getFromConditionLabel(transition.fromCondition, stateSets, unmet ? rejectingStateSets : null, showConditions),
+            getFromConditionLabel(transition.fromCondition, stateSets, isUnmet(transition) ? rejectingStateSets : null, showConditions),
             transition.toCondition,
             showConditions,
-            isCalledMethod && !rejectedByOthers,
+            isCalledMethod && !hasUnmetCall,
         );
         if (!transitionMap.has(key)) transitionMap.set(key, { bright: [], dimmed: [] });
         const group = transitionMap.get(key)!;
@@ -209,17 +211,28 @@ function getTransitionLabel(
 }
 
 /**
+ * Whether a transition of the rejected call, from a possible state, needs a state of a state set whose state rejects it
+ */
+function hasUnmetCondition(transition: LJStateMachine['transitions'][number], sm: LJStateMachine,
+    stateSets: LJStateMachine[], rejectingStateSets: LJStateMachine[]): boolean {
+    if (rejectingStateSets.length === 0 || !transition.fromCondition || transition.label !== sm.errorContext?.calledMethod
+        || !sm.errorContext.possibleStates.includes(transition.from)) return false;
+    const conditions = parseStateConditions(transition.fromCondition, stateSets);
+    return !!conditions?.some(condition => rejectingStateSets.includes(condition.stateSet));
+}
+
+/**
  * Gets the label of the condition a transition needs of the other state sets,
  * written as their states when it is only about them, e.g. [lockState: unlocked]
  * @param rejectingStateSets the state sets whose state rejects the call, to mark their conditions as unmet,
- *                           or null when the transition is not the rejected call
+ *                           or null when the transition does not need their state
  * @returns the label, null when there is no condition or conditions are hidden, an unmet one is always shown
  */
 function getFromConditionLabel(condition: string | null | undefined, stateSets: LJStateMachine[],
     rejectingStateSets: LJStateMachine[] | null, showConditions: boolean): FromConditionLabel | null {
     if (!condition || (!showConditions && !rejectingStateSets)) return null;
     const conditions = parseStateConditions(condition, stateSets);
-    if (!conditions) return { label: getConditionLabel('pre', condition, !!rejectingStateSets), isGuard: false };
+    if (!conditions) return { label: getConditionLabel('pre', condition), isGuard: false };
     const guards = conditions.map(stateCondition => {
         const text = escapeMermaidLabel(getStateConditionText(stateCondition));
         return rejectingStateSets?.includes(stateCondition.stateSet) ? `<span class="lj-unmet-condition">${text}</span>` : text;
@@ -244,10 +257,10 @@ function getInitialTransitionLabel(constructorSignature?: string | null, toCondi
     ].filter(Boolean).join('<br/>');
 }
 
-function getConditionLabel(kind: 'pre' | 'post', cond?: string | null, unmet = false): string {
+function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
     if (!cond) return '';
     
-    return `<span class="state-cond state-cond-${kind}${unmet ? ' lj-unmet-condition' : ''}">${escapeMermaidLabel(cond)}</span>`;
+    return `<span class="state-cond state-cond-${kind}">${escapeMermaidLabel(cond)}</span>`;
 }
 
 function escapeMermaidLabel(label: string): string {

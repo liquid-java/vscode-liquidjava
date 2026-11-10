@@ -439,6 +439,9 @@ describe('a state error on several state sets', () => {
         // the unmet condition stays when conditions are collapsed
         expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms)))
             .toEqual(expect.arrayContaining([`closed --> opened : open ${guard(unmet('lockState: unlocked'))}`, 'closed --> closed : lock']));
+        // without a condition on the state set in a wrong state, the call stays marked
+        sms[0].transitions[0].fromCondition = 'size(this) > 0';
+        expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms))).toContain(`closed --> opened : ${calledMethod('open')}`);
     });
 
     it('draws a transition that keeps its state as a round loop', async () => {
