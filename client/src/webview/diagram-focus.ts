@@ -63,12 +63,33 @@ export function getRejectedCallText(call: Pick<StateErrorFocus, 'calledMethod' |
 }
 
 /**
- * Orders the state machines of a class so that those of the state sets with the state error come first
+ * Orders the state machines of a class so that those of the state sets with the state error come first,
+ * starting with those whose state does not allow the call
  * @param sms the state machines, one per state set, in declaration order
- * @returns the state machines with the state error, then the others, each in declaration order
+ * @returns the state machines in a wrong state, then the others with the state error, then the rest, each in declaration order
  */
 export function orderStateMachines(sms: LJStateMachine[]): LJStateMachine[] {
-    return [...sms.filter(sm => sm.errorContext), ...sms.filter(sm => !sm.errorContext)];
+    const rank = (sm: LJStateMachine) => hasWrongState(sm) ? 0 : sm.errorContext ? 1 : 2;
+    return [...sms].sort((a, b) => rank(a) - rank(b));
+}
+
+/**
+ * Whether the receiver may be in a state of this state set that does not allow the call
+ */
+export function hasWrongState(sm: LJStateMachine): boolean {
+    return (getStateErrorFocus(sm)?.invalidStates.length ?? 0) > 0;
+}
+
+/**
+ * Gets the other state sets whose state rejects the call, when every possible state of this one allows it
+ * @param sm the state machine of this state set
+ * @param sms the state machines of the class, one per state set
+ * @returns the state machines in a wrong state, empty when this one may be in a wrong state or its state is unknown
+ */
+export function getRejectingStateSets(sm: LJStateMachine, sms: LJStateMachine[]): LJStateMachine[] {
+    const focus = getStateErrorFocus(sm);
+    if (!focus || focus.unknownState || focus.invalidStates.length > 0) return [];
+    return sms.filter(other => other !== sm && hasWrongState(other));
 }
 
 /**

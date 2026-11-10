@@ -1110,8 +1110,12 @@ export function getStyles(): string {
         .diagram-container .mermaid svg .ljStateErrorActual .label-container {
             stroke: var(--vscode-errorForeground) !important;
         }
-        .diagram-container .mermaid .edgeLabel .lj-state-error-method {
+        .diagram-container .mermaid .edgeLabel .lj-state-error-method,
+        .diagram-container .mermaid .edgeLabel .lj-unmet-condition {
             color: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid svg path.lj-self-loop {
+            stroke-width: 1.5px !important;
         }
         .diagram-container .mermaid svg path.lj-state-error-transition {
             stroke: var(--vscode-errorForeground) !important;

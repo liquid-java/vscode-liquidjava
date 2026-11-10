@@ -435,10 +435,10 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 const displayedStateMachines = orderStateMachines(shownError?.stateMachines ?? stateMachines);
                 const focusOnError = focusDiagramOnError && !!shownError;
                 const diagrams = displayedStateMachines.map(sm =>
-                    createMermaidDiagram(sm, diagramOrientation, showDiagramConditions, focusOnError));
+                    createMermaidDiagram(sm, diagramOrientation, showDiagramConditions, focusOnError, displayedStateMachines));
                 // copy the diagrams without the error overlay
                 currentDiagram = displayedStateMachines
-                    .map(sm => createMermaidDiagram({ ...sm, errorContext: null }, diagramOrientation, showDiagramConditions))
+                    .map(sm => createMermaidDiagram({ ...sm, errorContext: null }, diagramOrientation, showDiagramConditions, false, displayedStateMachines))
                     .join('\n\n');
                 renderStateMachineView(root, displayedStateMachines, diagrams, diagramOrientation, showDiagramConditions, focusOnError,
                     { index: shownIndex, count: stateErrors.length, line: getStateErrorLine(shownError) }, badges);

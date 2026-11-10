@@ -247,6 +247,7 @@ describe('state error focus', () => {
             '    childrenAllowed --> maybeHasChildren : add',
             '    maybeHasChildren --> childrenAllowed : removeAllChildren',
             '    maybeHasChildren --> maybeHasChildren : getFirstChild',
+            '%% lj-self-loops: edge3',
         ].join('\n'));
     });
 });
@@ -390,5 +391,74 @@ describe('state errors on several state sets', () => {
     it('focuses on the error of each state set that has it', () => {
         expect(getStateErrorFocuses([tiling, compression, other])).toEqual([getStateErrorFocus(compression)]);
         expect(getStateErrorFocuses([tiling, other])).toEqual([]);
+    });
+});
+
+// Door from the multi-set state error issue: d.lock(); d.open(); where open() needs doorState closed and lockState unlocked
+function door(): LJStateMachine[] {
+    const open = { calledMethod: 'open', receiver: 'd' };
+    return [
+        {
+            className: 'Door', stateSet: 0, stateSetName: 'doorState', states: ['closed', 'opened'],
+            initialTransitions: [{ to: 'closed' }],
+            transitions: [
+                { from: 'closed', to: 'opened', label: 'open', fromCondition: 'lockState(this) == unlocked' },
+                { from: 'closed', to: 'closed', label: 'lock', fromCondition: 'lockState(this) != locked' },
+            ],
+            errorContext: { ...open, possibleStates: ['closed'], acceptedStates: ['closed'], validStates: [], invalidStates: [] },
+        },
+        {
+            className: 'Door', stateSet: 1, stateSetName: 'lockState', states: ['unlocked', 'locked'],
+            initialTransitions: [{ to: 'unlocked' }],
+            transitions: [
+                { from: 'unlocked', to: 'unlocked', label: 'open', fromCondition: 'doorState(this) == closed' },
+                { from: 'locked', to: 'unlocked', label: 'unlock' },
+            ],
+            errorContext: { ...open, possibleStates: ['locked'], acceptedStates: ['unlocked'], validStates: [], invalidStates: ['locked'] },
+        },
+    ];
+}
+
+describe('a state error on several state sets', () => {
+    const guard = (text: string) => `<span class="state-cond state-cond-pre">[${text}]</span>`;
+    const unmet = (text: string) => `<span class="lj-unmet-condition">${text}</span>`;
+
+    it('puts the state set in a wrong state first', () => {
+        const [doorState, lockState] = door();
+        expect(orderStateMachines([doorState, lockState])).toEqual([lockState, doorState]);
+    });
+
+    it('marks the call in the state set in a wrong state, and its unmet condition in the others', () => {
+        const sms = door();
+        const [doorState, lockState] = sms.map(sm => lines(createMermaidDiagram(sm, 'TB', true, false, sms)));
+
+        expect(lockState).toContain(`unlocked --> unlocked : ${calledMethod('open')} ${guard('doorState: closed')}`);
+        expect(doorState).toContain(`closed --> opened : open ${guard(unmet('lockState: unlocked'))}`);
+        // a != on a state set with two states is its other state
+        expect(doorState).toContain(`closed --> closed : lock ${guard('lockState: unlocked')}`);
+        // the unmet condition stays when conditions are collapsed
+        expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms)))
+            .toEqual(expect.arrayContaining([`closed --> opened : open ${guard(unmet('lockState: unlocked'))}`, 'closed --> closed : lock']));
+    });
+
+    it('draws a transition that keeps its state as a round loop', async () => {
+        document.body.innerHTML = '<div class="diagram-container"><div id="diagram-wrapper"><pre class="mermaid"></pre></div></div>';
+        const pre = document.querySelector('.mermaid')!;
+        pre.textContent = createMermaidDiagram(door()[1], 'TB');
+        // ELK's curl on the left side of the state, from its top to its bottom
+        const points = [{ x: 100, y: 10 }, { x: 80, y: 15 }, { x: 100, y: 20 }];
+        const run = vi.fn(async () => {
+            pre.innerHTML = '<svg><path class="transition" data-id="edge1"></path></svg>';
+            Object.assign(pre.querySelector('path')!, {
+                getTotalLength: () => 2,
+                getPointAtLength: (at: number) => points[at],
+            });
+        });
+
+        await renderMermaidDiagram(document, { mermaid: { run } });
+
+        const loop = document.querySelector('path.lj-self-loop')!;
+        expect(loop.getAttribute('data-id')).toBe('edge1');
+        expect(loop.getAttribute('d')).toBe('M100,10 C68,-6 68,36 100,20');
     });
 });

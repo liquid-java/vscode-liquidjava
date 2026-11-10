@@ -1,7 +1,8 @@
 import type { LJStateMachine } from "../types/fsm";
 import { copyToClipboard } from "./clipboard";
-import { INVALID_STATE_ICON, VALID_STATE_ICON, getRelatedStates, getStateErrorFocus } from "./diagram-focus";
+import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectingStateSets, getRelatedStates, getStateErrorFocus } from "./diagram-focus";
 import { placePopover, type Box, type Point } from "./popover-placement";
+import { parseStateConditions, type StateCondition } from "./state-conditions";
 
 // constants
 const MIN_ZOOM = 0.2;
@@ -11,6 +12,10 @@ const SCROLL_ZOOM_IN_FACTOR = 1.05;
 const SCROLL_ZOOM_OUT_FACTOR = 0.95;
 // Mermaid comment listing the transitions to dim once rendered
 const DIMMED_TRANSITIONS_COMMENT = '%% lj-dimmed-transitions:';
+// Mermaid comment listing the transitions that keep their state, drawn as round loops once rendered
+const SELF_LOOPS_COMMENT = '%% lj-self-loops:';
+// how far the control points of a round loop are from its ends
+const SELF_LOOP_RADIUS = 32;
 // a focused diagram is shrunk to fit the panel, but never below this scale so that its labels stay readable
 const MIN_FOCUS_SCALE = 0.6;
 const FOCUS_BOTTOM_MARGIN = 16;
@@ -34,6 +39,7 @@ let startY = 0;
  * @param orientation
  * @param showConditions
  * @param focusOnError whether to dim the states unrelated to the selected state error and collapse the unrelated methods
+ * @param stateSets the state machines of every state set of the class, to write conditions on them as their states
  * @returns Mermaid diagram string
  */
 export function createMermaidDiagram(
@@ -41,20 +47,25 @@ export function createMermaidDiagram(
     orientation: "LR" | "TB",
     showConditions = false,
     focusOnError = false,
+    stateSets: LJStateMachine[] = [],
 ): string {
     if (!sm) return '';
     
     const lines: string[] = [];
     const errorFocus = getStateErrorFocus(sm);
+    // when the state of another state set rejects the call, the call is drawn as usual here and its condition is marked instead
+    const rejectingStateSets = getRejectingStateSets(sm, stateSets);
     const relatedStates = focusOnError && errorFocus ? getRelatedStates(errorFocus) : [];
     const isDimmed = (state: string) => relatedStates.length > 0 && !relatedStates.includes(state);
     // focusing collapses the dimmed methods of each label, so the diagram is laid out again around the error
     const collapse = relatedStates.length > 0;
     // Mermaid numbers the rendered transitions in the order they are declared
     const dimmedTransitions: string[] = [];
+    const selfLoops: string[] = [];
     let transitionCount = 0;
-    const addTransition = (line: string, dimmed: boolean) => {
+    const addTransition = (line: string, dimmed: boolean, selfLoop = false) => {
         if (dimmed) dimmedTransitions.push(`edge${transitionCount}`);
+        if (selfLoop) selfLoops.push(`edge${transitionCount}`);
         transitionCount++;
         lines.push(line);
     };
@@ -106,12 +117,14 @@ export function createMermaidDiagram(
         const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
         // in focus mode, only the failed method stays bright
         const dimmed = collapse && !isCalledMethod;
+        const rejectedByOthers = isCalledMethod && rejectingStateSets.length > 0;
+        const unmet = rejectedByOthers && !!errorFocus?.possibleStates.includes(transition.from);
         const label = getTransitionLabel(
             transition.label,
-            transition.fromCondition,
+            getFromConditionLabel(transition.fromCondition, stateSets, unmet ? rejectingStateSets : null, showConditions),
             transition.toCondition,
             showConditions,
-            isCalledMethod,
+            isCalledMethod && !rejectedByOthers,
         );
         if (!transitionMap.has(key)) transitionMap.set(key, { bright: [], dimmed: [] });
         const group = transitionMap.get(key)!;
@@ -124,8 +137,9 @@ export function createMermaidDiagram(
     // add transitions, dimming those whose methods are all dimmed
     transitionMap.forEach(({ bright, dimmed }, key) => {
         const [from, to] = key.split('|');
-        addTransition(`    ${from} --> ${to} : ${getCollapsedLabel(bright, dimmed, 'methods')}`, bright.length === 0);
+        addTransition(`    ${from} --> ${to} : ${getCollapsedLabel(bright, dimmed, 'methods')}`, bright.length === 0, from === to);
     });
+    if (selfLoops.length > 0) lines.push(`${SELF_LOOPS_COMMENT} ${selfLoops.join(' ')}`);
 
     if (!errorFocus) {
         const highlightedStates = sm.errorContext?.possibleStates ?? [];
@@ -169,23 +183,57 @@ function getCollapsedLabel(bright: string[], dimmed: CollapsibleLabel[], noun: '
     return [...bright, `<span class="lj-dimmed-method lj-collapsed-methods">${count}${methods}</span>`].join('<br/>');
 }
 
+/**
+ * Gets the label of a transition: its method with the condition it needs before, and the one it sets after
+ * @param fromCondition the condition before, from getFromConditionLabel
+ * @param isFailedCall whether to mark the method as the rejected call
+ */
 function getTransitionLabel(
     label: string,
-    fromCondition?: string | null,
+    fromCondition: FromConditionLabel | null,
     toCondition?: string | null,
     showConditions = false,
-    isCalledMethod = false,
+    isFailedCall = false,
 ): string {
     const escapedLabel = escapeMermaidLabel(label);
-    const methodLabel = isCalledMethod
+    const methodLabel = isFailedCall
         ? `<span class="lj-state-error-method">${escapedLabel}</span>`
         : escapedLabel;
-    if (!showConditions) return methodLabel;
+    // a condition written as states reads as a guard of the method, on its line
+    const guard = fromCondition?.isGuard ? fromCondition.label : '';
     return [
-        getConditionLabel('pre', fromCondition),
-        methodLabel,
-        getConditionLabel('post', toCondition)
+        guard ? '' : fromCondition?.label,
+        guard ? `${methodLabel} ${guard}` : methodLabel,
+        showConditions ? getConditionLabel('post', toCondition) : '',
     ].filter(Boolean).join('<br/>');
+}
+
+/**
+ * Gets the label of the condition a transition needs of the other state sets,
+ * written as their states when it is only about them, e.g. [lockState: unlocked]
+ * @param rejectingStateSets the state sets whose state rejects the call, to mark their conditions as unmet,
+ *                           or null when the transition is not the rejected call
+ * @returns the label, null when there is no condition or conditions are hidden, an unmet one is always shown
+ */
+function getFromConditionLabel(condition: string | null | undefined, stateSets: LJStateMachine[],
+    rejectingStateSets: LJStateMachine[] | null, showConditions: boolean): FromConditionLabel | null {
+    if (!condition || (!showConditions && !rejectingStateSets)) return null;
+    const conditions = parseStateConditions(condition, stateSets);
+    if (!conditions) return { label: getConditionLabel('pre', condition, !!rejectingStateSets), isGuard: false };
+    const guards = conditions.map(stateCondition => {
+        const text = escapeMermaidLabel(getStateConditionText(stateCondition));
+        return rejectingStateSets?.includes(stateCondition.stateSet) ? `<span class="lj-unmet-condition">${text}</span>` : text;
+    });
+    return { label: `<span class="state-cond state-cond-pre">[${guards.join(', ')}]</span>`, isGuard: true };
+}
+
+// the label of a transition's condition before, and whether it is written as the states it needs
+type FromConditionLabel = { label: string; isGuard: boolean };
+
+// the states a condition allows, after the name of their state set if it has one, e.g. lockState: unlocked
+function getStateConditionText({ stateSet, states }: StateCondition): string {
+    const allowed = states.join(' or ');
+    return stateSet.stateSetName ? `${stateSet.stateSetName}: ${allowed}` : allowed;
 }
 
 function getInitialTransitionLabel(constructorSignature?: string | null, toCondition?: string | null,
@@ -196,10 +244,10 @@ function getInitialTransitionLabel(constructorSignature?: string | null, toCondi
     ].filter(Boolean).join('<br/>');
 }
 
-function getConditionLabel(kind: 'pre' | 'post', cond?: string | null): string {
+function getConditionLabel(kind: 'pre' | 'post', cond?: string | null, unmet = false): string {
     if (!cond) return '';
     
-    return `<span class="state-cond state-cond-${kind}">${escapeMermaidLabel(cond)}</span>`;
+    return `<span class="state-cond state-cond-${kind}${unmet ? ' lj-unmet-condition' : ''}">${escapeMermaidLabel(cond)}</span>`;
 }
 
 function escapeMermaidLabel(label: string): string {
@@ -220,10 +268,12 @@ export async function renderMermaidDiagram(document: any, window: any) {
 
     try { 
         const dimmedTransitions = Array.from(mermaidElements, (element: any) => getListedTransitions(element.textContent, DIMMED_TRANSITIONS_COMMENT));
+        const selfLoops = Array.from(mermaidElements, (element: any) => getListedTransitions(element.textContent, SELF_LOOPS_COMMENT));
         await mermaid.run({ nodes: mermaidElements });
         highlightErrorTransitions(document);
         mermaidElements.forEach((element: any, index: number) => {
             markTransitions(element, dimmedTransitions[index], 'lj-dimmed');
+            roundSelfLoops(element, selfLoops[index]);
         });
         fitFocusedDiagrams(document, window);
         registerCollapsedLabels(document);
@@ -260,6 +310,35 @@ function markTransitions(element: any, edgeIds: string[], className: string) {
         element.querySelectorAll(`path.transition[data-id="${edgeId}"], g.label[data-id="${edgeId}"]`)
             .forEach((part: any) => part.classList.add(className));
     });
+}
+
+// the layout draws a transition that keeps its state as a curl no bigger than its arrowhead,
+// so it is drawn again as a round loop between the same ends, bulging out on the same side
+function roundSelfLoops(element: any, edgeIds: string[]) {
+    edgeIds.forEach(edgeId => {
+        const path = element.querySelector(`path.transition[data-id="${edgeId}"]`);
+        if (typeof path?.getTotalLength !== 'function') return;
+        const length = path.getTotalLength();
+        const [start, middle, end] = [0, length / 2, length].map(at => path.getPointAtLength(at));
+        path.setAttribute('d', getSelfLoopPath(start, middle, end));
+        path.classList.add('lj-self-loop');
+    });
+}
+
+function getSelfLoopPath(start: Point, middle: Point, end: Point): string {
+    const out = unit({ x: middle.x - (start.x + end.x) / 2, y: middle.y - (start.y + end.y) / 2 });
+    const along = unit({ x: end.x - start.x, y: end.y - start.y });
+    const control = (point: Point, sign: number) => ({
+        x: point.x + SELF_LOOP_RADIUS * (out.x + sign * along.x / 2),
+        y: point.y + SELF_LOOP_RADIUS * (out.y + sign * along.y / 2),
+    });
+    const [first, second] = [control(start, -1), control(end, 1)];
+    return `M${start.x},${start.y} C${first.x},${first.y} ${second.x},${second.y} ${end.x},${end.y}`;
+}
+
+function unit({ x, y }: Point): Point {
+    const length = Math.hypot(x, y) || 1;
+    return { x: x / length, y: y / length };
 }
 
 // shrinks the focused diagrams with a state error so that they fit below the summary, keeping them readable

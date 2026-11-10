@@ -1,5 +1,5 @@
 import type { LJStateMachine } from "../../../types/fsm";
-import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectedCallText, getStateErrorFocuses, type StateErrorFocus } from "../../diagram-focus";
+import { INVALID_STATE_ICON, VALID_STATE_ICON, getRejectedCallText, getStateErrorFocus, getStateErrorFocuses, type StateErrorFocus } from "../../diagram-focus";
 import { renderCodiconButton } from "../../icons";
 import { escapeHtml } from "../../utils";
 import { renderMainHeader, type NavBadges } from "../sections";
@@ -57,7 +57,7 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
                             </div>
                         </div>
                         ${errorFocuses.length > 0
-                            ? renderStateErrorSummary(getStateErrorSummary(errorFocuses), stateErrors) + renderStateErrorLegend(errorFocuses, focusOnError)
+                            ? renderStateErrorSummary(getStateErrorSummary(sms), stateErrors) + renderStateErrorLegend(errorFocuses, focusOnError)
                             : isStateErrorShown(stateErrors) ? renderStateErrorSummary(getUnmarkedStateErrorSummary(sms, stateErrors), stateErrors) : ''}
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
@@ -96,15 +96,40 @@ function isStateErrorShown(stateErrors: StateErrorNavigation): boolean {
     return stateErrors.index >= 0 || stateErrors.line !== undefined;
 }
 
+// the state error on one state set, with its state machine
+type StateSetError = { sm: LJStateMachine; focus: StateErrorFocus };
+
 // summarises the error of every state set it involves as a compiler would: the invalid call, then the expected and actual states
-function getStateErrorSummary(focuses: StateErrorFocus[]): string {
-    const call = getRejectedCallText(focuses[0]);
+function getStateErrorSummary(sms: LJStateMachine[]): string {
+    // in declaration order, as the call's spec names them
+    const errors = sms.flatMap(sm => {
+        const focus = getStateErrorFocus(sm);
+        return focus ? [{ sm, focus }] : [];
+    }).sort((a, b) => (a.sm.stateSet ?? 0) - (b.sm.stateSet ?? 0));
+    const call = getRejectedCallText(errors[0].focus);
+    // a state set in which every state allows the call does not constrain it
+    const constraining = errors.filter(({ sm, focus }) => focus.acceptedStates.length < sm.states.length);
+    const expectedErrors = constraining.length > 0 ? constraining : errors;
+    const knownErrors = errors.filter(({ focus }) => !focus.unknownState);
+    if (errors.every(({ sm }) => sm.stateSetName)) {
+        return `${renderInvalidCall(call)} \u00B7 expected ${renderNamedStateSets(expectedErrors, focus => focus.acceptedStates)} \u00B7 actual ${getNamedActualStates(knownErrors)}`;
+    }
     // the call needs an expected state of each state set
-    const expected = renderStateSets(focuses.map(focus => focus.acceptedStates));
-    const actual = focuses.every(focus => focus.unknownState)
-        ? 'unknown'
-        : renderStateSets(focuses.filter(focus => !focus.unknownState).map(focus => focus.possibleStates));
+    const expected = renderStateSets(expectedErrors.map(({ focus }) => focus.acceptedStates));
+    const actual = knownErrors.length === 0 ? 'unknown' : renderStateSets(knownErrors.map(({ focus }) => focus.possibleStates));
     return `${renderInvalidCall(call)} \u00B7 expected state ${expected} \u00B7 actual state ${actual}`;
+}
+
+// the actual states of the named state sets in a wrong state, or of all whose state is known if none is
+function getNamedActualStates(knownErrors: StateSetError[]): string {
+    if (knownErrors.length === 0) return 'state unknown';
+    const wrong = knownErrors.filter(({ focus }) => focus.invalidStates.length > 0);
+    return renderNamedStateSets(wrong.length > 0 ? wrong : knownErrors, focus => focus.possibleStates);
+}
+
+// the states of each named state set after its name, e.g. doorState closed, lockState unlocked
+function renderNamedStateSets(errors: StateSetError[], states: (focus: StateErrorFocus) => string[]): string {
+    return errors.map(({ sm, focus }) => `${escapeHtml(sm.stateSetName ?? '')} ${renderStates(states(focus))}`).join(', ');
 }
 
 // the shown error cannot be marked on the diagrams when the verifier could not tell which states allow the call
