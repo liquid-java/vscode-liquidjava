@@ -20,10 +20,10 @@ type ScopeColorRule = {
 
 // the tag the verifier gives a variable written like others in an error: the line its value comes from, x@12,
 // numbered when values share a line or have none, x@12#2 and x#2
-const LINE_TAG = "@\\d+(?:#\\d+)?\\b|(?<=[\\w)])#\\d+\\b";
+export const LINE_TAG = "@\\d+(?:#\\d+)?\\b|(?<=[\\w)])#\\d+\\b";
 const LINE_TAG_SCOPE = "line-tag";
 // string and character literals, whose text is shown as it is even where it looks like a line tag
-const LITERAL = `"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'`;
+export const LITERAL = `"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'`;
 const LINE_TAGS_OUTSIDE_LITERALS = new RegExp(`${LITERAL}|${LINE_TAG}`, "g");
 
 const repository = liquidJavaGrammar.repository as GrammarRepository;

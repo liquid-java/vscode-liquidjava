@@ -1,6 +1,8 @@
 import type { VCImplication } from "../../../types/vc-implications";
 import type { TranslationTable } from "../../../types/diagnostics";
-import { getExpressionLines, renderExpressionLines, renderHighlightedInlineExpression, renderLineTags } from "../../highlighting";
+import {
+    getExpressionLines, LINE_TAG, LITERAL, renderExpressionLines, renderHighlightedInlineExpression, renderLineTags,
+} from "../../highlighting";
 import { escapeHtml } from "../../utils";
 import { renderSourceHighlightButton } from "../sections";
 
@@ -8,7 +10,8 @@ type ChangeKind = "unchanged" | "removed" | "added";
 type DiffOperation<T> = { kind: ChangeKind; value: T };
 
 const MIN_LINE_SIMILARITY = 0.3;
-const TOKEN_PATTERN = /\s+|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|-->|&&|\|\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#]*(?:@\d+(?:#\d+)?)?|@\d+(?:#\d+)?|\d+(?:\.\d+)?|[^\s]/gu;
+const TOKEN_PATTERN = new RegExp(
+    `\\s+|${LITERAL}|-->|&&|\\|\\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#]*(?:${LINE_TAG})?|${LINE_TAG}|\\d+(?:\\.\\d+)?|[^\\s]`, "gu");
 const WHITESPACE_PATTERN = /^\s+$/u;
 const VC_LINE_SEPARATOR = "\t";
 
