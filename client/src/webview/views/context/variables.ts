@@ -1,10 +1,13 @@
 import { LJVariable } from "../../../types/context";
-import { RefinementMismatchError } from "../../../types/diagnostics";
+import { RefinementMismatchError, TranslationTable } from "../../../types/diagnostics";
 import { renderHighlightedInlineExpression, withoutLineTag } from "../../highlighting";
 import { escapeHtml, getSimpleName } from "../../utils";
 import { renderToggleSection, renderVariableHighlightButton, renderDiagnosticRevealButton } from "../sections";
 
-export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
+/**
+ * @param generatedPlaces where each value the verifier introduces comes from, by name
+ */
+export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError, generatedPlaces?: TranslationTable): string {
     const relevantNames = new Set(Object.keys(errorAtCursor?.translationTable || {}).map(withoutLineTag));
     return /*html*/`
         <div class="context-section">
@@ -28,7 +31,7 @@ export function renderContextVariables(variables: LJVariable[], isExpanded: bool
                                 return /*html*/`
                                 <tr class="${isRelevant ? 'context-variable-relevant' : ''}">
                                     <td>${renderVariableHighlightButton(variable)}</td>
-                                    <td><code>${renderHighlightedInlineExpression(variable.refinement)}</code></td>
+                                    <td><code>${renderHighlightedInlineExpression(variable.refinement, generatedPlaces)}</code></td>
                                 </tr>
                             `;}).join('')}
                             ${errorAtCursor ? renderFailingRefinement(errorAtCursor) : ''}

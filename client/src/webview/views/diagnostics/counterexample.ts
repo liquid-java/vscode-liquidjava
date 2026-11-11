@@ -1,7 +1,7 @@
-import type { Counterexample } from "../../../types/diagnostics";
+import type { Counterexample, TranslationTable } from "../../../types/diagnostics";
 import { renderHighlightedInlineExpression } from "../../highlighting";
 
-export function renderCounterexample(counterexample: Counterexample): string {
+export function renderCounterexample(counterexample: Counterexample, translationTable?: TranslationTable): string {
     if (counterexample.assignments.length === 0) return "";
 
     return /*html*/`
@@ -10,7 +10,7 @@ export function renderCounterexample(counterexample: Counterexample): string {
                 ${counterexample.assignments.map(assignment => /*html*/`
                     <div class="counterexample-line">
                         <span class="vc-node">${renderHighlightedInlineExpression(
-                            `${assignment.variable} == ${assignment.value}`
+                            `${assignment.variable} == ${assignment.value}`, translationTable
                         )}</span>
                     </div>
                 `).join("")}

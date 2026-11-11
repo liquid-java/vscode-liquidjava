@@ -1,4 +1,4 @@
-import { SourcePosition } from "./diagnostics";
+import { SourcePosition, TranslationTable } from "./diagnostics";
 
 // Type definitions used for LiquidJava context information
 
@@ -54,6 +54,7 @@ export type LJContext = {
   visibleVars: LJVariable[]; // variables visible in the current selection
   allVars: LJVariable[]; // instance vars + global vars + vars in scope
   fileScopes: Record<string, Range[]>; // file -> scopes
+  generatedPlaces: TranslationTable; // where each value the verifier introduces, such as #if_condition, comes from
 }
 
 export type Range = {

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import dtos.context.ContextHistoryDTO;
 import dtos.context.GhostDTO;
 import dtos.context.VariableDTO;
+import dtos.diagnostics.PlacementInCodeDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.api.CommandLineLauncher;
 import liquidjava.processor.context.ContextHistory;
@@ -86,6 +87,13 @@ class ContextHistoryConverterTest {
         // the array length the verifier introduces is replaced by its value
         assertEquals("length(keys@14) == 2", refinements.get("keys@14"));
         assertTrue(variables.stream().noneMatch(v -> v.displayName().startsWith("#")), refinements.toString());
+    }
+
+    @Test
+    void sendsWhereTheValuesTheVerifierIntroducesComeFrom() {
+        PlacementInCodeDTO length = verify(DOOR).generatedPlaces().get("#array_length");
+        assertEquals("2", length.text());
+        assertEquals(13, length.position().lineStart()); // new int[2], from line zero
     }
 
     @Test

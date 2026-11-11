@@ -39,14 +39,14 @@ type ErrorRendererMap = { [E in LJError as E['type']]: (error: E) => string };
 
 const errorContentRenderers: ErrorRendererMap = {
     'refinement-error': (e: RefinementError) => /*html*/ `
-        ${renderCustomSection('Expected', renderHighlightedLines(e.expected))}
+        ${renderCustomSection('Expected', renderHighlightedLines(e.expected, e.translationTable))}
         ${renderCustomSection('Found', renderVCImplication(e, e.found))}
         ${e.counterexample.assignments.length > 0
-            ? renderCustomSection('Counterexample', renderCounterexample(e.counterexample))
+            ? renderCustomSection('Counterexample', renderCounterexample(e.counterexample, e.translationTable))
             : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/ `
-        ${renderCustomSection('Expected', renderHighlightedLines(e.expected))}
+        ${renderCustomSection('Expected', renderHighlightedLines(e.expected, e.translationTable))}
         ${renderCustomSection('Found', renderVCImplication(e, e.found))}
     `,
     'invalid-refinement-error': (e: InvalidRefinementError) => /*html*/ `

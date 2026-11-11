@@ -3,6 +3,7 @@ package dtos.context;
 import java.util.List;
 import java.util.Map;
 
+import dtos.diagnostics.PlacementInCodeDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import spoon.reflect.reference.CtTypeReference;
 
@@ -15,7 +16,9 @@ public record ContextHistoryDTO(
     List<GhostDTO> ghosts,
     List<AliasDTO> aliases,
     List<MethodDTO> methods,
-    Map<String, List<SourcePositionDTO>> fileScopes
+    Map<String, List<SourcePositionDTO>> fileScopes,
+    // where each value the verifier introduces, such as #if_condition, comes from, by the name the context shows it with
+    Map<String, PlacementInCodeDTO> generatedPlaces
 ) {
     public static String stringifyType(CtTypeReference<?> typeReference) {
         if (typeReference == null)

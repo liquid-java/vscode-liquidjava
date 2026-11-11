@@ -2,9 +2,11 @@ import type { VCImplication } from "../../../types/vc-implications";
 import type { TranslationTable } from "../../../types/diagnostics";
 import {
     getExpressionLines, LINE_TAG, LITERAL, renderExpressionLines, renderHighlightedInlineExpression, renderLineTags,
+    withoutLineTag,
 } from "../../highlighting";
 import { escapeHtml } from "../../utils";
 import { renderSourceHighlightButton } from "../sections";
+import { generatedNameTitle, isGeneratedName } from "../../generated-names";
 
 type ChangeKind = "unchanged" | "removed" | "added";
 type DiffOperation<T> = { kind: ChangeKind; value: T };
@@ -41,13 +43,16 @@ function getImplicationLines(node: VCImplication): string[] {
 
 function renderBinder(binder: string, type: string, translationTable?: TranslationTable): string {
     const placement = translationTable?.[binder.slice(1)];
-    if (!placement?.position?.file) {
-        return `<span class="vc-node vc-binder" title="${escapeHtml(type)}">${renderLineTags(binder)}</span>`;
+    const position = placement?.position;
+    const name = withoutLineTag(binder.slice(1));
+    const explanation = isGeneratedName(name) ? generatedNameTitle(name, position) : "";
+    if (!position?.file) {
+        return `<span class="vc-node vc-binder" title="${escapeHtml(explanation || type)}">${renderLineTags(binder)}</span>`;
     }
     return renderSourceHighlightButton(
         renderLineTags(binder),
-        type ? `Go to source (${type})` : "Go to source",
-        placement.position,
+        explanation || (type ? `Go to source (${type})` : "Go to source"),
+        position,
         "vc-node vc-binder clickable",
     );
 }
@@ -63,11 +68,12 @@ export function renderVCLine(
     translationTable?: TranslationTable,
 ): string {
     const { binder, type, predicate, hasNext } = parseImplicationLine(line);
+    const renderPredicateLine = renderText ?? (text => renderHighlightedInlineExpression(text, translationTable));
     const arrow = hasNext ? ' <span class="vc-arrow">→</span>' : "";
     return /*html*/`
         <div class="vc-line ${className}">
             ${binder ? /*html*/`<div class="vc-binder-cell">${renderBinder(binder, type, translationTable)}</div>` : ""}
-            <div class="vc-predicate-cell"><span class="vc-node">${renderExpressionLines(getExpressionLines(predicate), renderText, arrow)}</span></div>
+            <div class="vc-predicate-cell"><span class="vc-node">${renderExpressionLines(getExpressionLines(predicate), renderPredicateLine, arrow)}</span></div>
         </div>
     `;
 }
@@ -112,11 +118,15 @@ function tokenizeExpression(expression: string): string[] {
     return expression.match(TOKEN_PATTERN) || [];
 }
 
-function renderChangedFragment(content: string): string {
-    return `<span class="vc-change-fragment">${renderHighlightedInlineExpression(content)}</span>`;
+function renderChangedFragment(content: string, translationTable?: TranslationTable): string {
+    return `<span class="vc-change-fragment">${renderHighlightedInlineExpression(content, translationTable)}</span>`;
 }
 
-function renderDestinationTokenDiff(before: string, after: string): { content: string; hasAddedContent: boolean } {
+function renderDestinationTokenDiff(
+    before: string,
+    after: string,
+    translationTable?: TranslationTable,
+): { content: string; hasAddedContent: boolean } {
     const operations = diffSequence(tokenizeExpression(before), tokenizeExpression(after));
     let html = "";
     let changedContent = "";
@@ -126,7 +136,7 @@ function renderDestinationTokenDiff(before: string, after: string): { content: s
         if (!changedContent) return;
         const trailingWhitespace = changedContent.match(/\s+$/u)?.[0] ?? "";
         const content = changedContent.slice(0, changedContent.length - trailingWhitespace.length);
-        if (content) html += renderChangedFragment(content);
+        if (content) html += renderChangedFragment(content, translationTable);
         html += trailingWhitespace;
         changedContent = "";
     };
@@ -143,7 +153,7 @@ function renderDestinationTokenDiff(before: string, after: string): { content: s
                 return;
             }
             flushChangedContent();
-            html += renderHighlightedInlineExpression(operation.value);
+            html += renderHighlightedInlineExpression(operation.value, translationTable);
         }
     });
     flushChangedContent();
@@ -197,14 +207,14 @@ function alignChangedLines(removed: string[], added: string[]): Array<[string | 
 }
 
 // each line of a changed predicate, diffed against the line of the old predicate it replaces, or all marked if none
-function renderChangedPredicateLines(before: string, after: string): string[] {
+function renderChangedPredicateLines(before: string, after: string, translationTable?: TranslationTable): string[] {
     const lines = (predicate: string) => getExpressionLines(predicate).map(line => line.text);
     return alignChangedLines(lines(before), lines(after))
         .flatMap(([beforeLine, afterLine]) => {
             if (afterLine === undefined) return [];
             return [beforeLine === undefined
-                ? renderChangedFragment(afterLine)
-                : renderDestinationTokenDiff(beforeLine, afterLine).content];
+                ? renderChangedFragment(afterLine, translationTable)
+                : renderDestinationTokenDiff(beforeLine, afterLine, translationTable).content];
         });
 }
 
@@ -222,7 +232,7 @@ function renderChangedDestinationLines(
             const beforePredicate = parseImplicationLine(before).predicate;
             const afterPredicate = parseImplicationLine(after).predicate;
             const change = renderDestinationTokenDiff(beforePredicate, afterPredicate);
-            const lines = renderChangedPredicateLines(beforePredicate, afterPredicate);
+            const lines = renderChangedPredicateLines(beforePredicate, afterPredicate, translationTable);
             return renderVCLine(
                 after,
                 change.hasAddedContent ? "" : "vc-change-line",
