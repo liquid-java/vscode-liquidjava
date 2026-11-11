@@ -24,7 +24,7 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
 
     try {
         await extension.client.start();
-        extension.client.onNotification("liquidjava/status", (params: { status: "passed" | "failed" | "crashed" }) =>
+        extension.client.onNotification("liquidjava/status", (params: { status: "loading" | "passed" | "failed" | "crashed" }) =>
             updateStatusBar(params.status)
         );
     } catch (error) {

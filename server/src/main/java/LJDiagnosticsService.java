@@ -50,6 +50,7 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
      */
     public void generateDiagnostics(String uri) {
         String path = PathUtils.extractBasePath(uri);
+        this.client.sendStatus(new Status("loading"));
         clearPublishedDiagnostics(uri);
 
         try {
