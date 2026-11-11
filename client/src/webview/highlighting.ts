@@ -22,13 +22,15 @@ type ScopeColorRule = {
 // numbered when values share a line or have none, x@12#2 and x#2
 const LINE_TAG = "@\\d+(?:#\\d+)?\\b|(?<=[\\w)])#\\d+\\b";
 const LINE_TAG_SCOPE = "line-tag";
-// the line tags of a text and its string and character literals, which keep their text
-const LINE_TAGS_OUTSIDE_LITERALS = new RegExp(`"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'|${LINE_TAG}`, "g");
+// string and character literals, whose text is shown as it is even where it looks like a line tag
+const LITERAL = `"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'`;
+const LINE_TAGS_OUTSIDE_LITERALS = new RegExp(`${LITERAL}|${LINE_TAG}`, "g");
 
 const repository = liquidJavaGrammar.repository as GrammarRepository;
 const patterns = (name: string): GrammarPattern[] => repository[name]?.patterns || [];
 
 const expressionPatterns: GrammarPattern[] = [
+    { match: LITERAL, name: "string.quoted.liquidjava.webview" },
     { match: LINE_TAG, name: LINE_TAG_SCOPE },
     { match: "\\b(return|break|continue|if|else|switch|case|default|for|while|do|try|catch|finally|throw|throws|new)\\b", name: "keyword.control.liquidjava.webview" },
     ...patterns("keywords"),

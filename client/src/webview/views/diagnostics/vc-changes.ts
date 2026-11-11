@@ -8,7 +8,7 @@ type ChangeKind = "unchanged" | "removed" | "added";
 type DiffOperation<T> = { kind: ChangeKind; value: T };
 
 const MIN_LINE_SIMILARITY = 0.3;
-const TOKEN_PATTERN = /\s+|-->|&&|\|\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#]*(?:@\d+(?:#\d+)?)?|@\d+(?:#\d+)?|\d+(?:\.\d+)?|[^\s]/gu;
+const TOKEN_PATTERN = /\s+|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|-->|&&|\|\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#]*(?:@\d+(?:#\d+)?)?|@\d+(?:#\d+)?|\d+(?:\.\d+)?|[^\s]/gu;
 const WHITESPACE_PATTERN = /^\s+$/u;
 const VC_LINE_SEPARATOR = "\t";
 
