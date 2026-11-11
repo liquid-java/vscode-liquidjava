@@ -88,6 +88,10 @@ describe('verification implications', () => {
             ['#case_conditionl20#1', 'Whether the case at line 20 matches. LiquidJava gives it the name #case_condition.', null],
         ]);
 
+        document.body.innerHTML = renderImplication({ ...chain, name: '#case_condition@74' });
+        expect(document.querySelector('.vc-binder')?.getAttribute('title')).toBe(
+            'Whether the case at line 74 matches. LiquidJava gives it the name #case_condition.');
+
         document.body.innerHTML = renderImplicationChange(
             { ...conclusion, predicate: 'a == x + y + z' }, { ...conclusion, predicate: 'a == x + y + #size_result' }, table,
         );

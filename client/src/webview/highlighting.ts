@@ -121,6 +121,12 @@ export function renderLineTags(text: string): string {
     return html + escapeHtml(text.slice(index));
 }
 
+/** The line of the line tag a name ends with, x@12 or x@12#2, if it has one */
+export function lineOfTag(name: string): number | undefined {
+    const line = /@(\d+)(?:#\d+)?$/.exec(name)?.[1];
+    return line === undefined ? undefined : Number(line);
+}
+
 /** The name of a variable without its line tag, as it is written in code */
 export function withoutLineTag(name: string): string {
     return name.replace(new RegExp(`(?:${LINE_TAG})$`), "");
@@ -137,9 +143,8 @@ function renderToken(content: string, scope: string): string {
 function renderGeneratedNameAt(expression: string, index: number, name: string, places?: TranslationTable): [string, number] {
     LINE_TAG_AT_INDEX.lastIndex = index + name.length;
     const tag = LINE_TAG_AT_INDEX.exec(expression)?.[0] ?? "";
-    const tagLine = /^@(\d+)/.exec(tag)?.[1];
     const content = renderToken(name, VARIABLE_SCOPE) + (tag ? renderLineTag(tag, name) : "");
-    const html = renderGeneratedName(name, content, tagLine ? Number(tagLine) : undefined, places?.[name + tag]);
+    const html = renderGeneratedName(name, content, lineOfTag(tag), places?.[name + tag]);
     return [html, name.length + tag.length];
 }
 

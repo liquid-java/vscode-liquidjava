@@ -2,7 +2,7 @@ import type { VCImplication } from "../../../types/vc-implications";
 import type { TranslationTable } from "../../../types/diagnostics";
 import {
     getExpressionLines, LINE_TAG, LITERAL, renderExpressionLines, renderHighlightedInlineExpression, renderLineTags,
-    withoutLineTag,
+    lineOfTag, withoutLineTag,
 } from "../../highlighting";
 import { escapeHtml } from "../../utils";
 import { renderSourceHighlightButton } from "../sections";
@@ -45,7 +45,7 @@ function renderBinder(binder: string, type: string, translationTable?: Translati
     const placement = translationTable?.[binder.slice(1)];
     const position = placement?.position;
     const name = withoutLineTag(binder.slice(1));
-    const explanation = isGeneratedName(name) ? generatedNameTitle(name, position) : "";
+    const explanation = isGeneratedName(name) ? generatedNameTitle(name, position, lineOfTag(binder)) : "";
     if (!position?.file) {
         return `<span class="vc-node vc-binder" title="${escapeHtml(explanation || type)}">${renderLineTags(binder)}</span>`;
     }
