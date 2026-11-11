@@ -4,7 +4,7 @@
 <dependency>
     <groupId>io.github.liquid-java</groupId>
     <artifactId>liquidjava-api</artifactId>
-    <version>0.0.7</version>
+    <version>0.0.8</version>
 </dependency>
 ```
 
@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.liquid-java:liquidjava-api:0.0.7'
+    implementation 'io.github.liquid-java:liquidjava-api:0.0.8'
 }
 ```
 

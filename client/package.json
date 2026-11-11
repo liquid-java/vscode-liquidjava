@@ -2,7 +2,7 @@
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
 	"description": "Extending Java with Liquid Types",
-	"version": "0.0.96",
+	"version": "0.1.0",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
@@ -185,7 +185,7 @@
 					{
 						"id": "annotations",
 						"title": "Add the annotation API",
-						"description": "Add ``liquidjava-api`` to your project to use annotations such as ``@Refinement``.\n**Maven — pom.xml**\n``<dependency>``\n``    <groupId>io.github.liquid-java</groupId>``\n``    <artifactId>liquidjava-api</artifactId>``\n``    <version>0.0.7</version>``\n``</dependency>``\n[Copy Maven dependency](command:liquidjava.copyMavenDependency)\n**Gradle — build.gradle**\n``repositories {``\n``    mavenCentral()``\n``}``\n``dependencies {``\n``    implementation 'io.github.liquid-java:liquidjava-api:0.0.7'``\n``}``\n[Copy Gradle dependency](command:liquidjava.copyGradleDependency)\nReload the Java project after changing dependencies. Import annotations from ``liquidjava.specification``.",
+						"description": "Add ``liquidjava-api`` to your project to use annotations such as ``@Refinement``.\n**Maven — pom.xml**\n``<dependency>``\n``    <groupId>io.github.liquid-java</groupId>``\n``    <artifactId>liquidjava-api</artifactId>``\n``    <version>0.0.8</version>``\n``</dependency>``\n[Copy Maven dependency](command:liquidjava.copyMavenDependency)\n**Gradle — build.gradle**\n``repositories {``\n``    mavenCentral()``\n``}``\n``dependencies {``\n``    implementation 'io.github.liquid-java:liquidjava-api:0.0.8'``\n``}``\n[Copy Gradle dependency](command:liquidjava.copyGradleDependency)\nReload the Java project after changing dependencies. Import annotations from ``liquidjava.specification``.",
 						"media": {
 							"markdown": "media/walkthrough/annotations.md"
 						},
