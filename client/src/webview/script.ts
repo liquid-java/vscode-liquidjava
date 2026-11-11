@@ -72,6 +72,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         const details = e.target as HTMLDetailsElement;
         const key = details.getAttribute?.('data-hint-key');
         if (key !== null && key !== undefined) setHintOpen(key, details.open);
+        logVisibleSections();
     }, true);
 
     root.addEventListener('click', (e: MouseEvent) => {
@@ -482,6 +483,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (!studyEnabled) return;
         const next = new Set<string>();
         for (const section of Array.from(root.querySelectorAll<HTMLElement>('[data-study-section]'))) {
+            // collapsed hints are not shown until opened
+            if (section.tagName === 'DETAILS' && !(section as HTMLDetailsElement).open) continue;
             const name = section.dataset.studySection!;
             next.add(name);
             if (!visibleSections.has(name)) log('section_shown', { section: name });

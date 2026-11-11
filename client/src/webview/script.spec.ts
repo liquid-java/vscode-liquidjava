@@ -659,12 +659,17 @@ describe('webview script', () => {
     });
 
     it('deduplicates continuously visible sections across diagnostic redraws', () => {
-        const error = { ...diagnostic(currentFile, 'Error'), hint: 'Private hint' };
+        const error = { ...diagnostic(currentFile, 'Error'), hints: [{ kind: 'general' as const, message: 'Private hint' }] };
         showDiagnostics([error]);
         receive({ type: 'study', enabled: true });
         postMessage.mockClear();
         receive({ type: 'diagnostics', diagnostics: [error] });
         expect(postMessage.mock.calls.some(([message]) => (message as any).event === 'section_shown')).toBe(false);
+        const hint = root.querySelector<HTMLDetailsElement>('.hint-section')!;
+        hint.open = true;
+        hint.dispatchEvent(new Event('toggle'));
+        expect(postMessage.mock.calls).toContainEqual([{ type: 'log', event: 'section_shown', section: 'hint' }]);
+        postMessage.mockClear();
         receive({ type: 'context', context: context() });
         click('[data-tab="context"]');
         click('[data-tab="diagnostics"]');

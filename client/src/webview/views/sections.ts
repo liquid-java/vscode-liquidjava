@@ -45,7 +45,7 @@ export function renderHints(hints: LJHint[] | undefined, key?: string): string {
     const notes = listsOptions ? shown.filter(hint => hint.kind !== 'call-sequence') : shown;
     const open = key !== undefined && openHints.has(key);
     return /*html*/`
-        <details class="section hint-section"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
+        <details class="section hint-section" data-study-section="hint"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
             <summary class="hint-summary">${shown.length === 1 ? 'Hint' : 'Hints'}</summary>
             <div class="hint-body">
                 ${listsOptions ? /*html*/`

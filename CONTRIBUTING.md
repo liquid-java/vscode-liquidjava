@@ -97,7 +97,7 @@ Run **LiquidJava: Reveal Study Log** to flush and open the JSONL file. Each line
 | `view_visible`, `view_hidden` | LiquidJava sidebar visibility, including initial state when logging is enabled. |
 | `tab_selected` | `tab` (`diagnostics`, `context`, `fsm`), `file` when available; includes initial selection and diagnostic context / state-machine actions. |
 | `section_toggled` | `section` (`context-vars`, `context-ghosts`, `context-aliases`), `expanded`, `file`. |
-| `section_shown` | `section` (`counterexample`, `vc-implications`, `hint`), `file`; these sections currently render without collapse controls. Records transitions into the rendered view; redraws of continuously visible sections are deduplicated. |
+| `section_shown` | `section` (`counterexample`, `vc-implications`, `hint`), `file`; the counterexample and implications render without collapse controls, and the collapsed hints count once opened. Records transitions into the rendered view; redraws of continuously visible sections are deduplicated. |
 | `vc_step_selected` | `direction` (`previous`, `next`), `file`; records simplification steps, including the displayed changes between implications. |
 | `diagnostic_reveal` | `file`, `line`, `column`; navigation from the webview to source. |
 | `highlight` | `file`, `line`, `active` for same-file highlights; cross-file navigation also records its highlight. |
