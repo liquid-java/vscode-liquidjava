@@ -5,14 +5,15 @@ import { groupHints, splitMessageText } from "./message-text";
 export type LinkTarget = (position: SourcePosition) => string | null;
 
 /**
- * Formats what the editor hover shows of a diagnostic under its headline, in markdown: the notes that explain it
- * (such as where a value comes from), the counterexample and the hints, with their code as inline code and the
- * places they name as links. VS Code shows the headline itself in its own hover, which is plain text
+ * Formats what the editor hover shows of a diagnostic, in markdown: its headline, the notes that explain it (such as
+ * where a value comes from), the counterexample and the hints, with their code as inline code and the places they
+ * name as links. VS Code's own part of the hover, which is plain text, shows only the diagnostic's title
  * @param linkTo the link that opens a place
- * @returns the markdown, or null if the diagnostic has none of them
+ * @returns the markdown, or null if the diagnostic has no headline
  */
 export function formatDiagnosticMarkdown(diagnostic: LJDiagnostic, linkTo: LinkTarget): string | null {
     const parts = [
+        formatMessageMarkdown(diagnostic.message, diagnostic.references, linkTo),
         ...diagnostic.messageNotes.map(note => formatMessageMarkdown(note, diagnostic.references, linkTo)),
         formatCounterexampleMarkdown(diagnostic),
         formatHintsMarkdown(diagnostic.hints, diagnostic.references, linkTo),
