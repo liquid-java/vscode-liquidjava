@@ -22,7 +22,8 @@ type ScopeColorRule = {
 // numbered when values share a line or have none, x@12#2 and x#2
 const LINE_TAG = "@\\d+(?:#\\d+)?\\b|(?<=[\\w)])#\\d+\\b";
 const LINE_TAG_SCOPE = "line-tag";
-const LINE_TAGS = new RegExp(LINE_TAG, "g");
+// the line tags of a text and its string and character literals, which keep their text
+const LINE_TAGS_OUTSIDE_LITERALS = new RegExp(`"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'|${LINE_TAG}`, "g");
 
 const repository = liquidJavaGrammar.repository as GrammarRepository;
 const patterns = (name: string): GrammarPattern[] => repository[name]?.patterns || [];
@@ -97,7 +98,8 @@ function renderLineTag(tag: string, variable: string): string {
 export function renderLineTags(text: string): string {
     let html = "";
     let index = 0;
-    for (const match of text.matchAll(LINE_TAGS)) {
+    for (const match of text.matchAll(LINE_TAGS_OUTSIDE_LITERALS)) {
+        if (/^["']/.test(match[0])) continue;
         html += escapeHtml(text.slice(index, match.index)) + renderLineTag(match[0], variableBefore(text, match.index));
         index = match.index + match[0].length;
     }
