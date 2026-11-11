@@ -30,6 +30,7 @@ function diagnostic(file: string, title: string, category: 'error' | 'warning' =
 function context(file = currentFile): LJContext {
     const variable: LJVariable = {
         name: 'count',
+        displayName: 'count',
         internalName: 'count_1',
         type: 'int',
         refinement: 'count > 0',

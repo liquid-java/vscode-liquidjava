@@ -25,6 +25,9 @@ export function renderContextGhosts(ghosts: LJGhost[], isExpanded: boolean): str
     `;
 }
 
+// a state of a named set is written as a value of its set, as error messages write it
 function renderGhost(ghost: LJGhost): string {
-    return `${ghost.returnType} ${ghost.name}(${ghost.parameterTypes.map(getSimpleName).join(', ')})`;
+    const parameters = ghost.parameterTypes.map(getSimpleName).join(', ');
+    if (ghost.stateSet) return `${ghost.stateSet}(${parameters}) == ${ghost.name}`;
+    return `${ghost.returnType} ${ghost.name}(${parameters})`;
 }

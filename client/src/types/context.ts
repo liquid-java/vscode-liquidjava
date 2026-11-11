@@ -4,6 +4,7 @@ import { SourcePosition } from "./diagnostics";
 
 export type LJVariable = {
   name: string;
+  displayName: string; // as error messages name it, such as x@12 for the value x takes at line 12
   internalName: string;
   type: string;
   refinement: string;
@@ -19,6 +20,7 @@ export type LJGhost = {
   parameterTypes: string[];
   refinement: string;
   isState: boolean;
+  stateSet: string | null; // the name of the state's set, when it is not a generated one
   file: string;
 }
 
