@@ -86,15 +86,19 @@ export const renderLocation = (diagnostic: LJDiagnostic): string => {
     const positions: SourcePosition[] = [];
     if (diagnostic.position && diagnostic.file) positions.push(diagnostic.position);
 
-    const declarationPosition = diagnostic.type === 'refinement-error' || diagnostic.type === 'state-refinement-error'
-        ? diagnostic.declarationPosition
+    const declaration = diagnostic.type === 'refinement-error' || diagnostic.type === 'state-refinement-error'
+        ? diagnostic
         : null;
-    if (declarationPosition?.file) positions.push(declarationPosition);
+    const declarationPositions = declaration?.declarationPositions.filter(position => position.file) ?? [];
+    positions.push(...declarationPositions);
 
     if (positions.length === 0) return "";
     const title = positions.length === 1 ? "Location" : "Locations";
     const links = positions.map(renderLocationLink).join("\n");
-    return renderCustomSection(title, /*html*/`<pre>${links}</pre>`);
+    // the notes explain the declarations, so they are shown only under their links
+    const notes = declarationPositions.length > 0 ? declaration?.declarationNotes ?? [] : [];
+    const noteLines = notes.map(note => `<span class="location-note">${escapeHtml(note)}</span>`).join("");
+    return renderCustomSection(title, /*html*/`<pre>${links}${noteLines}</pre>`);
 };
 
 export function renderVariableHighlightButton(variable: LJVariable): string {

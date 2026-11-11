@@ -377,6 +377,12 @@ export function getStyles(): string {
         .link:hover {
             text-decoration: underline;
         }
+        .location-note {
+            display: block;
+            padding-left: 2ch;
+            text-indent: -2ch;
+            color: var(--vscode-descriptionForeground);
+        }
         .lj-expression,
         .lj-expression-code {
             font-family: var(--vscode-editor-font-family);

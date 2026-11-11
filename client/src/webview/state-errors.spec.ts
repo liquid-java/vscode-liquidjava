@@ -26,6 +26,8 @@ function stateError(line: number, overrides: Partial<StateRefinementError> = {})
         found: { implication: null as never, origin: null, simplification: null },
         customMessage: '',
         declarationPosition: { file: refinementsFile, lineStart: 21, colStart: 29, lineEnd: 21, colEnd: 51 },
+        declarationPositions: [{ file: refinementsFile, lineStart: 21, colStart: 29, lineEnd: 21, colEnd: 51 }],
+        declarationNotes: [],
         stateMachines: [machine()],
         ...overrides,
     };

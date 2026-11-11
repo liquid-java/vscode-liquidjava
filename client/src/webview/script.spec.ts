@@ -64,7 +64,7 @@ function stateError(title: string, sm: LJStateMachine, line = position.lineStart
         title, message: `${title} message`, hints: [], file, position: errorPosition,
         category: 'error', type: 'state-refinement-error', translationTable: {}, expected: 'Open(counter)',
         found: { implication: null as never, origin: null, simplification: 'Closed(counter)' },
-        customMessage: '', declarationPosition: null, stateMachines: [sm],
+        customMessage: '', declarationPosition: null, declarationPositions: [], declarationNotes: [], stateMachines: [sm],
     };
 }
 
