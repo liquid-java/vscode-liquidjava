@@ -18,15 +18,25 @@ type ScopeColorRule = {
     color: string;
 };
 
+// the tag the verifier gives a variable written like others in an error: the line its value comes from, x@12,
+// numbered when values share a line or have none, x@12#2 and x#2
+export const LINE_TAG = "@\\d+(?:#\\d+)?\\b|(?<=[\\w)])#\\d+\\b";
+const LINE_TAG_SCOPE = "line-tag";
+// string and character literals, whose text is shown as it is even where it looks like a line tag
+export const LITERAL = `"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'`;
+const LINE_TAGS_OUTSIDE_LITERALS = new RegExp(`${LITERAL}|${LINE_TAG}`, "g");
+
 const repository = liquidJavaGrammar.repository as GrammarRepository;
 const patterns = (name: string): GrammarPattern[] => repository[name]?.patterns || [];
 
 const expressionPatterns: GrammarPattern[] = [
+    { match: LITERAL, name: "string.quoted.liquidjava.webview" },
+    { match: LINE_TAG, name: LINE_TAG_SCOPE },
     { match: "\\b(return|break|continue|if|else|switch|case|default|for|while|do|try|catch|finally|throw|throws|new)\\b", name: "keyword.control.liquidjava.webview" },
     ...patterns("keywords"),
     ...patterns("functions"),
     ...patterns("operators"),
-    { match: "\\b[a-zA-Z_][a-zA-Z0-9_#⁰¹²³⁴⁵⁶⁷⁸⁹]*(?=\\s*\\()", name: "entity.name.function.liquidjava.webview" },
+    { match: "\\b[a-zA-Z_][a-zA-Z0-9_#]*(?=\\s*\\()", name: "entity.name.function.liquidjava.webview" },
     { match: "\\b[A-Z][a-zA-Z0-9_]*(?=\\s*\\()", name: "entity.name.function.constructor.liquidjava.webview" },
     ...patterns("qualified-names"),
     { match: "\\b(byte|short|long|char|void)\\b", name: "storage.type.primitive.liquidjava.webview" },
@@ -34,7 +44,7 @@ const expressionPatterns: GrammarPattern[] = [
     { match: "\\bnull\\b", name: "constant.language.null.liquidjava.webview" },
     ...patterns("literals"),
     { match: "[(){}.,;\\[\\]]", name: "punctuation.separator.liquidjava" },
-    { match: "#*[a-zA-Z_][a-zA-Z0-9_#⁰¹²³⁴⁵⁶⁷⁸⁹]*", name: "variable.other.liquidjava" }
+    { match: "#*[a-zA-Z_](?:[a-zA-Z0-9_]|#(?!\\d))*", name: "variable.other.liquidjava" }
 ];
 
 const highlightRules: HighlightRule[] = expressionPatterns
@@ -61,6 +71,57 @@ function colorForScope(scope: string): string {
         ?? "var(--vscode-editor-foreground)";
 }
 
+// the variable that ends at an index: a name such as this.items, or a call such as failures.size()
+function variableBefore(text: string, end: number): string {
+    let start = end;
+    for (let depth = 0; start > 0; start--) {
+        const c = text[start - 1];
+        if (c === ")") depth++;
+        else if (c === "(") {
+            if (depth === 0) break;
+            depth--;
+        }
+        else if (depth === 0 && !/[\w#.]/.test(c)) break;
+    }
+    return text.slice(start, end);
+}
+
+// a line tag as a subscript, l12, that says which value of the variable it stands for
+function renderLineTag(tag: string, variable: string): string {
+    const [, line, number] = /^(?:@(\d+))?(?:#(\d+))?$/.exec(tag) ?? [];
+    const name = variable || "the variable";
+    const value = !number ? `${name} at line ${line}`
+        : line ? `the ${ordinal(Number(number))} value ${name} gets at line ${line}`
+        : `the ${ordinal(Number(number))} value of ${name} (line unknown)`;
+    const text = (line ? `l${line}` : "") + (number ? `#${number}` : "");
+    return `<sub class="lj-line-tag" title="${escapeHtml(value)}">${escapeHtml(text)}</sub>`;
+}
+
+// 1st, 2nd, 3rd, 4th, ..., 11th, 12th, 13th, ..., 21st
+function ordinal(n: number): string {
+    const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
+    return `${n}${suffix}`;
+}
+
+/**
+ * Renders text with the line tags of its variables as subscripts, x@12 as x with l12 below
+ */
+export function renderLineTags(text: string): string {
+    let html = "";
+    let index = 0;
+    for (const match of text.matchAll(LINE_TAGS_OUTSIDE_LITERALS)) {
+        if (/^["']/.test(match[0])) continue;
+        html += escapeHtml(text.slice(index, match.index)) + renderLineTag(match[0], variableBefore(text, match.index));
+        index = match.index + match[0].length;
+    }
+    return html + escapeHtml(text.slice(index));
+}
+
+/** The name of a variable without its line tag, as it is written in code */
+export function withoutLineTag(name: string): string {
+    return name.replace(new RegExp(`(?:${LINE_TAG})$`), "");
+}
+
 function renderHighlightedContent(expression: string): string {
     let html = "";
     let index = 0;
@@ -79,7 +140,9 @@ function renderHighlightedContent(expression: string): string {
         const match = matchingRule.regex.exec(expression);
         const content = match?.[0] || expression[index] || "";
 
-        html += `<span style="color:${colorForScope(matchingRule.scope)}">${escapeHtml(content)}</span>`;
+        html += matchingRule.scope === LINE_TAG_SCOPE
+            ? renderLineTag(content, variableBefore(expression, index))
+            : `<span style="color:${colorForScope(matchingRule.scope)}">${escapeHtml(content)}</span>`;
         index += content.length;
     }
     return html;

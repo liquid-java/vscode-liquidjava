@@ -1,5 +1,6 @@
 package dtos.diagnostics;
 
+import liquidjava.rj_language.ast.formatter.DisplayNames;
 import liquidjava.rj_language.opt.VCSimplificationResult;
 
 /**
@@ -7,13 +8,13 @@ import liquidjava.rj_language.opt.VCSimplificationResult;
  */
 public record VCSimplificationResultDTO(VCImplicationDTO implication, VCSimplificationResultDTO origin, String simplification) {
 
-    public static VCSimplificationResultDTO from(VCSimplificationResult result) {
+    public static VCSimplificationResultDTO from(VCSimplificationResult result, DisplayNames names) {
         if (result == null)
             return null;
 
         return new VCSimplificationResultDTO(
-                VCImplicationDTO.from(result.getImplication()),
-                from(result.getOrigin()),
+                VCImplicationDTO.from(result.getImplication(), names),
+                from(result.getOrigin(), names),
                 result.getSimplification()
         );
     }

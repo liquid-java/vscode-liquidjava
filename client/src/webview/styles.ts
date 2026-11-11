@@ -394,6 +394,12 @@ export function getStyles(): string {
             text-indent: -2ch;
             color: var(--vscode-descriptionForeground);
         }
+        /* the line a variable's value comes from, when the error has several values of it */
+        .lj-line-tag {
+            font-size: 0.75em;
+            color: var(--vscode-descriptionForeground);
+            cursor: help;
+        }
         .lj-expression,
         .lj-expression-code {
             font-family: var(--vscode-editor-font-family);

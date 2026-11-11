@@ -92,7 +92,7 @@ describe('diagnostics view', () => {
         const position = { file: '/workspace/Reader.java', lineStart: 133, colStart: 8, lineEnd: 133, colEnd: 8 };
         document.body.innerHTML = renderDiagnosticsView([{
             ...error(), messageNotes: [note], references: [{ message: note, text: 'line 134', start: 8, position }],
-            hints: [{ kind: 'general', message: "Call `` b.f('`') `` first" }],
+            hints: [{ kind: 'general', message: "Call `` b.f('`') `` first" }, { kind: 'general', message: 'Set `s@9 = "x@1"`' }],
         }], false, currentFile);
 
         const link = document.querySelector('.message-note a.location-link');
@@ -100,7 +100,8 @@ describe('diagnostics view', () => {
         expect([link?.getAttribute('data-file'), link?.getAttribute('data-line')]).toEqual(['/workspace/Reader.java', '133']);
         expect(text('.message-note')).toBe('Origin: line 134, new BufferedInputStream(stream) makes markState(b) == unmarked');
         expect(Array.from(document.querySelectorAll('.lj-code')).map(code => code.textContent))
-            .toEqual(['new BufferedInputStream(stream)', 'markState(b) == unmarked', "b.f('`')"]);
+            .toEqual(['new BufferedInputStream(stream)', 'markState(b) == unmarked', "b.f('`')", 'sl9 = "x@1"']);
+        expect(document.querySelector('.lj-code sub.lj-line-tag')?.getAttribute('title')).toBe('s at line 9');
     });
 
     it('shows every declaration of a refinement with their notes under them', () => {
