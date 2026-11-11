@@ -72,8 +72,7 @@ public class LJDiagnosticsHandler {
                 d -> PathUtils.toFileUri(d.getFile()),
                 Collectors.mapping(d -> {
                     Range range = getRangeFromPosition(d.getPosition());
-                    String message = String.format("%s: %s", d.getTitle(), d.getMessage());
-                    return new Diagnostic(range, message, severity, SOURCE);
+                    return new Diagnostic(range, getHoverMessage(d), severity, SOURCE);
                 }, Collectors.toList())
             ));
         
@@ -81,6 +80,22 @@ public class LJDiagnosticsHandler {
         return diagnosticsByFile.entrySet().stream()
             .map(entry -> new PublishDiagnosticsParams(entry.getKey(), entry.getValue()))
             .toList();
+    }
+
+    /**
+     * The message the editor shows for a diagnostic: the headline, then the notes that explain it and the
+     * counterexample, each on its own line. The hints are left to the LiquidJava view
+     * @param diagnostic the diagnostic
+     * @return the message
+     */
+    static String getHoverMessage(LJDiagnostic diagnostic) {
+        List<String> lines = new ArrayList<>();
+        lines.add(String.format("%s: %s", diagnostic.getTitle(), diagnostic.getMessage()));
+        lines.addAll(diagnostic.getMessageNotes());
+        String counterexample = diagnostic.getCounterexampleStr();
+        if (counterexample != null && !counterexample.isBlank())
+            lines.add(counterexample);
+        return String.join("\n", lines);
     }
 
     /**
