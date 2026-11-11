@@ -38,12 +38,18 @@ function currentFile(): string | null {
     return value.length > 0 ? value : null;
 }
 
+// the writes are asynchronous, so a slow disk never stalls the extension host, and chained, so the lines keep their order
+let pending: Promise<void> = Promise.resolve();
+
 function append(file: string | null, event: UsageEvent) {
     if (!file) return;
-    try {
-        fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.appendFileSync(file, formatUsageLine(event));
-    } catch (error) {
-        extension.logger?.client.error(`usage log: cannot write ${file}: ${String(error)}`);
-    }
+    const line = formatUsageLine(event);
+    pending = pending.then(async () => {
+        try {
+            await fs.promises.mkdir(path.dirname(file), { recursive: true });
+            await fs.promises.appendFile(file, line);
+        } catch (error) {
+            extension.logger?.client.error(`usage log: cannot write ${file}: ${String(error)}`);
+        }
+    });
 }

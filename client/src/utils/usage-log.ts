@@ -6,7 +6,7 @@
 /** A message the webview posts when something in the view is used */
 export interface UsageMessage {
     type: "usage";
-    /** what was used: tab, hints, found-step, state-machine, state-error-step, reveal, context, copy, scope, diagram, zoom */
+    /** what was used: tab, hints, found-step, state-machine, state-error-step, reveal, context, context-section, copy, scope, diagram */
     action: string;
     [detail: string]: unknown;
 }

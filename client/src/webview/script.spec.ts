@@ -154,6 +154,12 @@ describe('webview script', () => {
         const details = root.querySelector<HTMLDetailsElement>('details[data-hint-key]');
         expect(details, 'the hints are rendered closed').not.toBeNull();
         expect(details!.open).toBe(false);
+        // a toggle without a click or key on the summary is a render (an open hint drawn again), not a use
+        details!.open = true;
+        details!.dispatchEvent(new dom.window.Event('toggle'));
+        expect(postMessage.mock.calls.filter(([m]) => (m as { action?: string }).action === 'hints')).toEqual([]);
+        details!.open = false;
+        click('details[data-hint-key] > summary');
         details!.open = true;
         details!.dispatchEvent(new dom.window.Event('toggle'));
         expect(postMessage.mock.calls).toContainEqual([{ type: 'usage', action: 'hints', open: true, error: details!.getAttribute('data-hint-key') }]);

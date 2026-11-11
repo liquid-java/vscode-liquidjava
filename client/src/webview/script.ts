@@ -61,14 +61,20 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     vscode.postMessage({ type: 'ready' });    
     
     // on click
-    // toggle does not bubble, so it is caught on its way down
+    // toggle does not bubble, so it is caught on its way down. A render of an open <details> fires it too, so only a
+    // toggle right after the summary was clicked or keyed counts as the user opening or closing the hints
+    let hintToggleByUser = false;
+    const markHintToggle = (e: Event) => { if ((e.target as Element).closest?.('.hint-summary')) hintToggleByUser = true; };
+    root.addEventListener('click', markHintToggle, true);
+    root.addEventListener('keydown', markHintToggle, true);
     root.addEventListener('toggle', (e: Event) => {
         const details = e.target as HTMLDetailsElement;
         const key = details.getAttribute?.('data-hint-key');
         if (key !== null && key !== undefined) {
             setHintOpen(key, details.open);
-            usage('hints', { open: details.open, error: key });
+            if (hintToggleByUser) usage('hints', { open: details.open, error: key });
         }
+        hintToggleByUser = false;
     }, true);
 
     root.addEventListener('click', (e: MouseEvent) => {
