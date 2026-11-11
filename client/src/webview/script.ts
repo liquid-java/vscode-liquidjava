@@ -315,10 +315,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
-        // nav tab click
-        if (target.classList.contains('nav-tab')) {
+        // nav tab click (also on the badge inside the tab)
+        const navTab = target.closest?.('.nav-tab');
+        if (navTab) {
             e.stopPropagation();
-            const tab = target.getAttribute('data-tab') as NavTab;
+            const tab = navTab.getAttribute('data-tab') as NavTab;
             if (tab && tab !== selectedTab) {
                 vscode.postMessage({ type: 'highlight', range: null });
                 usage('tab', { tab });
