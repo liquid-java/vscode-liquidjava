@@ -600,6 +600,17 @@ export function getStyles(): string {
         .vc-binder {
             color: var(--vscode-descriptionForeground);
         }
+        .vc-step-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            min-width: 0;
+        }
+        .vc-step-info {
+            display: inline-flex;
+            color: var(--vscode-descriptionForeground);
+            cursor: help;
+        }
         .vc-step-controls {
             display: inline-flex;
             align-items: center;
