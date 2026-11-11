@@ -76,4 +76,20 @@ describe('Found', () => {
             lines: [`∀p ${states}`],
         });
     });
+
+    it('says that nothing known proves Expected when the verifier could not prove it, with the steps a step back', () => {
+        render(
+            derivation([null, chain(['undoManager', 'undoManager == #getUndoManager_result'])]),
+            'expected `redoState(undoManager) == redoable` but could not prove it',
+        );
+
+        expect(shown()).toMatchObject({ label: 'Summary', info: 'Go back to see what is known here.', position: '2/2', lines: [] });
+        expect(document.querySelector('.vc-nothing-known')?.textContent)
+            .toBe('Nothing is known here that could prove Expected.');
+        previous();
+        expect(document.querySelector('.vc-nothing-known')).toBeNull();
+        expect(shown()).toMatchObject({
+            label: 'Original', position: '1/2', lines: ['∀undoManager undoManager == #getUndoManager_result'],
+        });
+    });
 });

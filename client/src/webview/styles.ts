@@ -600,6 +600,12 @@ export function getStyles(): string {
         .vc-binder {
             color: var(--vscode-descriptionForeground);
         }
+        .vc-nothing-known {
+            margin: 0;
+            padding: 0.0625rem 0.25rem;
+            color: var(--vscode-descriptionForeground);
+            font-family: var(--vscode-font-family);
+        }
         .vc-step-title {
             display: inline-flex;
             align-items: center;

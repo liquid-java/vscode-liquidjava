@@ -9,6 +9,8 @@ import { getImplicationLines, renderImplication, renderImplicationChange } from 
 type VCStep = {
     implication: VCImplication;
     passes: string[];
+    // a summary in front of the newest step, which says that nothing known proves Expected instead of showing the chain
+    nothingKnown?: boolean;
 };
 
 // state to preserve across re-renders
@@ -36,6 +38,10 @@ const DISPLAY_STEP_DESCRIPTIONS: Record<string, string> = {
     "Relevant to Expected": "Kept only the facts that share a term with Expected.",
 };
 const ORIGINAL_DESCRIPTION = "What is known here, before simplifying.";
+const NOTHING_KNOWN = "Nothing is known here that could prove Expected.";
+const NOTHING_KNOWN_DESCRIPTION = "Go back to see what is known here.";
+// the end of the verifier's message when nothing it found is about what Expected constrains
+const NOT_PROVEN = / but could not prove it$/u;
 // names the verifier makes up (#if_condition) or numbers (x#1), which do not appear in the code
 const GENERATED_NAME = /#\w/u;
 
@@ -46,6 +52,7 @@ function renderStepButton(errorId: string, step: "previous" | "next", disabled: 
 }
 
 function getStepLabel(step: VCStep): { label: string; description: string } {
+    if (step.nothingKnown) return { label: "Summary", description: NOTHING_KNOWN_DESCRIPTION };
     if (step.passes.length === 0) return { label: "Original", description: ORIGINAL_DESCRIPTION };
     const displayStep = step.passes.find(pass => !(pass in PASS_DESCRIPTIONS));
     const description = step.passes
@@ -134,10 +141,13 @@ function renderSelectedStep(errorId: string, previousIndex?: number): string {
 
     const { steps, translationTable, stepIndex } = state;
     const current = steps[stepIndex];
-    const previous = previousIndex === undefined ? undefined : steps[previousIndex];
-    const implication = previous
-        ? `<div class="vc-chain">${renderImplicationChange(previous.implication, current.implication, translationTable)}</div>`
-        : `<div class="vc-chain">${renderImplication(current.implication, translationTable)}</div>`;
+    // a change is shown from a step whose chain was shown
+    const previous = previousIndex === undefined || steps[previousIndex].nothingKnown ? undefined : steps[previousIndex];
+    const implication = current.nothingKnown
+        ? `<p class="vc-nothing-known">${NOTHING_KNOWN}</p>`
+        : previous
+            ? `<div class="vc-chain">${renderImplicationChange(previous.implication, current.implication, translationTable)}</div>`
+            : `<div class="vc-chain">${renderImplication(current.implication, translationTable)}</div>`;
 
     return /*html*/`
         ${steps.length > 1 ? renderStepHeader(errorId, current, stepIndex, steps.length) : ""}
@@ -169,7 +179,11 @@ export function renderVCImplication(
     result: VCSimplificationResult
 ): string {
     if (!result?.implication) return renderHighlightedExpression(String(result));
-    const steps = getVCSteps(result);
+    const derivedSteps = getVCSteps(result);
+    // when the verifier could not prove Expected, Found opens on a summary that says so, with the steps a step back
+    const steps = NOT_PROVEN.test(error.message)
+        ? [{ ...derivedSteps[0], passes: [], nothingKnown: true }, ...derivedSteps]
+        : derivedSteps;
 
     const errorId = encodeURIComponent(JSON.stringify([
         error.file,
