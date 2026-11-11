@@ -392,6 +392,14 @@ export function getStyles(): string {
             background: transparent !important;
             background-color: transparent !important;
         }
+        .lj-line {
+            display: block;
+            padding-left: 2ch;
+            text-indent: -2ch;
+        }
+        .lj-line-branch {
+            padding-left: 4ch;
+        }
         .lj-token-keyword {
             color: var(--lj-token-keyword);
         }
@@ -479,7 +487,7 @@ export function getStyles(): string {
             gap: 0.25rem;
         }
         .counterexample-line {
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
         }
         .vc-line {
             display: contents;
@@ -488,7 +496,7 @@ export function getStyles(): string {
         .vc-predicate-cell {
             min-width: 0;
             padding: 0.0625rem 0.25rem;
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
         }
         .vc-binder-cell {
             min-height: 1.2em;
@@ -498,6 +506,23 @@ export function getStyles(): string {
         }
         .vc-predicate-cell {
             color: var(--vscode-editor-foreground);
+        }
+        /* a narrow panel puts each binder above its predicate, so that the predicate gets the whole width */
+        @media (max-width: 420px) {
+            .diagnostic-item {
+                padding-inline: 0.5rem;
+            }
+            .vc-container {
+                padding-inline: 0.25rem;
+            }
+            .vc-chain {
+                grid-template-columns: minmax(0, 1fr);
+                line-height: 1.4;
+            }
+            .vc-binder-cell,
+            .vc-predicate-cell {
+                padding-inline: 0;
+            }
         }
         .vc-arrow {
             font-size: 1.5em;

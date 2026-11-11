@@ -1,5 +1,6 @@
 import { renderDiagnosticDataAttributes, renderExpressionSection, renderDiagnosticHeader, renderCustomSection, renderLocation, renderDiagnosticContextButton, renderDiagnosticStateMachineButton, renderHints } from "../sections";
 import { renderCounterexample } from "./counterexample";
+import { renderHighlightedLines } from "../../highlighting";
 import { renderVCImplication } from "./vc-implications";
 import type {
     ArgumentMismatchError,
@@ -38,14 +39,14 @@ type ErrorRendererMap = { [E in LJError as E['type']]: (error: E) => string };
 
 const errorContentRenderers: ErrorRendererMap = {
     'refinement-error': (e: RefinementError) => /*html*/ `
-        ${renderExpressionSection('Expected', e.expected)}
+        ${renderCustomSection('Expected', renderHighlightedLines(e.expected))}
         ${renderCustomSection('Found', renderVCImplication(e, e.found))}
         ${e.counterexample.assignments.length > 0
             ? renderCustomSection('Counterexample', renderCounterexample(e.counterexample))
             : ''}
     `,
     'state-refinement-error': (e: StateRefinementError) => /*html*/ `
-        ${renderExpressionSection('Expected', e.expected)}
+        ${renderCustomSection('Expected', renderHighlightedLines(e.expected))}
         ${renderCustomSection('Found', renderVCImplication(e, e.found))}
     `,
     'invalid-refinement-error': (e: InvalidRefinementError) => /*html*/ `

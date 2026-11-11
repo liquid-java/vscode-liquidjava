@@ -1,6 +1,6 @@
 import type { VCImplication } from "../../../types/vc-implications";
 import type { TranslationTable } from "../../../types/diagnostics";
-import { renderHighlightedInlineExpression } from "../../highlighting";
+import { getExpressionLines, renderExpressionLines, renderHighlightedInlineExpression } from "../../highlighting";
 import { escapeHtml } from "../../utils";
 import { renderSourceHighlightButton } from "../sections";
 
@@ -49,17 +49,22 @@ function renderBinder(binder: string, type: string, translationTable?: Translati
     );
 }
 
+/**
+ * Renders a line of a VC chain, its predicate on the lines of getExpressionLines
+ * @param renderText renders the text of the line at an index, highlighted by default
+ */
 export function renderVCLine(
     line: string,
     className = "",
-    predicateContent?: string,
+    renderText?: (text: string, index: number) => string,
     translationTable?: TranslationTable,
 ): string {
     const { binder, type, predicate, hasNext } = parseImplicationLine(line);
+    const arrow = hasNext ? ' <span class="vc-arrow">→</span>' : "";
     return /*html*/`
         <div class="vc-line ${className}">
             ${binder ? /*html*/`<div class="vc-binder-cell">${renderBinder(binder, type, translationTable)}</div>` : ""}
-            <div class="vc-predicate-cell"><span class="vc-node">${predicateContent ?? renderHighlightedInlineExpression(predicate)}</span>${hasNext ? ' <span class="vc-arrow">→</span>' : ""}</div>
+            <div class="vc-predicate-cell"><span class="vc-node">${renderExpressionLines(getExpressionLines(predicate), renderText, arrow)}</span></div>
         </div>
     `;
 }
@@ -188,6 +193,18 @@ function alignChangedLines(removed: string[], added: string[]): Array<[string | 
     return lines;
 }
 
+// each line of a changed predicate, diffed against the line of the old predicate it replaces, or all marked if none
+function renderChangedPredicateLines(before: string, after: string): string[] {
+    const lines = (predicate: string) => getExpressionLines(predicate).map(line => line.text);
+    return alignChangedLines(lines(before), lines(after))
+        .flatMap(([beforeLine, afterLine]) => {
+            if (afterLine === undefined) return [];
+            return [beforeLine === undefined
+                ? renderChangedFragment(afterLine)
+                : renderDestinationTokenDiff(beforeLine, afterLine).content];
+        });
+}
+
 function renderChangedDestinationLines(
     removed: string[],
     added: string[],
@@ -199,14 +216,14 @@ function renderChangedDestinationLines(
         .map(([before, after]) => {
             if (after === undefined) return "";
             if (before === undefined) return renderVCLine(after, "vc-change-line", undefined, translationTable);
-            const change = renderDestinationTokenDiff(
-                parseImplicationLine(before).predicate,
-                parseImplicationLine(after).predicate,
-            );
+            const beforePredicate = parseImplicationLine(before).predicate;
+            const afterPredicate = parseImplicationLine(after).predicate;
+            const change = renderDestinationTokenDiff(beforePredicate, afterPredicate);
+            const lines = renderChangedPredicateLines(beforePredicate, afterPredicate);
             return renderVCLine(
                 after,
                 change.hasAddedContent ? "" : "vc-change-line",
-                change.content,
+                (_text, index) => lines[index],
                 translationTable,
             );
         })
