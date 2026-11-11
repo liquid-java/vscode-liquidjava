@@ -52,13 +52,14 @@ describe('verification implications', () => {
     });
     it('writes a line tag under its variable, saying which value it stands for, and changes it with its variable', () => {
         document.body.innerHTML = renderImplication({
-            name: 'x@12', type: 'int', predicate: 'x@12 > failures.size()@84 && y#2 > 0 && s == "x@1"', next: conclusion,
+            name: 'x@12', type: 'int', predicate: 'x@12 > failures.size()@84 && y#2 > z@25#2 && s == "x@1"', next: conclusion,
         });
 
         const tags = Array.from(document.querySelectorAll('sub.lj-line-tag'));
         expect(tags.map(tag => [tag.textContent, tag.getAttribute('title')])).toEqual([
-            ['l12', 'value of x at line 12'], ['l12', 'value of x at line 12'],
-            ['l84', 'value of failures.size() at line 84'], ['#2', 'value 2 of y'],
+            ['l12', 'x at line 12'], ['l12', 'x at line 12'],
+            ['l84', 'failures.size() at line 84'], ['#2', 'the 2nd value of y (line unknown)'],
+            ['l25#2', 'the 2nd value z gets at line 25'],
         ]);
 
         document.body.innerHTML = renderImplicationChange(

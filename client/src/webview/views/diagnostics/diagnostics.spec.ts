@@ -101,7 +101,7 @@ describe('diagnostics view', () => {
         expect(text('.message-note')).toBe('Origin: line 134, new BufferedInputStream(stream) makes markState(b) == unmarked');
         expect(Array.from(document.querySelectorAll('.lj-code')).map(code => code.textContent))
             .toEqual(['new BufferedInputStream(stream)', 'markState(b) == unmarked', "b.f('`')", 'sl9 = "x@1"']);
-        expect(document.querySelector('.lj-code sub.lj-line-tag')?.getAttribute('title')).toBe('value of s at line 9');
+        expect(document.querySelector('.lj-code sub.lj-line-tag')?.getAttribute('title')).toBe('s at line 9');
     });
 
     it('shows every declaration of a refinement with their notes under them', () => {

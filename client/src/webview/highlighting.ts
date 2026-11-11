@@ -89,9 +89,18 @@ function variableBefore(text: string, end: number): string {
 // a line tag as a subscript, l12, that says which value of the variable it stands for
 function renderLineTag(tag: string, variable: string): string {
     const [, line, number] = /^(?:@(\d+))?(?:#(\d+))?$/.exec(tag) ?? [];
-    const value = ["value", number, variable && `of ${variable}`, line && `at line ${line}`].filter(Boolean).join(" ");
+    const name = variable || "the variable";
+    const value = !number ? `${name} at line ${line}`
+        : line ? `the ${ordinal(Number(number))} value ${name} gets at line ${line}`
+        : `the ${ordinal(Number(number))} value of ${name} (line unknown)`;
     const text = (line ? `l${line}` : "") + (number ? `#${number}` : "");
     return `<sub class="lj-line-tag" title="${escapeHtml(value)}">${escapeHtml(text)}</sub>`;
+}
+
+// 1st, 2nd, 3rd, 4th, ..., 11th, 12th, 13th, ..., 21st
+function ordinal(n: number): string {
+    const suffix = n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th";
+    return `${n}${suffix}`;
 }
 
 /**
