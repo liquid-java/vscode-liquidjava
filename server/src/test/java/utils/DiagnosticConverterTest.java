@@ -14,8 +14,10 @@ import org.junit.jupiter.api.io.TempDir;
 import dtos.diagnostics.HintDTO;
 import dtos.diagnostics.LJDiagnosticDTO;
 import dtos.diagnostics.SourcePositionDTO;
+import dtos.diagnostics.SourceReferenceDTO;
 import dtos.errors.*;
 import dtos.warnings.*;
+import liquidjava.diagnostics.SourceReference;
 import liquidjava.diagnostics.TranslationTable;
 import liquidjava.diagnostics.errors.*;
 import liquidjava.diagnostics.hints.Hint;
@@ -60,6 +62,16 @@ class DiagnosticConverterTest {
         assertEquals(List.of(new HintDTO("general", "check the refinement")), dto.hints);
         assertEquals(workspace.resolve("Example.java").toRealPath().toString(), dto.file);
         assertEquals(new SourcePositionDTO(dto.file, 1, 8, 1, 18), dto.position);
+    }
+
+    @Test
+    void sendsTheMessageNotesWithThePlacesTheyNameFromLineZero() {
+        CustomError error = new CustomError("verification failed", position);
+        error.addMessageNote(SourceReference.of("Origin: line 2, `value`", "line 2", 8, position));
+        LJDiagnosticDTO dto = (LJDiagnosticDTO) DiagnosticConverter.convertToDTO(error);
+        assertEquals(List.of("Origin: line 2, `value`"), dto.messageNotes);
+        assertEquals(List.of(new SourceReferenceDTO("Origin: line 2, `value`", "line 2", 8,
+                new SourcePositionDTO(dto.file, 1, 8, 1, 8))), dto.references);
     }
 
     @Test
