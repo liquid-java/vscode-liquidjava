@@ -13,17 +13,13 @@ import liquidjava.diagnostics.errors.RefinementError;
 import liquidjava.diagnostics.errors.StateRefinementError;
 import liquidjava.processor.VCImplication;
 import liquidjava.processor.context.PlacementInCode;
-import liquidjava.rj_language.ast.BinaryExpression;
-import liquidjava.rj_language.ast.Expression;
-import liquidjava.rj_language.ast.FunctionInvocation;
-import liquidjava.rj_language.ast.UnaryExpression;
-import liquidjava.rj_language.ast.Var;
 import spoon.reflect.cu.SourcePosition;
 
 /**
  * Writes the errors of the current verifier the way the verifier of July 2025 wrote them (its ErrorHandler): one
  * text block with the code, the expected type, the refinement found as the whole verification condition, the instance
- * translation table and the location. The verifier itself is the released one; only the text is the old one.
+ * translation table and the location. The verifier itself is the released one; only the text is the old one. States
+ * keep the current state-set notation, which the old verifier did not have.
  */
 public final class BaselineMessages {
 
@@ -121,38 +117,16 @@ public final class BaselineMessages {
         return sb.toString();
     }
 
-    // Expected possible states:closed(#d_10), written as state predicates, which is how the old verifier wrote them
+    // Expected possible states:Door.state(#d_10) == closed. The states are written as the current verifier writes
+    // them, as values of their state set: the old verifier had no named state sets, so there is no old form for
+    // them, and the spec files the participants read use the same notation
     private static String expected(StateRefinementError error) {
-        return fromSetForm(error.getExpected().getExpression().clone()).toString();
+        return error.getExpected().getExpression().toString();
     }
 
-    // ∀#d_10:Door, open(#d_10), the whole chain before any simplification
+    // ∀#d_10:Door, Door.state(#d_10) == open, the whole chain before any simplification
     private static String found(StateRefinementError error) {
-        return error.getFoundSimplification().map(e -> fromSetForm(e.clone())).getOriginal().getImplication()
-                .toString();
-    }
-
-    /**
-     * Undoes the state-set notation the current verifier shows states in: {@code state(d) == open} is written
-     * {@code open(d)} again, and {@code state(d) != open} is {@code !open(d)}, as the old verifier wrote them
-     */
-    static Expression fromSetForm(Expression e) {
-        if (e instanceof BinaryExpression binary && binary.getFirstOperand() instanceof FunctionInvocation set
-                && set.getArgs().size() == 1 && binary.getSecondOperand() instanceof Var state
-                && ("==".equals(binary.getOperator()) || "!=".equals(binary.getOperator()))) {
-            FunctionInvocation stateOf = new FunctionInvocation(qualifiedLike(set.getName(), state.getName()),
-                    List.of(set.getArgs().get(0).clone()));
-            return "==".equals(binary.getOperator()) ? stateOf : new UnaryExpression("!", stateOf);
-        }
-        for (int i = 0; i < e.getChildren().size(); i++)
-            e.setChild(i, fromSetForm(e.getChildren().get(i)));
-        return e;
-    }
-
-    // The state qualified as its set is: Door.state and open give Door.open
-    private static String qualifiedLike(String setName, String state) {
-        int dot = setName.lastIndexOf('.');
-        return dot < 0 || state.contains(".") ? state : setName.substring(0, dot + 1) + state;
+        return error.getFoundSimplification().getOriginal().getImplication().toString();
     }
 
     private static String translationTable(TranslationTable table) {
