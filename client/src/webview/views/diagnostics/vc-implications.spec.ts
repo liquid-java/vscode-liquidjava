@@ -67,7 +67,7 @@ describe('Found', () => {
         ), 'found compression(p) == compressionNotExplicit but expected ...');
 
         expect(shown()).toEqual({
-            label: 'Relevant to Expected', info: 'Kept only the facts that share a term with Expected.',
+            label: 'Relevant to Expected', info: 'Kept only the facts that Expected depends on, directly or through other facts.',
             position: '2/2', lines: ['∀p compression(p) == compressionNotExplicit'],
         });
         previous();

@@ -35,7 +35,7 @@ const PASS_DESCRIPTIONS: Record<string, string> = {
     "Constraint": "Removed facts that other facts already imply.",
 };
 const DISPLAY_STEP_DESCRIPTIONS: Record<string, string> = {
-    "Relevant to Expected": "Kept only the facts that share a term with Expected.",
+    "Relevant to Expected": "Kept only the facts that Expected depends on, directly or through other facts.",
 };
 const ORIGINAL_DESCRIPTION = "What is known here, before simplifying.";
 const NOTHING_KNOWN = "Nothing is known here that could prove Expected.";
