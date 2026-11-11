@@ -16,6 +16,8 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 
+import dtos.Status;
+
 import utils.PathUtils;
 
 public class LJDiagnosticsService implements TextDocumentService, WorkspaceService {
@@ -59,8 +61,10 @@ public class LJDiagnosticsService implements TextDocumentService, WorkspaceServi
                     publishedDiagnosticUris.add(params.getUri());
                 }
             });
+            this.client.sendStatus(new Status(ljDiagnostics.errors().isEmpty() ? "passed" : "failed"));
         } catch (Exception e) {
             clearPublishedDiagnostics(uri);
+            this.client.sendStatus(new Status("crashed"));
         }
     }
 

@@ -6,9 +6,12 @@ import org.eclipse.lsp4j.ServerCapabilities;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
 import org.eclipse.lsp4j.WorkspaceServerCapabilities;
+import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
+
+import dtos.Uri;
 
 public class LJLanguageServer implements LanguageServer {
 
@@ -60,5 +63,17 @@ public class LJLanguageServer implements LanguageServer {
 
     public void connect(LJLanguageClient client) {
         diagnosticsService.setClient(client);
+    }
+
+    @SuppressWarnings("unused")
+    @JsonNotification("$/setTraceNotification")
+    public void setTrace(Object params) {
+        // suppress notification
+    }
+
+    /** Runs the verifier on request (the LiquidJava: Verify command) */
+    @JsonNotification("liquidjava/verify")
+    public void verify(Uri uri) {
+        diagnosticsService.generateDiagnosticsAsync(uri.uri());
     }
 }

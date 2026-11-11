@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 import { extension } from "../state";
 import { connectToPort } from "../utils/utils";
+import { updateStatusBar } from "../services/status-bar";
 
 /**
  * Connects the standard language client to the LiquidJava server.
@@ -23,6 +24,9 @@ export async function runClient(context: vscode.ExtensionContext, port: number) 
 
     try {
         await extension.client.start();
+        extension.client.onNotification("liquidjava/status", (params: { status: "passed" | "failed" | "crashed" }) =>
+            updateStatusBar(params.status)
+        );
     } catch (error) {
         vscode.window.showErrorMessage("LiquidJava failed to initialize: " + String(error));
         await stopClient();
@@ -39,6 +43,7 @@ export async function stopClient() {
     } catch {
         // the connection may already be closed
     } finally {
+        updateStatusBar("stopped");
         extension.client = undefined;
         extension.socket?.destroy();
         extension.socket = undefined;

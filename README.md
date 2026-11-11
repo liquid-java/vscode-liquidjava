@@ -1,3 +1,11 @@
+> **Study baseline branch (`study/baseline`).** This branch is the baseline condition of the error-message study: the
+> released verifier (`liquidjava-verifier` 0.0.38, the same engine as `main`) with its errors written the way the
+> verifier of July 2025 wrote them, in a plain extension (squiggle, hover text, Problems panel, status bar, the
+> `LiquidJava: Verify` command; no LiquidJava view, hints, counterexamples or highlighting). The old text is built in
+> `server/src/main/java/BaselineMessages.java` from the verifier's error objects, so the verifier itself is untouched.
+> `java -cp language-server-liquidjava.jar BaselineLauncher <src folder>` prints the messages outside the editor.
+> It is not meant to be merged into `main`; it is built into a `.vsix` for the study.
+
 # LiquidJava VS Code Extension
 
 ![](https://raw.githubusercontent.com/liquid-java/liquidjava/refs/heads/main/docs/design/figs/banner.gif)

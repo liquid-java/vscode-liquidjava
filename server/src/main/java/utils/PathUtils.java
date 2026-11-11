@@ -1,9 +1,6 @@
 package utils;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -11,9 +8,6 @@ import java.nio.file.Paths;
  * Utility class for path operations
  */
 public class PathUtils {
-    private static final String FILE_PREFIX = "file://";
-    private static final String SRC_SUFFIX = "/src/";
-
     /**
      * Checks if a file is in a given directory
      * @param fileUri the file URI
@@ -33,31 +27,20 @@ public class PathUtils {
     /**
      * Extracts the base path from the given full path
      * e.g. file://path/to/project/src/main/path/to/File.java => /path/to/project/src/main
-     * @param fullPath the full path
+     * @param fileUri the file URI
      * @return base path
      */
-    public static String extractBasePath(String fullPath) {
-        fullPath = convertUTFtoCharacters(fullPath);
-        fullPath = fullPath.replace(FILE_PREFIX, "");
-        int suffixIndex = fullPath.indexOf(SRC_SUFFIX);
-        int nextSlashIndex = fullPath.indexOf("/", suffixIndex + SRC_SUFFIX.length());
-        if (suffixIndex == -1 || nextSlashIndex == -1)
-            return fullPath; // cannot extract base path
-        return fullPath.substring(0, nextSlashIndex); // up to and including the next slash after /src/
-    }
-
-    /**
-     * Converts a UTF-8 encoded string to a regular string
-     * @param source
-     * @return converted string
-     */
-    private static String convertUTFtoCharacters(String source) {
-        try {
-            return URLDecoder.decode(source, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            // not going to happen - value came from JDK's own StandardCharsets
-            return null;
+    public static String extractBasePath(String fileUri) {
+        Path fullPath = Paths.get(URI.create(fileUri));
+        for (int i = 0; i < fullPath.getNameCount() - 1; i++) {
+            if (fullPath.getName(i).toString().equals("src")) {
+                Path basePath = fullPath.subpath(0, i + 2);
+                return fullPath.getRoot() == null
+                        ? basePath.toString()
+                        : fullPath.getRoot().resolve(basePath).toString();
+            }
         }
+        return fullPath.toString();
     }
 
     /**
@@ -67,13 +50,6 @@ public class PathUtils {
      */
     public static String toFileUri(String filePath) {
         if (filePath == null) return "";
-        
-        String normalized = filePath.replace("\\", "/");
-        // Windows (C:/path)
-        if (!normalized.isEmpty() && normalized.charAt(1) == ':') {
-            return FILE_PREFIX + "/" + normalized;
-        }
-        // Unix (/path)
-        return FILE_PREFIX + normalized;
+        return Paths.get(filePath).toUri().toString();
     }
 }
