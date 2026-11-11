@@ -21,6 +21,6 @@ class LJDiagnosticsHandlerTest {
         diagnostic.setCounterexampleStr("Counterexample: timeout == -1");
         diagnostic.addHint(Hint.general("Add a refinement"));
         assertEquals("Refinement Error: found x > 0 && y == 1 but expected `q and a*b",
-                LJDiagnosticsHandler.getHoverMessage(diagnostic));
+                LJDiagnosticsHandler.diagnosticMessage(diagnostic));
     }
 }

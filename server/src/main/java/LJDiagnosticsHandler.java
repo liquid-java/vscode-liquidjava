@@ -74,7 +74,7 @@ public class LJDiagnosticsHandler {
                 d -> PathUtils.toFileUri(d.getFile()),
                 Collectors.mapping(d -> {
                     Range range = getRangeFromPosition(d.getPosition());
-                    return new Diagnostic(range, getHoverMessage(d), severity, SOURCE);
+                    return new Diagnostic(range, diagnosticMessage(d), severity, SOURCE);
                 }, Collectors.toList())
             ));
         
@@ -95,7 +95,7 @@ public class LJDiagnosticsHandler {
      * @param diagnostic the diagnostic
      * @return the message
      */
-    static String getHoverMessage(LJDiagnostic diagnostic) {
+    static String diagnosticMessage(LJDiagnostic diagnostic) {
         return String.format("%s: %s", diagnostic.getTitle(), plainCode(diagnostic.getMessage()));
     }
 
