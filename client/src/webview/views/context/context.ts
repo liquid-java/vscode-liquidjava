@@ -23,7 +23,7 @@ export function renderContextView(context: LJContext | undefined, currentFile: s
                 ? 'No context information available at the cursor position'
                 : `${renderContextAliases(aliases, sectionState.aliases)}
                    ${renderContextGhosts(ghosts, sectionState.ghosts)}
-                   ${renderContextVariables(allVars, sectionState.vars, errorAtCursor)}
+                   ${renderContextVariables(allVars, sectionState.vars, errorAtCursor, context?.generatedPlaces)}
             `}
         </div>
     `;

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import dtos.context.AliasDTO;
 import dtos.context.ContextDisplay;
@@ -13,6 +14,7 @@ import dtos.context.ContextHistoryDTO;
 import dtos.context.MethodDTO;
 import dtos.context.GhostDTO;
 import dtos.context.VariableDTO;
+import dtos.diagnostics.PlacementInCodeDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import liquidjava.processor.context.ContextHistory;
 import liquidjava.processor.context.GhostFunction;
@@ -47,7 +49,8 @@ public class ContextHistoryConverter {
             contextHistory.getGhosts().stream().sorted(GHOST_ORDER).map(GhostDTO::from).collect(Collectors.toList()),
             contextHistory.getAliases().stream().map(AliasDTO::from).collect(Collectors.toList()),
             contextHistory.getMethods().stream().map(MethodDTO::from).filter(f -> f != null).collect(Collectors.toList()),
-            parseFileScopes(contextHistory.getFileScopes())
+            parseFileScopes(contextHistory.getFileScopes()),
+            convertGeneratedPlaces(contextHistory, display)
         );
     }
 
@@ -70,6 +73,15 @@ public class ContextHistoryConverter {
             .map(v -> VariableDTO.from(v, display))
             .filter(v -> v != null)
             .collect(Collectors.toList());
+    }
+
+    // where each value the verifier introduces comes from, by the name the context shows it with
+    private static Map<String, PlacementInCodeDTO> convertGeneratedPlaces(ContextHistory history, ContextDisplay display) {
+        Map<String, PlacementInCodeDTO> places = new HashMap<>();
+        Stream.concat(history.getLocalVars().stream(), history.getGlobalVars().stream())
+            .filter(v -> GeneratedNames.isGenerated(v.getName()) && v.getPlacementInCode() != null)
+            .forEach(v -> places.put(display.name(v.getName()), PlacementInCodeDTO.from(v.getPlacementInCode())));
+        return places;
     }
 
     private static Map<String, List<SourcePositionDTO>> parseFileScopes(Map<String, Set<String>> fileScopes) {

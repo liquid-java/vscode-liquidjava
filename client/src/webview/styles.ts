@@ -399,6 +399,18 @@ export function getStyles(): string {
             color: var(--vscode-descriptionForeground);
             cursor: help;
         }
+        /* a name LiquidJava gives a value of the code, explained on hover */
+        .lj-generated-name {
+            text-decoration: underline dotted var(--vscode-descriptionForeground);
+            text-underline-offset: 2px;
+            cursor: help;
+        }
+        .lj-generated-name.location-link {
+            cursor: pointer;
+        }
+        .lj-generated-name.location-link:hover {
+            text-decoration-style: solid;
+        }
         .lj-expression,
         .lj-expression-code {
             font-family: var(--vscode-editor-font-family);

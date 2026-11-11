@@ -1,4 +1,6 @@
 import * as liquidJavaGrammar from "../../syntaxes/liquidjava.json";
+import type { TranslationTable } from "../types/diagnostics";
+import { isGeneratedName, renderGeneratedName } from "./generated-names";
 import { escapeHtml } from "./utils";
 
 type GrammarPattern = {
@@ -22,6 +24,8 @@ type ScopeColorRule = {
 // numbered when values share a line or have none, x@12#2 and x#2
 export const LINE_TAG = "@\\d+(?:#\\d+)?\\b|(?<=[\\w)])#\\d+\\b";
 const LINE_TAG_SCOPE = "line-tag";
+const VARIABLE_SCOPE = "variable.other.liquidjava";
+const LINE_TAG_AT_INDEX = new RegExp(LINE_TAG, "y");
 // string and character literals, whose text is shown as it is even where it looks like a line tag
 export const LITERAL = `"(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'`;
 const LINE_TAGS_OUTSIDE_LITERALS = new RegExp(`${LITERAL}|${LINE_TAG}`, "g");
@@ -44,7 +48,7 @@ const expressionPatterns: GrammarPattern[] = [
     { match: "\\bnull\\b", name: "constant.language.null.liquidjava.webview" },
     ...patterns("literals"),
     { match: "[(){}.,;\\[\\]]", name: "punctuation.separator.liquidjava" },
-    { match: "#*[a-zA-Z_](?:[a-zA-Z0-9_]|#(?!\\d))*", name: "variable.other.liquidjava" }
+    { match: "#*[a-zA-Z_](?:[a-zA-Z0-9_]|#(?!\\d))*", name: VARIABLE_SCOPE }
 ];
 
 const highlightRules: HighlightRule[] = expressionPatterns
@@ -117,12 +121,38 @@ export function renderLineTags(text: string): string {
     return html + escapeHtml(text.slice(index));
 }
 
+/** The line of the line tag a name ends with, x@12 or x@12#2, if it has one */
+export function lineOfTag(name: string): number | undefined {
+    const line = /@(\d+)(?:#\d+)?$/.exec(name)?.[1];
+    return line === undefined ? undefined : Number(line);
+}
+
 /** The name of a variable without its line tag, as it is written in code */
 export function withoutLineTag(name: string): string {
     return name.replace(new RegExp(`(?:${LINE_TAG})$`), "");
 }
 
-function renderHighlightedContent(expression: string): string {
+function renderToken(content: string, scope: string): string {
+    return `<span style="color:${colorForScope(scope)}">${escapeHtml(content)}</span>`;
+}
+
+/**
+ * Renders a name the verifier gives a value of the code, with the line tag after it if any
+ * @returns the html and the length of the text it renders
+ */
+function renderGeneratedNameAt(expression: string, index: number, name: string, places?: TranslationTable): [string, number] {
+    LINE_TAG_AT_INDEX.lastIndex = index + name.length;
+    const tag = LINE_TAG_AT_INDEX.exec(expression)?.[0] ?? "";
+    const content = renderToken(name, VARIABLE_SCOPE) + (tag ? renderLineTag(tag, name) : "");
+    const html = renderGeneratedName(name, content, lineOfTag(tag), places?.[name + tag]);
+    return [html, name.length + tag.length];
+}
+
+/**
+ * Renders an expression with its tokens colored
+ * @param places where the variables of the expression come from, by name, such as the translation table of an error
+ */
+function renderHighlightedContent(expression: string, places?: TranslationTable): string {
     let html = "";
     let index = 0;
 
@@ -140,25 +170,31 @@ function renderHighlightedContent(expression: string): string {
         const match = matchingRule.regex.exec(expression);
         const content = match?.[0] || expression[index] || "";
 
+        if (matchingRule.scope === VARIABLE_SCOPE && isGeneratedName(content)) {
+            const [generated, length] = renderGeneratedNameAt(expression, index, content, places);
+            html += generated;
+            index += length;
+            continue;
+        }
         html += matchingRule.scope === LINE_TAG_SCOPE
             ? renderLineTag(content, variableBefore(expression, index))
-            : `<span style="color:${colorForScope(matchingRule.scope)}">${escapeHtml(content)}</span>`;
+            : renderToken(content, matchingRule.scope);
         index += content.length;
     }
     return html;
 }
 
-function renderExpression(expression: string, wrap: boolean): string {
+function renderExpression(expression: string, wrap: boolean, places?: TranslationTable): string {
     if (!expression) return "";
 
-    const content = renderHighlightedContent(expression);
+    const content = renderHighlightedContent(expression, places);
     return wrap
         ? `<pre class="lj-expression-block"><code class="lj-expression-code">${content}</code></pre>`
         : content;
 }
 
-export function renderHighlightedExpression(expression: string): string {
-    return renderExpression(expression, true);
+export function renderHighlightedExpression(expression: string, places?: TranslationTable): string {
+    return renderExpression(expression, true, places);
 }
 
 const WEAKER_THAN_AND = ["||", "-->", "?"];
@@ -239,7 +275,7 @@ export function getExpressionLines(expression: string): ExpressionLine[] {
  */
 export function renderExpressionLines(
     lines: ExpressionLine[],
-    renderText: (text: string, index: number) => string = renderHighlightedContent,
+    renderText: (text: string, index: number) => string = text => renderHighlightedContent(text),
     trailing = "",
 ): string {
     return lines.map((line, index) => {
@@ -250,14 +286,19 @@ export function renderExpressionLines(
 
 /**
  * Renders an expression on the lines of getExpressionLines, in an expression block as renderHighlightedExpression does
+ * @param places where the variables of the expression come from, by name
  */
-export function renderHighlightedLines(expression: string): string {
+export function renderHighlightedLines(expression: string, places?: TranslationTable): string {
     if (!expression) return "";
 
-    const html = renderExpressionLines(getExpressionLines(expression));
+    const html = renderExpressionLines(getExpressionLines(expression), text => renderHighlightedContent(text, places));
     return `<pre class="lj-expression-block"><code class="lj-expression-code">${html}</code></pre>`;
 }
 
-export function renderHighlightedInlineExpression(expression: string): string {
-    return renderExpression(expression, false);
+/**
+ * Renders an expression inline, with its tokens colored
+ * @param places where the variables of the expression come from, by name
+ */
+export function renderHighlightedInlineExpression(expression: string, places?: TranslationTable): string {
+    return renderExpression(expression, false, places);
 }

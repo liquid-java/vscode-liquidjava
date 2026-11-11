@@ -47,6 +47,7 @@ function context(file = currentFile): LJContext {
         visibleVars: [variable],
         allVars: [variable],
         fileScopes: {},
+        generatedPlaces: {},
     };
 }
 

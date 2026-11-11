@@ -69,6 +69,34 @@ describe('verification implications', () => {
         expect(Array.from(document.querySelectorAll('.vc-change-fragment')).map(fragment => fragment.innerHTML))
             .toEqual([expect.stringMatching(/^<span [^>]*>x<\/span><sub [^>]*>l13<\/sub>$/)]);
     });
+    it('explains the names LiquidJava gives values of the code, linking each to its line when it is known', () => {
+        const at = (lineStart: number) => ({ text: '', position: { file: '/w/A.java', lineStart, colStart: 4, lineEnd: lineStart, colEnd: 9 } });
+        const table = { '#if_condition': at(9), '#size_result': at(14) };
+        const chain: VCImplication = {
+            name: '#if_condition', type: 'boolean', predicate: 'x > 0',
+            next: { ...conclusion, predicate: 'a == #size_result + #new_File + #case_condition@20#1 + #ret' },
+        };
+        const names = () => Array.from(document.querySelectorAll('.lj-generated-name'), name =>
+            [name.textContent, name.getAttribute('title'), name.getAttribute('data-line')]);
+
+        document.body.innerHTML = renderImplication(chain, table);
+        expect(document.querySelector('.vc-binder')?.getAttribute('title')).toBe(
+            'The condition of the if at line 10. LiquidJava gives it the name #if_condition. Click to go to it.');
+        expect(names()).toEqual([
+            ['#size_result', 'The value returned by the call to size() at line 15. LiquidJava gives it the name #size_result. Click to go to it.', '14'],
+            ['#new_File', 'The new File object created. LiquidJava gives it the name #new_File.', null],
+            ['#case_conditionl20#1', 'Whether the case at line 20 matches. LiquidJava gives it the name #case_condition.', null],
+        ]);
+
+        document.body.innerHTML = renderImplication({ ...chain, name: '#case_condition@74' });
+        expect(document.querySelector('.vc-binder')?.getAttribute('title')).toBe(
+            'Whether the case at line 74 matches. LiquidJava gives it the name #case_condition.');
+
+        document.body.innerHTML = renderImplicationChange(
+            { ...conclusion, predicate: 'a == x + y + z' }, { ...conclusion, predicate: 'a == x + y + #size_result' }, table,
+        );
+        expect(document.querySelector('.vc-change-fragment .lj-generated-name')?.getAttribute('data-line')).toBe('14');
+    });
     it.each([
         ['initial rendering', () => renderImplication({ ...implication, next: null })],
         ['simplification change', () => renderImplicationChange(implication, { ...implication, next: null })],

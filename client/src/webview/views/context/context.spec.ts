@@ -15,7 +15,7 @@ function ghost(name: string, file = currentFile, stateSet: string | null = null)
 function context(overrides: Partial<LJContext> = {}): LJContext {
     return {
         localVars: [], globalVars: [], ghosts: [], aliases: [], methods: [],
-        visibleVars: [], allVars: [], fileScopes: {}, ...overrides,
+        visibleVars: [], allVars: [], fileScopes: {}, generatedPlaces: {}, ...overrides,
     };
 }
 
@@ -48,6 +48,21 @@ describe('context view', () => {
         expect(text('#context-vars tbody td:last-child')).toBe('countl3 > 0');
         expect(Array.from(document.querySelectorAll('.context-toggle-btn'), node => node.getAttribute('aria-expanded'))).toEqual(['true', 'true', 'true']);
         expect(document.querySelectorAll('.context-section-content.collapsed')).toHaveLength(0);
+    });
+
+    it('links the names LiquidJava gives values of the code in refinements to their lines', () => {
+        document.body.innerHTML = renderContextView(context({
+            allVars: [{
+                name: 'a', displayName: 'a', internalName: 'a', type: 'int', refinement: 'a == #pos_result',
+                mainRefinement: '', position: null, annotationPosition: null,
+            }],
+            generatedPlaces: { '#pos_result': { text: 'pos(x)', position: { file: '/w/A.java', lineStart: 6, colStart: 16, lineEnd: 6, colEnd: 22 } } },
+        }), currentFile, sectionState);
+
+        const name = document.querySelector('#context-vars .lj-generated-name.location-link');
+        expect(name?.getAttribute('title')).toBe(
+            'The value returned by the call to pos() at line 7. LiquidJava gives it the name #pos_result. Click to go to it.');
+        expect([name?.getAttribute('data-file'), name?.getAttribute('data-line')]).toEqual(['/w/A.java', '6']);
     });
 
     it('honors each section collapse state independently', () => {
