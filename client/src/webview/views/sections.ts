@@ -4,6 +4,7 @@ import { renderHighlightedExpression, renderHighlightedInlineExpression } from "
 import { getDiagnosticRevealTarget, getDiagnosticRevealTargetKey } from "../diagnostic-reveal";
 import { renderCodicon, renderCodiconButton } from "../icons";
 import { renderMessageText } from "../message-text";
+import { groupHints } from "../../utils/message-text";
 import { LJVariable } from "../../types/context";
 
 export const renderMainHeader = (title: string, selectedTab: NavTab, badges = NO_NAV_BADGES): string => /*html*/`
@@ -32,23 +33,19 @@ export function setHintOpen(key: string, open: boolean) {
 
 /**
  * Renders the hints of a diagnostic, closed until the user opens them
- * Several call sequences are alternatives, so they are listed as options apart from the hints that explain the error
  * @param hints The hints of the diagnostic
  * @param key Identifies the diagnostic, so opened hints stay open after a new verification
  * @param references The places in the source the hints name
  */
 export function renderHints(hints: LJHint[] | undefined, key?: string, references: LJSourceReference[] = []): string {
-    const shown = (hints ?? []).filter(hint => hint.message.trim());
+    const { shown, options, notes } = groupHints(hints);
     if (shown.length === 0) return '';
-    const options = shown.filter(hint => hint.kind === 'call-sequence');
-    const listsOptions = options.length > 1;
-    const notes = listsOptions ? shown.filter(hint => hint.kind !== 'call-sequence') : shown;
     const open = key !== undefined && openHints.has(key);
     return /*html*/`
         <details class="section hint-section"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
             <summary class="hint-summary">${shown.length === 1 ? 'Hint' : 'Hints'}</summary>
             <div class="hint-body">
-                ${listsOptions ? /*html*/`
+                ${options.length > 0 ? /*html*/`
                     <div class="hint-options">
                         <p class="hint-options-title">Any one of these:</p>
                         <ul>${options.map(hint => `<li>${renderHintMessage(hint, references)}</li>`).join('')}</ul>

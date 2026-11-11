@@ -5,6 +5,8 @@ import { getSelectionContextVariables } from './context';
 import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
 import { definitionMatchesClass, getDefinitions } from './definition';
 import { isExtensionRunning } from '../extension';
+import type { SourcePosition } from '../types/diagnostics';
+import { formatHintsMarkdown } from '../utils/message-markdown';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -29,10 +31,28 @@ export function registerHover() {
                 }
             }
 
-            if (hoverContent.value.length === 0) return null;
-            return new vscode.Hover(hoverContent);
+            const contents = [hoverContent, ...getHoveredHints(document, position)].filter(content => content.value.length > 0);
+            if (contents.length === 0) return null;
+            return new vscode.Hover(contents);
         }
     });
+}
+
+/**
+ * The hints of the LiquidJava diagnostics at a position, in markdown. VS Code shows their message in its own hover,
+ * which is plain text, and that hover leaves the hints out
+ */
+function getHoveredHints(document: vscode.TextDocument, position: vscode.Position): vscode.MarkdownString[] {
+    const file = normalizeFilePath(document.uri.fsPath);
+    return (extension.diagnostics ?? [])
+        .filter(diagnostic => diagnostic.position && diagnostic.file && normalizeFilePath(diagnostic.file) === file)
+        .filter(diagnostic => {
+            const { lineStart, colStart, lineEnd, colEnd } = diagnostic.position!;
+            return new vscode.Range(lineStart, colStart, lineEnd, colEnd).contains(position);
+        })
+        .map(diagnostic => formatHintsMarkdown(diagnostic.hints, diagnostic.references, toLocationLink))
+        .filter((markdown): markdown is string => markdown !== null)
+        .map(markdown => new vscode.MarkdownString(markdown));
 }
 
 function getHoveredVariable(document: vscode.TextDocument, position: vscode.Position): LJVariable | null {
@@ -120,9 +140,12 @@ function formatMethodHover(method: LJMethod): string {
 }
 
 function formatMethodLocationLink(method: LJMethod): string | null {
-    if (!method.position?.file) return null;
-    const uri = vscode.Uri.file(method.position.file).with({
-        fragment: `L${method.position.lineStart + 1},${method.position.colStart + 1}`
-    });
-    return `[Go to Refinements Definition](${uri.toString()})`;
+    const link = method.position && toLocationLink(method.position);
+    return link ? `[Go to Refinements Definition](${link})` : null;
+}
+
+// a link that opens the file at the position
+function toLocationLink(position: SourcePosition): string | null {
+    if (!position.file) return null;
+    return vscode.Uri.file(position.file).with({ fragment: `L${position.lineStart + 1},${position.colStart + 1}` }).toString();
 }
