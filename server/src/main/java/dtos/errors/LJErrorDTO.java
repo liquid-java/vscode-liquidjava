@@ -17,12 +17,12 @@ public class LJErrorDTO extends LJDiagnosticDTO {
 
     public LJErrorDTO(String type, LJError error) {
         super("error", type, error);
-        this.translationTable = TranslationTableDTO.from(error.getTranslationTable());
+        this.translationTable = TranslationTableDTO.from(error.getTranslationTable(), error.getDisplayNames());
     }
 
     protected LJErrorDTO(String category, String type, LJError error) {
         super(category, type, error);
-        this.translationTable = TranslationTableDTO.from(error.getTranslationTable());
+        this.translationTable = TranslationTableDTO.from(error.getTranslationTable(), error.getDisplayNames());
     }
 
     public LJErrorDTO(String category, String type, String title, String message, List<HintDTO> hints, String file,

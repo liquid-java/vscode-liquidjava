@@ -1,6 +1,6 @@
 import type { VCImplication } from "../../../types/vc-implications";
 import type { TranslationTable } from "../../../types/diagnostics";
-import { getExpressionLines, renderExpressionLines, renderHighlightedInlineExpression } from "../../highlighting";
+import { getExpressionLines, renderExpressionLines, renderHighlightedInlineExpression, renderLineTags } from "../../highlighting";
 import { escapeHtml } from "../../utils";
 import { renderSourceHighlightButton } from "../sections";
 
@@ -8,7 +8,7 @@ type ChangeKind = "unchanged" | "removed" | "added";
 type DiffOperation<T> = { kind: ChangeKind; value: T };
 
 const MIN_LINE_SIMILARITY = 0.3;
-const TOKEN_PATTERN = /\s+|-->|&&|\|\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#⁰¹²³⁴⁵⁶⁷⁸⁹]*|\d+(?:\.\d+)?|[^\s]/gu;
+const TOKEN_PATTERN = /\s+|-->|&&|\|\||==|!=|<=|>=|[a-zA-Z_#][a-zA-Z0-9_#]*(?:@\d+(?:#\d+)?)?|@\d+(?:#\d+)?|\d+(?:\.\d+)?|[^\s]/gu;
 const WHITESPACE_PATTERN = /^\s+$/u;
 const VC_LINE_SEPARATOR = "\t";
 
@@ -39,10 +39,10 @@ function getImplicationLines(node: VCImplication): string[] {
 function renderBinder(binder: string, type: string, translationTable?: TranslationTable): string {
     const placement = translationTable?.[binder.slice(1)];
     if (!placement?.position?.file) {
-        return `<span class="vc-node vc-binder" title="${escapeHtml(type)}">${escapeHtml(binder)}</span>`;
+        return `<span class="vc-node vc-binder" title="${escapeHtml(type)}">${renderLineTags(binder)}</span>`;
     }
     return renderSourceHighlightButton(
-        escapeHtml(binder),
+        renderLineTags(binder),
         type ? `Go to source (${type})` : "Go to source",
         placement.position,
         "vc-node vc-binder clickable",

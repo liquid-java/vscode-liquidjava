@@ -1,11 +1,11 @@
 import { LJVariable } from "../../../types/context";
 import { RefinementMismatchError } from "../../../types/diagnostics";
-import { renderHighlightedInlineExpression } from "../../highlighting";
+import { renderHighlightedInlineExpression, withoutLineTag } from "../../highlighting";
 import { escapeHtml, getSimpleName } from "../../utils";
 import { renderToggleSection, renderVariableHighlightButton, renderDiagnosticRevealButton } from "../sections";
 
 export function renderContextVariables(variables: LJVariable[], isExpanded: boolean, errorAtCursor?: RefinementMismatchError): string {
-    const relevantNames = new Set(Object.keys(errorAtCursor?.translationTable || {}));
+    const relevantNames = new Set(Object.keys(errorAtCursor?.translationTable || {}).map(withoutLineTag));
     return /*html*/`
         <div class="context-section">
             ${renderToggleSection('Variables', 'context-vars', isExpanded)}

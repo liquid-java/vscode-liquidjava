@@ -44,8 +44,8 @@ describe('context view', () => {
         expect(text('#context-ghosts tr:first-child td:last-child')).toBe('ghost');
         expect(text('#context-ghosts tr:last-child td:first-child')).toBe('phase(Example) == open');
         expect(text('#context-ghosts tr:last-child td:last-child')).toBe('state');
-        expect(text('#context-vars tbody td:first-child')).toBe('count@3');
-        expect(text('#context-vars tbody td:last-child')).toBe('count@3 > 0');
+        expect(text('#context-vars tbody td:first-child')).toBe('countl3');
+        expect(text('#context-vars tbody td:last-child')).toBe('countl3 > 0');
         expect(Array.from(document.querySelectorAll('.context-toggle-btn'), node => node.getAttribute('aria-expanded'))).toEqual(['true', 'true', 'true']);
         expect(document.querySelectorAll('.context-section-content.collapsed')).toHaveLength(0);
     });

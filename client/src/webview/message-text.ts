@@ -1,4 +1,5 @@
 import type { LJSourceReference } from "../types/diagnostics";
+import { renderLineTags } from "./highlighting";
 import { escapeHtml } from "./utils";
 
 // a run of backticks, the code, and a run of the same length, as the verifier marks code in its messages
@@ -24,7 +25,7 @@ export function renderMessageText(message: string, references: LJSourceReference
         CODE_SPAN.lastIndex = index;
         const span = message[index] === "`" ? CODE_SPAN.exec(message) : null;
         if (span) {
-            html += `<code class="lj-code">${escapeHtml(unpad(span[2]))}</code>`;
+            html += `<code class="lj-code">${renderLineTags(unpad(span[2]))}</code>`;
             index += span[0].length;
             continue;
         }

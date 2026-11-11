@@ -50,6 +50,23 @@ describe('verification implications', () => {
         expect(Array.from(document.querySelectorAll('.vc-change-fragment')).map(fragment => fragment.textContent))
             .toEqual(['x > 0 &&']);
     });
+    it('writes a line tag under its variable, saying which value it stands for, and changes it with its variable', () => {
+        document.body.innerHTML = renderImplication({
+            name: 'x@12', type: 'int', predicate: 'x@12 > failures.size()@84 && y#2 > 0', next: conclusion,
+        });
+
+        const tags = Array.from(document.querySelectorAll('sub.lj-line-tag'));
+        expect(tags.map(tag => [tag.textContent, tag.getAttribute('title')])).toEqual([
+            ['l12', 'value of x at line 12'], ['l12', 'value of x at line 12'],
+            ['l84', 'value of failures.size() at line 84'], ['#2', 'value 2 of y'],
+        ]);
+
+        document.body.innerHTML = renderImplicationChange(
+            { ...conclusion, predicate: 'x@12 > 0' }, { ...conclusion, predicate: 'x@13 > 0' },
+        );
+        expect(Array.from(document.querySelectorAll('.vc-change-fragment')).map(fragment => fragment.innerHTML))
+            .toEqual([expect.stringMatching(/^<span [^>]*>x<\/span><sub [^>]*>l13<\/sub>$/)]);
+    });
     it.each([
         ['initial rendering', () => renderImplication({ ...implication, next: null })],
         ['simplification change', () => renderImplicationChange(implication, { ...implication, next: null })],

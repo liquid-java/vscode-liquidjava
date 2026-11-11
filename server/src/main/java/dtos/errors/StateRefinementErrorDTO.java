@@ -35,8 +35,8 @@ public class StateRefinementErrorDTO extends LJErrorDTO {
 
     public StateRefinementErrorDTO(StateRefinementError error) {
         super("state-refinement-error", error);
-        this.expected = error.getExpected() == null ? null : ExpressionFormatter.format(error.getExpected());
-        this.found = VCSimplificationResultDTO.from(error.getFoundSimplification());
+        this.expected = error.getExpected() == null ? null : ExpressionFormatter.format(error.getExpected().getExpression(), error.getDisplayNames());
+        this.found = VCSimplificationResultDTO.from(error.getFoundSimplification(), error.getDisplayNames());
         this.customMessage = error.getCustomMessage();
         this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
         this.declarationPositions = error.getDeclarationPositions().stream().map(SourcePositionDTO::from).toList();

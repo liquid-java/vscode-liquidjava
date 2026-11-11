@@ -2,7 +2,7 @@ package dtos.diagnostics;
 
 import java.util.List;
 
-import liquidjava.rj_language.ast.formatter.VariableFormatter;
+import liquidjava.rj_language.ast.formatter.DisplayNames;
 import liquidjava.smt.Counterexample;
 
 /**
@@ -10,13 +10,13 @@ import liquidjava.smt.Counterexample;
  */
 public record CounterexampleDTO(List<AssignmentDTO> assignments) {
 
-    public static CounterexampleDTO from(Counterexample counterexample) {
+    public static CounterexampleDTO from(Counterexample counterexample, DisplayNames names) {
         if (counterexample == null)
             return null;
 
         List<AssignmentDTO> assignments = counterexample.assignments().stream()
                 .map(assignment -> new AssignmentDTO(
-                        VariableFormatter.format(assignment.first()),
+                        names.get(assignment.first()),
                         assignment.second()))
                 .toList();
         return new CounterexampleDTO(assignments);

@@ -25,10 +25,10 @@ public class RefinementErrorDTO extends LJErrorDTO {
 
     public RefinementErrorDTO(RefinementError error) {
         super("refinement-error", error);
-        this.expected = error.getExpected() == null ? null : ExpressionFormatter.format(error.getExpected());
-        this.found = VCSimplificationResultDTO.from(error.getFound());
+        this.expected = error.getExpected() == null ? null : ExpressionFormatter.format(error.getExpected().getExpression(), error.getDisplayNames());
+        this.found = VCSimplificationResultDTO.from(error.getFound(), error.getDisplayNames());
         this.customMessage = error.getCustomMessage();
-        this.counterexample = CounterexampleDTO.from(error.getCounterexample());
+        this.counterexample = CounterexampleDTO.from(error.getCounterexample(), error.getDisplayNames());
         this.declarationPosition = SourcePositionDTO.from(error.getDeclarationPosition());
         this.declarationPositions = error.getDeclarationPositions().stream().map(SourcePositionDTO::from).toList();
         this.declarationNotes = error.getDeclarationNotes();

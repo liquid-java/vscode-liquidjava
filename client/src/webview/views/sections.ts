@@ -113,11 +113,11 @@ export const renderLocation = (diagnostic: LJDiagnostic): string => {
 };
 
 export function renderVariableHighlightButton(variable: LJVariable): string {
-    const displayName = variable.displayName;
+    const name = `<code>${renderHighlightedInlineExpression(variable.displayName)}</code>`;
     const position = variable.position;
-    if (!position || !position.file) return `<code>${displayName}</code>`;
+    if (!position || !position.file) return name;
     return renderSourceHighlightButton(
-        `<code>${renderHighlightedInlineExpression(displayName)}</code>`,
+        name,
         variable.type ? `Go to source (${variable.type})` : "Go to source",
         position,
         "clickable",

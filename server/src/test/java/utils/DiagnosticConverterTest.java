@@ -5,18 +5,25 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import dtos.diagnostics.CounterexampleDTO.AssignmentDTO;
 import dtos.diagnostics.HintDTO;
 import dtos.diagnostics.LJDiagnosticDTO;
 import dtos.diagnostics.SourcePositionDTO;
 import dtos.diagnostics.SourceReferenceDTO;
+import dtos.diagnostics.VCImplicationDTO;
 import dtos.errors.*;
 import dtos.warnings.*;
+import liquidjava.api.CommandLineLauncher;
+import liquidjava.diagnostics.Diagnostics;
 import liquidjava.diagnostics.SourceReference;
 import liquidjava.diagnostics.TranslationTable;
 import liquidjava.diagnostics.errors.*;
@@ -196,6 +203,22 @@ class DiagnosticConverterTest {
         assertEquals(List.of(), dto.declarationPositions);
         assertEquals(List.of("where closed(this) means doorState(this) == closed"), dto.declarationNotes);
         assertEquals(List.of(), dto.stateMachines);
+    }
+
+    @Test
+    void namesTheVariablesOfEveryPartOfAnErrorAsItsMessageDoes() {
+        String file = Path.of("src", "test", "resources", "names", "Negate.java").toAbsolutePath().toString();
+        CommandLineLauncher.launch(file);
+        RefinementErrorDTO dto = (RefinementErrorDTO) DiagnosticConverter
+                .convertToDTO(Diagnostics.getInstance().getErrors().iterator().next());
+        assertEquals("found `b@7 == 8 && b@7 > 0 && b == -b@7` but expected `b > 0`", dto.message);
+        VCImplicationDTO original = dto.found.origin().implication();
+        assertEquals(List.of("∀b@6 b@6 == 8", "∀b@7 b@7 == b@6 && b@7 > 0", "∀b b == -b@7"),
+                Stream.iterate(original, Objects::nonNull, VCImplicationDTO::next)
+                        .map(step -> "∀" + step.name() + " " + step.predicate()).toList());
+        assertEquals("b > 0", dto.expected);
+        assertEquals(Set.of("b@6", "b@7", "b"), dto.translationTable.keySet());
+        assertEquals(List.of("b"), dto.counterexample.assignments().stream().map(AssignmentDTO::variable).toList());
     }
 
     @Test
