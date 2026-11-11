@@ -2,6 +2,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -82,20 +84,37 @@ public class LJDiagnosticsHandler {
             .toList();
     }
 
+    /** A run of backticks, the code, and a run of the same length, as the verifier marks code in its messages */
+    private static final Pattern CODE_SPAN = Pattern.compile("(`+)([\\s\\S]+?)(?<!`)\\1(?!`)");
+
     /**
-     * The message the editor shows for a diagnostic: the headline, then the notes that explain it and the
-     * counterexample, each on its own line. The hints are left to the LiquidJava view
+     * The message of a diagnostic in the editor: its headline, which VS Code shows as plain text in the hover, the
+     * Problems tab and the problem view, so the code it marks with backticks is written without them. The notes,
+     * the counterexample and the hints are left to the extension's own part of the hover, in markdown, and to the
+     * LiquidJava view
      * @param diagnostic the diagnostic
      * @return the message
      */
     static String getHoverMessage(LJDiagnostic diagnostic) {
-        List<String> lines = new ArrayList<>();
-        lines.add(String.format("%s: %s", diagnostic.getTitle(), diagnostic.getMessage()));
-        lines.addAll(diagnostic.getMessageNotes());
-        String counterexample = diagnostic.getCounterexampleStr();
-        if (counterexample != null && !counterexample.isBlank())
-            lines.add(counterexample);
-        return String.join("\n", lines);
+        return String.format("%s: %s", diagnostic.getTitle(), plainCode(diagnostic.getMessage()));
+    }
+
+    /** The text with the code it marks with backticks written without them */
+    static String plainCode(String text) {
+        if (text == null)
+            return "";
+        Matcher matcher = CODE_SPAN.matcher(text);
+        StringBuilder plain = new StringBuilder();
+        while (matcher.find())
+            matcher.appendReplacement(plain, Matcher.quoteReplacement(unpad(matcher.group(2))));
+        matcher.appendTail(plain);
+        return plain.toString();
+    }
+
+    // the code without the space on each side that the verifier adds to code with a backtick or a space at an end
+    private static String unpad(String code) {
+        return code.length() >= 2 && code.startsWith(" ") && code.endsWith(" ") ? code.substring(1, code.length() - 1)
+                : code;
     }
 
     /**

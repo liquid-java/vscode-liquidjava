@@ -233,14 +233,13 @@ export function getStyles(): string {
             background-color: var(--vscode-editor-background);
             border-radius: 4px;
         }
-        /* code that a message marks with backticks, set apart from its prose */
+        /* code that a message marks with backticks, as VS Code renders inline code in a markdown hover */
         .lj-code {
-            padding: 0 0.2em;
+            padding: 0 0.1em;
             border-radius: 3px;
             font-family: var(--vscode-editor-font-family, monospace);
             font-size: var(--vscode-editor-font-size, inherit);
-            color: var(--vscode-textPreformat-foreground);
-            background-color: var(--vscode-textPreformat-background);
+            background-color: var(--vscode-textCodeBlock-background);
             overflow-wrap: break-word;
         }
         .message-note {

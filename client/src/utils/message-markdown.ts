@@ -1,8 +1,24 @@
-import type { LJHint, LJSourceReference, SourcePosition } from "../types/diagnostics";
+import type { LJDiagnostic, LJHint, LJSourceReference, SourcePosition } from "../types/diagnostics";
 import { groupHints, splitMessageText } from "./message-text";
 
 // the link that opens a place in the source, or null if it has no file
 export type LinkTarget = (position: SourcePosition) => string | null;
+
+/**
+ * Formats what the editor hover shows of a diagnostic under its headline, in markdown: the notes that explain it
+ * (such as where a value comes from), the counterexample and the hints, with their code as inline code and the
+ * places they name as links. VS Code shows the headline itself in its own hover, which is plain text
+ * @param linkTo the link that opens a place
+ * @returns the markdown, or null if the diagnostic has none of them
+ */
+export function formatDiagnosticMarkdown(diagnostic: LJDiagnostic, linkTo: LinkTarget): string | null {
+    const parts = [
+        ...diagnostic.messageNotes.map(note => formatMessageMarkdown(note, diagnostic.references, linkTo)),
+        formatCounterexampleMarkdown(diagnostic),
+        formatHintsMarkdown(diagnostic.hints, diagnostic.references, linkTo),
+    ].filter((part): part is string => part !== null && part.length > 0);
+    return parts.length > 0 ? parts.join("\n\n") : null;
+}
 
 /**
  * Formats the hints of a diagnostic in markdown, as the panel shows them: their code as inline code and the places
@@ -20,6 +36,13 @@ export function formatHintsMarkdown(hints: LJHint[] | undefined, references: LJS
         ...options.length > 0 ? ["Any one of these:", options.map(hint => `- ${format(hint)}`).join("\n")] : [],
         ...notes.map(format),
     ].join("\n\n");
+}
+
+// Counterexample: `x == 1 && y == 0`, as the verifier prints it, or null if the diagnostic has none
+function formatCounterexampleMarkdown(diagnostic: LJDiagnostic): string | null {
+    if (diagnostic.type !== "refinement-error" || diagnostic.counterexample.assignments.length === 0) return null;
+    const assignments = diagnostic.counterexample.assignments.map(a => `${a.variable} == ${a.value}`).join(" && ");
+    return `Counterexample: ${formatInlineCode(assignments)}`;
 }
 
 function formatMessageMarkdown(message: string, references: LJSourceReference[], linkTo: LinkTarget): string {

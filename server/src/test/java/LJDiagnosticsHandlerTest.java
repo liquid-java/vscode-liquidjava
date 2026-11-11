@@ -10,9 +10,9 @@ import liquidjava.diagnostics.hints.Hint;
 class LJDiagnosticsHandlerTest {
 
     @Test
-    void hoverShowsTheHeadlineThenTheNotesThenTheCounterexampleButNoHints() {
-        LJDiagnostic diagnostic = new LJDiagnostic("Refinement Error", "expected timeout >= 0 but could not prove it",
-                null, "", null) {
+    void messageIsTheHeadlineWithItsCodeUnwrappedAndNothingElse() {
+        LJDiagnostic diagnostic = new LJDiagnostic("Refinement Error",
+                "found `x > 0 && y == 1` but expected `` `q `` and `a*b`", null, "", null) {
             @Override
             public List<String> getMessageNotes() {
                 return List.of("where Positive(x) means x > 0");
@@ -20,10 +20,7 @@ class LJDiagnosticsHandlerTest {
         };
         diagnostic.setCounterexampleStr("Counterexample: timeout == -1");
         diagnostic.addHint(Hint.general("Add a refinement"));
-
-        assertEquals("""
-                Refinement Error: expected timeout >= 0 but could not prove it
-                where Positive(x) means x > 0
-                Counterexample: timeout == -1""", LJDiagnosticsHandler.getHoverMessage(diagnostic));
+        assertEquals("Refinement Error: found x > 0 && y == 1 but expected `q and a*b",
+                LJDiagnosticsHandler.getHoverMessage(diagnostic));
     }
 }

@@ -6,7 +6,7 @@ import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
 import { definitionMatchesClass, getDefinitions } from './definition';
 import { isExtensionRunning } from '../extension';
 import type { SourcePosition } from '../types/diagnostics';
-import { formatHintsMarkdown } from '../utils/message-markdown';
+import { formatDiagnosticMarkdown } from '../utils/message-markdown';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -31,7 +31,7 @@ export function registerHover() {
                 }
             }
 
-            const contents = [hoverContent, ...getHoveredHints(document, position)].filter(content => content.value.length > 0);
+            const contents = [hoverContent, ...getHoveredDiagnostics(document, position)].filter(content => content.value.length > 0);
             if (contents.length === 0) return null;
             return new vscode.Hover(contents);
         }
@@ -39,10 +39,10 @@ export function registerHover() {
 }
 
 /**
- * The hints of the LiquidJava diagnostics at a position, in markdown. VS Code shows their message in its own hover,
- * which is plain text, and that hover leaves the hints out
+ * What the LiquidJava diagnostics at a position say under their headline, in markdown: the notes that explain them,
+ * the counterexample and the hints. VS Code shows the headline in its own hover, which is plain text
  */
-function getHoveredHints(document: vscode.TextDocument, position: vscode.Position): vscode.MarkdownString[] {
+function getHoveredDiagnostics(document: vscode.TextDocument, position: vscode.Position): vscode.MarkdownString[] {
     const file = normalizeFilePath(document.uri.fsPath);
     return (extension.diagnostics ?? [])
         .filter(diagnostic => diagnostic.position && diagnostic.file && normalizeFilePath(diagnostic.file) === file)
@@ -50,7 +50,7 @@ function getHoveredHints(document: vscode.TextDocument, position: vscode.Positio
             const { lineStart, colStart, lineEnd, colEnd } = diagnostic.position!;
             return new vscode.Range(lineStart, colStart, lineEnd, colEnd).contains(position);
         })
-        .map(diagnostic => formatHintsMarkdown(diagnostic.hints, diagnostic.references, toLocationLink))
+        .map(diagnostic => formatDiagnosticMarkdown(diagnostic, toLocationLink))
         .filter((markdown): markdown is string => markdown !== null)
         .map(markdown => new vscode.MarkdownString(markdown));
 }
