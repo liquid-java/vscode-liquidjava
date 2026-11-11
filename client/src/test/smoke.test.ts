@@ -41,7 +41,9 @@ suite('Bundled LiquidJava extension', () => {
             const initialDiagnostics = nextFixtureDiagnostics();
             const document = await vscode.workspace.openTextDocument(uri);
             await vscode.window.showTextDocument(document);
-            await initialDiagnostics;
+            // the server only verifies on the first file opened, so an earlier test may have verified this one
+            const verified = api.getState().diagnostics.some(d => vscode.Uri.file(path.resolve(d.file)).fsPath === uri.fsPath);
+            if (!verified) await initialDiagnostics;
 
             const manualDiagnostics = nextFixtureDiagnostics();
             await vscode.commands.executeCommand('liquidjava.verify');
