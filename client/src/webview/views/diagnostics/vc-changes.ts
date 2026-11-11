@@ -27,7 +27,7 @@ function parseImplicationLine(line: string): { binder: string; type: string; pre
     return { binder, type, predicate, hasNext: next === "next" };
 }
 
-export function getImplicationLines(node: VCImplication): string[] {
+function getImplicationLines(node: VCImplication): string[] {
     const lines: string[] = [];
     for (let current: VCImplication | null = node; current; current = current.next) {
         if (current.next && !hasBinder(current)) continue;

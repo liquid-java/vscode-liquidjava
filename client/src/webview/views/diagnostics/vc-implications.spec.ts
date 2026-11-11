@@ -43,37 +43,30 @@ function previous(): void {
 afterEach(() => { document.body.innerHTML = ''; });
 
 describe('Found', () => {
-    it('names a simplified step and tells what changed, instead of the pass', () => {
+    it('shows every step of the verifier, each under its name with what changed in the tooltip', () => {
+        const states = 'tiling(p) == tilingNotExplicit && compression(p) == compressionNotExplicit';
         render(derivation(
-            [null, chain(['failures', 'failures == this.failures'], ['n', 'n == size(failures)'])],
-            ['Substitution', chain(['n', 'n == size(this.failures)'])],
+            [null, chain(['#if_condition', '#if_condition'], ['p', states])],
+            ['Binder', chain(['#if_condition', 'true'], ['p', states])],
+            ['Binder', chain(['p', states])],
+            ['Relevant to Expected', chain(['p', 'compression(p) == compressionNotExplicit'])],
         ));
 
         expect(shown()).toEqual({
-            label: 'Simplified', info: 'Replaced variables with the values they are equal to.', position: '2/2',
-            lines: ['∀n n == size(this.failures)'],
-        });
-        previous();
-        expect(shown()).toMatchObject({ label: 'Original', info: 'What is known here, before simplifying.', position: '1/2' });
-    });
-
-    it('shows a display step by name and skips steps with generated names or the same pass', () => {
-        const states = 'tiling(p) == tilingNotExplicit && compression(p) == compressionNotExplicit';
-        render(derivation(
-            [null, chain(['#if_condition', '#if_condition'], ['x', 'x > 0'], ['p', states])],
-            ['Binder', chain(['x', 'x > 0'], ['p', states])],
-            ['Binder', chain(['p', states])],
-            ['Relevant to Expected', chain(['p', 'compression(p) == compressionNotExplicit'])],
-        ), 'found compression(p) == compressionNotExplicit but expected ...');
-
-        expect(shown()).toEqual({
             label: 'Relevant to Expected', info: 'Kept only the facts that Expected depends on, directly or through other facts.',
-            position: '2/2', lines: ['∀p compression(p) == compressionNotExplicit'],
+            position: '4/4', lines: ['∀p compression(p) == compressionNotExplicit'],
         });
         previous();
         expect(shown()).toMatchObject({
-            label: 'Simplified', position: '1/2',
-            lines: [`∀p ${states}`],
+            label: 'Simplified', info: 'Removed facts that say nothing, and conditions that Expected does not depend on.',
+            position: '3/4',
+        });
+        previous();
+        expect(shown()).toMatchObject({ label: 'Simplified', position: '2/4' });
+        previous();
+        expect(shown()).toMatchObject({
+            label: 'Original', info: 'What is known here, before simplifying.', position: '1/4',
+            lines: ['∀#if_condition #if_condition →', `∀p ${states}`],
         });
     });
 
