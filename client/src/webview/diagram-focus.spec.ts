@@ -118,7 +118,7 @@ describe('state error focus', () => {
 
         expect(lines(createMermaidDiagram(sm, 'TB', false, false))).toContain('[*] --> maybeHasChildren : isLeaf');
         expect(lines(createMermaidDiagram(sm, 'TB', true, false))).toContain(
-            '[*] --> maybeHasChildren : isLeaf<br/><span class="state-cond state-cond-post">!return</span>');
+            '[*] --> maybeHasChildren : isLeaf <span class="state-cond state-cond-post">[!return]</span>');
         // the constructor and the entry transition come first
         expect(dimmedTransitions(createMermaidDiagram(sm, 'TB', false, true))[0]).toMatch(/^%% lj-dimmed-transitions: edge0 edge1\b/);
     });
@@ -130,8 +130,8 @@ describe('state error focus', () => {
         ] };
 
         expect(lines(createMermaidDiagram(sm, 'TB', true, true))).toContain(`[*] --> maybeHasChildren : ${collapsedMethods([
-            'isLeaf<br/><span class="state-cond state-cond-post">!return</span>',
-            'getChildCount<br/><span class="state-cond state-cond-post">return &gt; 0</span>',
+            'isLeaf <span class="state-cond state-cond-post">[!return]</span>',
+            'getChildCount <span class="state-cond state-cond-post">[return &gt; 0]</span>',
         ], '2 methods')}`);
     });
 
@@ -176,7 +176,7 @@ describe('state error focus', () => {
         sm.transitions[0] = { ...sm.transitions[0], fromCondition: 'unbound(this)' };
 
         expect(lines(createMermaidDiagram(sm, 'TB', true, true))).toContain(
-            `unbound --> bound : ${dimmedMethod('<span class="state-cond state-cond-pre">unbound(this)</span><br/>bind')}`);
+            `unbound --> bound : ${dimmedMethod('<span class="state-cond state-cond-pre">[unbound(this)]</span> bind')}`);
     });
 
     it('only colours labels that match the called method exactly', () => {
@@ -247,6 +247,7 @@ describe('state error focus', () => {
             '    childrenAllowed --> maybeHasChildren : add',
             '    maybeHasChildren --> childrenAllowed : removeAllChildren',
             '    maybeHasChildren --> maybeHasChildren : getFirstChild',
+            '%% lj-self-loops: edge3',
         ].join('\n'));
     });
 });
@@ -390,5 +391,81 @@ describe('state errors on several state sets', () => {
     it('focuses on the error of each state set that has it', () => {
         expect(getStateErrorFocuses([tiling, compression, other])).toEqual([getStateErrorFocus(compression)]);
         expect(getStateErrorFocuses([tiling, other])).toEqual([]);
+    });
+});
+
+// Door from the multi-set state error issue: d.lock(); d.open(); where open() needs doorState closed and lockState unlocked
+function door(): LJStateMachine[] {
+    const open = { calledMethod: 'open', receiver: 'd' };
+    return [
+        {
+            className: 'Door', stateSet: 0, stateSetName: 'doorState', states: ['closed', 'opened'],
+            initialTransitions: [{ to: 'closed' }],
+            transitions: [
+                { from: 'closed', to: 'opened', label: 'open', fromCondition: 'lockState(this) == unlocked' },
+                { from: 'closed', to: 'closed', label: 'lock', fromCondition: 'lockState(this) != locked' },
+            ],
+            errorContext: { ...open, possibleStates: ['closed'], acceptedStates: ['closed'], validStates: [], invalidStates: [] },
+        },
+        {
+            className: 'Door', stateSet: 1, stateSetName: 'lockState', states: ['unlocked', 'locked'],
+            initialTransitions: [{ to: 'unlocked' }],
+            transitions: [
+                { from: 'unlocked', to: 'unlocked', label: 'open', fromCondition: 'doorState(this) == closed' },
+                { from: 'locked', to: 'unlocked', label: 'unlock' },
+            ],
+            errorContext: { ...open, possibleStates: ['locked'], acceptedStates: ['unlocked'], validStates: [], invalidStates: ['locked'] },
+        },
+    ];
+}
+
+describe('a state error on several state sets', () => {
+    const guard = (text: string) => `<span class="state-cond state-cond-pre">[${text}]</span>`;
+    const unmet = (text: string) => `<span class="lj-unmet-condition">${text}</span>`;
+
+    it('puts the state set in a wrong state first', () => {
+        const [doorState, lockState] = door();
+        expect(orderStateMachines([doorState, lockState])).toEqual([lockState, doorState]);
+    });
+
+    it('marks the call in the state set in a wrong state, and its unmet condition in the others', () => {
+        const sms = door();
+        const [doorState, lockState] = sms.map(sm => lines(createMermaidDiagram(sm, 'TB', true, false, sms)));
+
+        expect(lockState).toContain(`unlocked --> unlocked : ${guard('doorState(this) == closed')} ${calledMethod('open')}`);
+        expect(doorState).toContain(`closed --> opened : ${guard(unmet('lockState(this) == unlocked'))} open`);
+        expect(doorState).toContain(`closed --> closed : ${guard('lockState(this) != locked')} lock`);
+        // the unmet condition stays when conditions are collapsed
+        expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms)))
+            .toEqual(expect.arrayContaining([`closed --> opened : ${guard(unmet('lockState(this) == unlocked'))} open`, 'closed --> closed : lock']));
+        // only the clauses the actual state does not meet are marked
+        sms[0].transitions[0].fromCondition = 'lockState(this) == unlocked && (size(this) > 0 || ready(this))';
+        expect(lines(createMermaidDiagram(sms[0], 'TB', true, false, sms)))
+            .toContain(`closed --> opened : ${guard(`${unmet('lockState(this) == unlocked')} &amp;&amp; (size(this) &gt; 0 || ready(this))`)} open`);
+        // without a condition on the state set in a wrong state, the call stays marked
+        sms[0].transitions[0].fromCondition = 'size(this) > 0';
+        expect(lines(createMermaidDiagram(sms[0], 'TB', false, false, sms))).toContain(`closed --> opened : ${calledMethod('open')}`);
+    });
+
+    it('draws a transition that keeps its state as a round loop', async () => {
+        document.body.innerHTML = '<div class="diagram-container"><div id="diagram-wrapper"><pre class="mermaid"></pre></div></div>';
+        const pre = document.querySelector('.mermaid')!;
+        pre.textContent = createMermaidDiagram(door()[1], 'TB');
+        // ELK's curl on the left side of the state, from its top to its bottom
+        const points = [{ x: 100, y: 10 }, { x: 85, y: 15 }, { x: 100, y: 20 }];
+        const run = vi.fn(async () => {
+            pre.innerHTML = '<svg><path class="transition" data-id="edge1"></path></svg>';
+            Object.assign(pre.querySelector('path')!, {
+                getTotalLength: () => 2,
+                getPointAtLength: (at: number) => points[at],
+            });
+        });
+
+        await renderMermaidDiagram(document, { mermaid: { run } });
+
+        const loop = document.querySelector('path.lj-self-loop')!;
+        expect(loop.getAttribute('data-id')).toBe('edge1');
+        // as far out as the curl
+        expect(loop.getAttribute('d')).toBe('M100,10 C80,0 80,30 100,20');
     });
 });

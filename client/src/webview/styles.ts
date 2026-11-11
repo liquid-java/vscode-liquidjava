@@ -1080,6 +1080,12 @@ export function getStyles(): string {
             color: var(--vscode-foreground) !important;
             background: var(--vscode-editor-background) !important;
         }
+        /* a label reads as [condition before] method [condition after], so Mermaid must not wrap it */
+        .diagram-container .mermaid .edgeLabel div {
+            white-space: nowrap !important;
+            width: auto !important;
+            max-width: none !important;
+        }
         .diagram-container .mermaid .edgeLabel .state-cond {
             color: var(--vscode-descriptionForeground) !important;
             display: inline-block !important;
@@ -1110,8 +1116,12 @@ export function getStyles(): string {
         .diagram-container .mermaid svg .ljStateErrorActual .label-container {
             stroke: var(--vscode-errorForeground) !important;
         }
-        .diagram-container .mermaid .edgeLabel .lj-state-error-method {
+        .diagram-container .mermaid .edgeLabel .lj-state-error-method,
+        .diagram-container .mermaid .edgeLabel .lj-unmet-condition {
             color: var(--vscode-errorForeground) !important;
+        }
+        .diagram-container .mermaid svg path.lj-self-loop {
+            stroke-width: 1.5px !important;
         }
         .diagram-container .mermaid svg path.lj-state-error-transition {
             stroke: var(--vscode-errorForeground) !important;

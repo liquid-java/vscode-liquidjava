@@ -370,6 +370,29 @@ describe('state machine view', () => {
                 .toEqual(['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state']);
         });
 
+        it('names the state sets in the summary, without those in which every state allows the call', () => {
+            // d.lock(); d.open(); where open() needs doorState closed and lockState unlocked, and any mode
+            const open = { calledMethod: 'open', receiver: 'd' };
+            const sms = [
+                machine({ stateSet: 1, stateSetName: 'lockState', states: ['unlocked', 'locked'],
+                    errorContext: { ...open, possibleStates: ['locked'], acceptedStates: ['unlocked'], validStates: [], invalidStates: ['locked'] } }),
+                machine({ stateSet: 0, stateSetName: 'doorState', states: ['closed', 'opened'],
+                    errorContext: { ...open, possibleStates: ['closed'], acceptedStates: ['closed'], validStates: [], invalidStates: [] } }),
+                machine({ stateSet: 2, stateSetName: 'mode', states: ['quiet', 'loud'],
+                    errorContext: { ...open, possibleStates: ['quiet'], acceptedStates: ['quiet', 'loud'], validStates: [], invalidStates: [] } }),
+            ];
+            renderStateMachineView(document.body, sms, ['lock diagram', 'door diagram', 'mode diagram'], 'TB', false, true);
+
+            expect(document.querySelector('.diagram-error-text')?.textContent)
+                .toBe('Invalid method call d.open() \u00B7 expected doorState closed, lockState unlocked \u00B7 actual lockState locked');
+
+            // with no set in a wrong state, the call is rejected by the combination of states, so every set is named
+            sms[0].errorContext = { ...open, possibleStates: ['locked'], acceptedStates: ['unlocked', 'locked'], validStates: [], invalidStates: [] };
+            renderStateMachineView(document.body, sms, ['lock diagram', 'door diagram', 'mode diagram'], 'TB', false, true);
+            expect(document.querySelector('.diagram-error-text')?.textContent)
+                .toBe('Invalid method call d.open() \u00B7 expected doorState closed, lockState unlocked or locked, mode quiet or loud \u00B7 actual doorState closed, lockState locked, mode quiet');
+        });
+
         it('fits the diagram to the panel only when focusing on the error', () => {
             const sm = { ...tiling, errorContext: { calledMethod: 'write', receiver: 'param', possibleStates: ['startTiling'], acceptedStates: ['tilingSet'], validStates: [], invalidStates: ['startTiling'] } };
 
