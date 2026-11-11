@@ -3,6 +3,7 @@ import { LiquidJavaWebviewProvider } from "../webview/provider";
 import { extension } from "../state";
 import type { DiagnosticRevealTarget } from "../types/diagnostics";
 import type { NavTab } from "../webview/views/sections";
+import { logUsage } from "./usage-log";
 
 /**
  * Initializes the webview panel for the extension
@@ -23,7 +24,9 @@ export function registerWebview(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget, tab?: NavTab) => {
             const isVisible = extension.webview?.isVisible();
             await vscode.commands.executeCommand("liquidJavaView.focus");
-            if (!diagnostic) return; 
+            if (!diagnostic) return;
+            // the code lenses above an error: its title opens the Verification tab, "Show in state machine" the State Machine tab
+            logUsage(tab === 'fsm' ? 'state-machine' : 'show-view', { from: 'code-lens', file: diagnostic.file, line: diagnostic.position.lineStart + 1 });
             
             if (isVisible) {
                 extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic, tab });

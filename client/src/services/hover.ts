@@ -50,9 +50,14 @@ function getHoveredDiagnostics(document: vscode.TextDocument, position: vscode.P
             const { lineStart, colStart, lineEnd, colEnd } = diagnostic.position!;
             return new vscode.Range(lineStart, colStart, lineEnd, colEnd).contains(position);
         })
-        .map(diagnostic => formatDiagnosticMarkdown(diagnostic, toLocationLink))
+        .map(diagnostic => formatDiagnosticMarkdown(diagnostic, toLocationLink, { hints: showHintsInHover() }))
         .filter((markdown): markdown is string => markdown !== null)
         .map(markdown => new vscode.MarkdownString(markdown));
+}
+
+// liquidjava.hover.showHints: off keeps the hints in the view only, closed until opened (user studies)
+function showHintsInHover(): boolean {
+    return vscode.workspace.getConfiguration().get<boolean>('liquidjava.hover.showHints', true);
 }
 
 function getHoveredVariable(document: vscode.TextDocument, position: vscode.Position): LJVariable | null {

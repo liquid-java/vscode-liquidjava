@@ -64,6 +64,16 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Apply italic style to LiquidJava injected tokens on top of any active theme"
+				},
+				"liquidjava.hover.showHints": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show the hints of an error in the editor hover. When off, the hover says that the hints are in the LiquidJava view, where they stay closed until opened."
+				},
+				"liquidjava.usageLog": {
+					"type": "string",
+					"default": "",
+					"description": "Path of a JSON Lines file to which the extension appends what is used in the LiquidJava view: tabs, hints opened, Found steps, locations, state machine, copies. Empty: nothing is written. Meant for user studies."
 				}
 			}
 		},

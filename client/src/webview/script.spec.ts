@@ -141,6 +141,24 @@ describe('webview script', () => {
         expect(root.querySelector('.info')?.textContent).toContain('Running the LiquidJava verification');
     });
 
+    it('posts a usage message for a tab switch and for the hints toggle (liquidjava.usageLog)', () => {
+        showDiagnostics([{ ...diagnostic(currentFile, 'State error'), hints: [{ kind: 'general', message: 'Call `open()` first' }] }]);
+        receive({ type: 'context', context: context() });
+        postMessage.mockClear();
+
+        click('[data-tab="context"]');
+        expect(postMessage.mock.calls).toContainEqual([{ type: 'usage', action: 'tab', tab: 'context' }]);
+
+        click('[data-tab="diagnostics"]');
+        postMessage.mockClear();
+        const details = root.querySelector<HTMLDetailsElement>('details[data-hint-key]');
+        expect(details, 'the hints are rendered closed').not.toBeNull();
+        expect(details!.open).toBe(false);
+        details!.open = true;
+        details!.dispatchEvent(new dom.window.Event('toggle'));
+        expect(postMessage.mock.calls).toContainEqual([{ type: 'usage', action: 'hints', open: true, error: details!.getAttribute('data-hint-key') }]);
+    });
+
     it('switches between diagnostics, context, and state machine tabs', async () => {
         showDiagnostics([diagnostic(currentFile, 'Current error')]);
         receive({ type: 'context', context: context() });
@@ -168,8 +186,11 @@ describe('webview script', () => {
         expect(root.querySelector('.diagram-container')).toBeNull();
         expect(postMessage.mock.calls).toEqual([
             [{ type: 'highlight', range: null }],
+            [{ type: 'usage', action: 'tab', tab: 'context' }],
             [{ type: 'highlight', range: null }],
+            [{ type: 'usage', action: 'tab', tab: 'fsm' }],
             [{ type: 'highlight', range: null }],
+            [{ type: 'usage', action: 'tab', tab: 'diagnostics' }],
         ]);
     });
 
