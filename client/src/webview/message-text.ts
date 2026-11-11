@@ -1,9 +1,7 @@
 import type { LJSourceReference } from "../types/diagnostics";
+import { splitMessageText } from "../utils/message-text";
 import { renderLineTags } from "./highlighting";
 import { escapeHtml } from "./utils";
-
-// a run of backticks, the code, and a run of the same length, as the verifier marks code in its messages
-const CODE_SPAN = /(`+)([\s\S]+?)(?<!`)\1(?!`)/y;
 
 /**
  * Renders a line of a diagnostic, such as a note or a hint: the code it marks with backticks in the editor font,
@@ -11,33 +9,13 @@ const CODE_SPAN = /(`+)([\s\S]+?)(?<!`)\1(?!`)/y;
  * @param references the places the diagnostic names, of which only those of this line are used
  */
 export function renderMessageText(message: string, references: LJSourceReference[] = []): string {
-    const links = references.filter(reference =>
-        reference.message === message && message.startsWith(reference.text, reference.start));
-    let html = "";
-    let index = 0;
-    while (index < message.length) {
-        const link = links.find(reference => reference.start === index);
-        if (link) {
-            html += renderReferenceLink(link);
-            index += link.text.length;
-            continue;
+    return splitMessageText(message, references).map(segment => {
+        switch (segment.kind) {
+            case "reference": return renderReferenceLink(segment.reference);
+            case "code": return `<code class="lj-code">${renderLineTags(segment.code)}</code>`;
+            case "text": return escapeHtml(segment.text);
         }
-        CODE_SPAN.lastIndex = index;
-        const span = message[index] === "`" ? CODE_SPAN.exec(message) : null;
-        if (span) {
-            html += `<code class="lj-code">${renderLineTags(unpad(span[2]))}</code>`;
-            index += span[0].length;
-            continue;
-        }
-        html += escapeHtml(message[index]);
-        index++;
-    }
-    return html;
-}
-
-// the code without the space on each side that the verifier adds to code that holds a backtick or a space at an end
-function unpad(code: string): string {
-    return code.length >= 2 && code.startsWith(" ") && code.endsWith(" ") ? code.slice(1, -1) : code;
+    }).join("");
 }
 
 function renderReferenceLink(reference: LJSourceReference): string {
