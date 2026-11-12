@@ -29,8 +29,12 @@ export function registerStatusBar(context: vscode.ExtensionContext) {
     context.subscriptions.push(extension.statusBar);
 }
 
+/** Fires on every status change: loading when a verification starts, passed, failed or crashed when it ends (the server sends those after it has published the diagnostics), stopped when the client stops. Exported by activate() for other extensions. */
+export const statusEmitter = new vscode.EventEmitter<ExtensionStatus>();
+
 export function updateStatusBar(status: ExtensionStatus) {
     extension.status = status;
+    statusEmitter.fire(status);
     if (!extension.statusBar) return;
     const color = status === "stopped" || status === "crashed" ? "errorForeground" : "statusBar.foreground";
     extension.statusBar.color = new vscode.ThemeColor(color);
