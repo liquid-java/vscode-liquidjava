@@ -7,6 +7,7 @@ import { registerCommands } from "./services/commands";
 import { registerStatusBar, updateStatusBar } from "./services/status-bar";
 import { registerWebview } from "./services/webview";
 import { registerHover } from "./services/hover";
+import { registerUsageLog } from "./services/usage-log";
 import { registerEvents } from "./services/events";
 import { registerAutocomplete } from "./services/autocomplete";
 import { refreshCodeLenses, registerCodeLens } from "./services/codelens";
@@ -27,6 +28,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Liquid
     registerCommands(context);
     registerEvents(context);
     registerWebview(context);
+    registerUsageLog(context);
     registerAutocomplete(context);
     registerCodeLens(context);
     registerHover();

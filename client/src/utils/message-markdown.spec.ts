@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDiagnosticMarkdown, formatHintsMarkdown } from './message-markdown';
+import { HINTS_IN_VIEW, formatDiagnosticMarkdown, formatHintsMarkdown } from './message-markdown';
 
 describe('hints in markdown', () => {
     it('keeps the code and links the lines, and escapes the rest', () => {
@@ -45,6 +45,13 @@ describe('a diagnostic in markdown', () => {
             'Counterexample: `x == 0 && size(s) == 2`',
             '**Hint**\n\nCall `buffered.mark(int)` before this call',
         ].join('\n\n'));
+    });
+
+    it('says where the hints are instead of showing them when hints are off (liquidjava.hover.showHints)', () => {
+        const withHints = { category: 'error', type: 'custom-error', title: 'Error', message: 'a < b', hints: [{ kind: 'general', message: 'Call `f()` first' }], file: '', position: null, messageNotes: [], references: [] } as unknown as import('../types/diagnostics').LJDiagnostic;
+        expect(formatDiagnosticMarkdown(withHints, () => null, { hints: false })).toBe('a \\< b\n\n' + HINTS_IN_VIEW);
+        const without = { ...withHints, hints: [] } as unknown as import('../types/diagnostics').LJDiagnostic;
+        expect(formatDiagnosticMarkdown(without, () => null, { hints: false })).toBe('a \\< b');
     });
 
     it('is the headline alone when the diagnostic has no notes, counterexample or hints', () => {

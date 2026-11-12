@@ -4,19 +4,26 @@ import { groupHints, splitMessageText } from "./message-text";
 // the link that opens a place in the source, or null if it has no file
 export type LinkTarget = (position: SourcePosition) => string | null;
 
+// what the hover says instead of the hints when liquidjava.hover.showHints is off
+export const HINTS_IN_VIEW = "**Hints**: in the LiquidJava view (Hints, under the error).";
+
 /**
  * Formats what the editor hover shows of a diagnostic, in markdown: its headline, the notes that explain it (such as
  * where a value comes from), the counterexample and the hints, with their code as inline code and the places they
  * name as links. VS Code's own part of the hover, which is plain text, shows only the diagnostic's title
  * @param linkTo the link that opens a place
+ * @param options hints: false leaves the hints out and says where they are (the LiquidJava view) when there are any
  * @returns the markdown, or null if the diagnostic has no headline
  */
-export function formatDiagnosticMarkdown(diagnostic: LJDiagnostic, linkTo: LinkTarget): string | null {
+export function formatDiagnosticMarkdown(diagnostic: LJDiagnostic, linkTo: LinkTarget, options: { hints?: boolean } = {}): string | null {
+    const hints = options.hints === false
+        ? diagnostic.hints && diagnostic.hints.length > 0 ? HINTS_IN_VIEW : null
+        : formatHintsMarkdown(diagnostic.hints, diagnostic.references, linkTo);
     const parts = [
         formatMessageMarkdown(diagnostic.message, diagnostic.references, linkTo),
         ...diagnostic.messageNotes.map(note => formatMessageMarkdown(note, diagnostic.references, linkTo)),
         formatCounterexampleMarkdown(diagnostic),
-        formatHintsMarkdown(diagnostic.hints, diagnostic.references, linkTo),
+        hints,
     ].filter((part): part is string => part !== null && part.length > 0);
     return parts.length > 0 ? parts.join("\n\n") : null;
 }

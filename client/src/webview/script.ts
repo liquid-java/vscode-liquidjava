@@ -53,16 +53,28 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         vars: true,
     };
 
+    // what the view's controls are used for goes to the extension, which logs it when liquidjava.usageLog is set
+    const usage = (action: string, detail: Record<string, unknown> = {}) => vscode.postMessage({ type: 'usage', action, ...detail });
+
     // initial state
     root.innerHTML = renderLoading();
     vscode.postMessage({ type: 'ready' });    
     
     // on click
-    // toggle does not bubble, so it is caught on its way down
+    // toggle does not bubble, so it is caught on its way down. A render of an open <details> fires it too, so only a
+    // toggle right after the summary was clicked or keyed counts as the user opening or closing the hints
+    let hintToggleByUser = false;
+    const markHintToggle = (e: Event) => { if ((e.target as Element).closest?.('.hint-summary')) hintToggleByUser = true; };
+    root.addEventListener('click', markHintToggle, true);
+    root.addEventListener('keydown', markHintToggle, true);
     root.addEventListener('toggle', (e: Event) => {
         const details = e.target as HTMLDetailsElement;
         const key = details.getAttribute?.('data-hint-key');
-        if (key !== null && key !== undefined) setHintOpen(key, details.open);
+        if (key !== null && key !== undefined) {
+            setHintOpen(key, details.open);
+            if (hintToggleByUser) usage('hints', { open: details.open, error: key });
+        }
+        hintToggleByUser = false;
     }, true);
 
     root.addEventListener('click', (e: MouseEvent) => {
@@ -89,6 +101,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
             const isExpanded = contextToggleButton.getAttribute('aria-expanded') !== 'false';
             const nextExpanded = !isExpanded;
+            usage('context-section', { section: sectionId, open: nextExpanded });
             if (sectionId === 'context-vars') contextSectionState.vars = nextExpanded;
             if (sectionId === 'context-ghosts') contextSectionState.ghosts = nextExpanded;
             if (sectionId === 'context-aliases') contextSectionState.aliases = nextExpanded;
@@ -131,6 +144,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
             const revealTarget = getDiagnosticRevealTargetFromKey(target.getAttribute('data-diagnostic-target'));
             if (!revealTarget) return;
+            usage('reveal', { file: revealTarget.file, line: revealTarget.position.lineStart + 1 });
             revealDiagnostic(revealTarget);
             return;
         }
@@ -142,6 +156,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
 
             const revealTarget = getDiagnosticRevealTargetFromKey(diagnosticContextButton.getAttribute('data-diagnostic-target'));
             if (!revealTarget) return;
+            usage('context', { file: revealTarget.file, line: revealTarget.position.lineStart + 1 });
             revealContextForDiagnostic(revealTarget);
             return;
         }
@@ -155,6 +170,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             const diagnostic = getDisplayDiagnostics(diagnostics ?? [], showAllDiagnostics, currentFile)
                 .filter(d => d.category === 'error')[errorIndex];
             if (diagnostic?.type !== 'state-refinement-error' || diagnostic.stateMachines.length === 0) return;
+            usage('state-machine', { from: 'view', error: errorIndex });
             showStateError(diagnostic);
             return;
         }
@@ -166,7 +182,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             if ((stateErrorStepButton as HTMLButtonElement).disabled) return;
             const errors = getCurrentStateErrors();
             const index = getShownStateError(errors).index + parseInt(stateErrorStepButton.getAttribute('data-step') || '0', 10);
-            if (errors[index]) showStateError(errors[index]);
+            if (errors[index]) { usage('state-error-step', { to: index }); showStateError(errors[index]); }
             return;
         }
 
@@ -183,6 +199,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         const vcImplicationStepButton = target.closest?.('.vc-step-btn');
         if (vcImplicationStepButton) {
             e.stopPropagation();
+            usage('found-step', { direction: vcImplicationStepButton.getAttribute('data-vc-step'), error: vcImplicationStepButton.getAttribute('data-error-id') });
             handleVCImplicationStepClick(vcImplicationStepButton, () => {
                 root.querySelector<HTMLElement>('.highlight-var-btn.selected')?.classList.remove('selected');
                 vscode.postMessage({ type: 'highlight', range: null });
@@ -194,6 +211,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (target.id === 'show-all-button') {
             e.stopPropagation();
             showAllDiagnostics = !showAllDiagnostics;
+            usage('scope', { workspace: showAllDiagnostics });
             updateView();
             return;
         }
@@ -203,6 +221,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (scopeButton) {
             e.stopPropagation();
             showAllDiagnostics = scopeButton.dataset.diagnosticsScope === 'workspace';
+            usage('scope', { workspace: showAllDiagnostics });
             updateView();
             return;
         }
@@ -211,6 +230,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (target.closest?.('#diagram-orientation-btn')) {
             e.stopPropagation();
             diagramOrientation = diagramOrientation === "TB" ? "LR" : "TB";
+            usage('diagram', { orientation: diagramOrientation });
             resetZoom(document);
             updateView();
             return;
@@ -222,6 +242,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             e.stopPropagation();
             if ((diagramConditionsButton as HTMLButtonElement).disabled) return;
             showDiagramConditions = !showDiagramConditions;
+            usage('diagram', { conditions: showDiagramConditions });
             updateView();
             return;
         }
@@ -230,6 +251,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (target.closest?.('#diagram-focus-btn')) {
             e.stopPropagation();
             focusDiagramOnError = !focusDiagramOnError;
+            usage('diagram', { focus: focusDiagramOnError });
             updateView();
             return;
         }
@@ -299,12 +321,14 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
-        // nav tab click
-        if (target.classList.contains('nav-tab')) {
+        // nav tab click (also on the badge inside the tab)
+        const navTab = target.closest?.('.nav-tab');
+        if (navTab) {
             e.stopPropagation();
-            const tab = target.getAttribute('data-tab') as NavTab;
+            const tab = navTab.getAttribute('data-tab') as NavTab;
             if (tab && tab !== selectedTab) {
                 vscode.postMessage({ type: 'highlight', range: null });
+                usage('tab', { tab });
                 selectedTab = tab;
                 updateView();
             }
@@ -316,6 +340,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         if (diagnosticCopyBtn) {
             e.preventDefault();
             e.stopPropagation();
+            usage('copy');
             copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics || [], showAllDiagnostics, currentFile));
             return;
         }
