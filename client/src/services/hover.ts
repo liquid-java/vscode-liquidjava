@@ -39,10 +39,12 @@ export function registerHover() {
 }
 
 /**
- * What the LiquidJava diagnostics at a position say under their headline, in markdown: the notes that explain them,
- * the counterexample and the hints. VS Code shows the headline in its own hover, which is plain text
+ * The details of the LiquidJava diagnostics at a position, in markdown: the notes that explain them, the
+ * counterexample and the hints. VS Code shows the message itself in its own part of the hover, which is plain text.
+ * Nothing when liquidjava.hover.showDetails is off: the details are then in the LiquidJava view only
  */
 function getHoveredDiagnostics(document: vscode.TextDocument, position: vscode.Position): vscode.MarkdownString[] {
+    if (!showDetailsInHover()) return [];
     const file = normalizeFilePath(document.uri.fsPath);
     return (extension.diagnostics ?? [])
         .filter(diagnostic => diagnostic.position && diagnostic.file && normalizeFilePath(diagnostic.file) === file)
@@ -50,14 +52,16 @@ function getHoveredDiagnostics(document: vscode.TextDocument, position: vscode.P
             const { lineStart, colStart, lineEnd, colEnd } = diagnostic.position!;
             return new vscode.Range(lineStart, colStart, lineEnd, colEnd).contains(position);
         })
-        .map(diagnostic => formatDiagnosticMarkdown(diagnostic, toLocationLink, { hints: showHintsInHover() }))
+        .map(diagnostic => formatDiagnosticMarkdown(diagnostic, toLocationLink))
         .filter((markdown): markdown is string => markdown !== null)
         .map(markdown => new vscode.MarkdownString(markdown));
 }
 
-// liquidjava.hover.showHints: off keeps the hints in the view only, closed until opened (user studies)
-function showHintsInHover(): boolean {
-    return vscode.workspace.getConfiguration().get<boolean>('liquidjava.hover.showHints', true);
+// liquidjava.hover.showDetails: off keeps the origin notes, the counterexample and the hints in the view only (user
+// studies). liquidjava.hover.showHints, its name in 0.1.1, still counts when a settings file sets it to false
+function showDetailsInHover(): boolean {
+    const configuration = vscode.workspace.getConfiguration();
+    return configuration.get<boolean>('liquidjava.hover.showDetails', true) && configuration.get<boolean>('liquidjava.hover.showHints', true);
 }
 
 function getHoveredVariable(document: vscode.TextDocument, position: vscode.Position): LJVariable | null {

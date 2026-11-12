@@ -83,14 +83,16 @@ public class LJDiagnosticsHandler {
     }
 
     /**
-     * The message of a diagnostic in the editor: its title alone. VS Code shows that message as plain text in the
-     * hover, the Problems tab and the problem view; the headline, the notes, the counterexample and the hints are
-     * rendered by the extension's own part of the hover, in markdown, and by the LiquidJava view
+     * The message of a diagnostic in the editor: its title and its headline, as plain text, so the Problems tab says
+     * what is wrong and not only which kind of error it is. VS Code shows that message as plain text in the hover, the
+     * Problems tab and the problem view; the notes, the counterexample and the hints are rendered by the extension's
+     * own part of the hover, in markdown, and by the LiquidJava view
      * @param diagnostic the diagnostic
      * @return the message
      */
     static String diagnosticMessage(LJDiagnostic diagnostic) {
-        return diagnostic.getTitle();
+        String headline = diagnostic.getMessage() == null ? "" : diagnostic.getMessage().replace("`", "").trim();
+        return headline.isEmpty() ? diagnostic.getTitle() : diagnostic.getTitle() + ": " + headline;
     }
 
     /**

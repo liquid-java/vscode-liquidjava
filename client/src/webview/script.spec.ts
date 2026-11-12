@@ -200,6 +200,18 @@ describe('webview script', () => {
         ]);
     });
 
+    it('opens a tab on a selectTab message (the liquidjava.showView command with a tab and no diagnostic)', () => {
+        showDiagnostics([diagnostic(currentFile, 'Current error')]);
+        receive({ type: 'fsm', sms: [stateMachine] });
+        postMessage.mockClear();
+
+        receive({ type: 'selectTab', tab: 'fsm' });
+        expect(root.querySelector('.nav-tab.selected')?.getAttribute('data-tab')).toBe('fsm');
+        expect(root.querySelector('.diagram-title')?.textContent).toBe('Counter');
+        // the extension host logs that use itself, with who asked for it
+        expect(postMessage.mock.calls.filter(([m]) => (m as { type: string }).type === 'usage')).toEqual([]);
+    });
+
     it('opens a state error focused on the error and toggles the dimming', () => {
         const error = stateError('State refinement error', errorMachine('Counter', 'close'));
         showDiagnostics([error]);

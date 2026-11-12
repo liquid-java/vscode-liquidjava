@@ -12,6 +12,7 @@ import { logUsage } from "./usage-log";
 export function registerWebview(context: vscode.ExtensionContext) {
     extension.webview = new LiquidJavaWebviewProvider(context.extensionUri);
     let pendingDiagnosticReveal: { diagnostic: DiagnosticRevealTarget, tab?: NavTab } | undefined;
+    let pendingTab: NavTab | undefined;
 
     // webview provider
     context.subscriptions.push(
@@ -20,13 +21,21 @@ export function registerWebview(context: vscode.ExtensionContext) {
     );
     // show view command
     context.subscriptions.push(
-        // shows the diagnostic in the Verification tab, or a state error in the State Machine tab when tab is 'fsm'
-        vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget, tab?: NavTab) => {
+        // shows the diagnostic in the Verification tab, or a state error in the State Machine tab when tab is 'fsm';
+        // without a diagnostic, opens the tab, if one is given. from names the caller in the usage log: the code
+        // lenses above an error (the default), or another extension
+        vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget, tab?: NavTab, from = 'code-lens') => {
             const isVisible = extension.webview?.isVisible();
             await vscode.commands.executeCommand("liquidJavaView.focus");
-            if (!diagnostic) return;
+            if (!diagnostic) {
+                if (!tab) return;
+                logUsage('tab', { tab, from });
+                if (isVisible) extension.webview?.sendMessage({ type: "selectTab", tab });
+                else pendingTab = tab;
+                return;
+            }
             // the code lenses above an error: its title opens the Verification tab, "Show in state machine" the State Machine tab
-            logUsage(tab === 'fsm' ? 'state-machine' : 'show-view', { from: 'code-lens', file: diagnostic.file, line: diagnostic.position.lineStart + 1 });
+            logUsage(tab === 'fsm' ? 'state-machine' : 'show-view', { from, file: diagnostic.file, line: diagnostic.position.lineStart + 1 });
             
             if (isVisible) {
                 extension.webview?.sendMessage({ type: "revealDiagnostic", diagnostic, tab });
@@ -47,6 +56,10 @@ export function registerWebview(context: vscode.ExtensionContext) {
                 if (pendingDiagnosticReveal) {
                     extension.webview?.sendMessage({ type: "revealDiagnostic", ...pendingDiagnosticReveal });
                     pendingDiagnosticReveal = undefined;
+                }
+                if (pendingTab) {
+                    extension.webview?.sendMessage({ type: "selectTab", tab: pendingTab });
+                    pendingTab = undefined;
                 }
             }
         })

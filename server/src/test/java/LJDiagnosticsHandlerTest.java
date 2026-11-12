@@ -10,7 +10,7 @@ import liquidjava.diagnostics.hints.Hint;
 class LJDiagnosticsHandlerTest {
 
     @Test
-    void messageIsTheTitleAlone() {
+    void messageIsTheTitleAndTheHeadlineWithoutCodeFences() {
         LJDiagnostic diagnostic = new LJDiagnostic("Refinement Error", "found `x > 0` but expected `y == 1`", null, "",
                 null) {
             @Override
@@ -20,6 +20,6 @@ class LJDiagnosticsHandlerTest {
         };
         diagnostic.setCounterexampleStr("Counterexample: timeout == -1");
         diagnostic.addHint(Hint.general("Add a refinement"));
-        assertEquals("Refinement Error", LJDiagnosticsHandler.diagnosticMessage(diagnostic));
+        assertEquals("Refinement Error: found x > 0 but expected y == 1", LJDiagnosticsHandler.diagnosticMessage(diagnostic));
     }
 }
