@@ -421,6 +421,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 followCursorStateError(msg.errorAtCursor as LJDiagnostic | undefined);
                 if (selectedTab === 'context') updateView();
                 break;
+            case 'selectTab': {   // the liquidjava.showView command with a tab and no diagnostic
+                const tab = msg.tab as NavTab;
+                if (tab !== selectedTab) { selectedTab = tab; updateView(); }
+                break;
+            }
             case 'revealDiagnostic': {
                 const revealTarget = msg.diagnostic as DiagnosticRevealTarget;
                 const stateError = msg.tab === 'fsm' ? findStateErrorAt(revealTarget) : undefined;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HINTS_IN_VIEW, formatDiagnosticMarkdown, formatHintsMarkdown } from './message-markdown';
+import { formatDiagnosticMarkdown, formatHintsMarkdown } from './message-markdown';
 
 describe('hints in markdown', () => {
     it('keeps the code and links the lines, and escapes the rest', () => {
@@ -28,7 +28,7 @@ describe('hints in markdown', () => {
 });
 
 describe('a diagnostic in markdown', () => {
-    it('shows the headline, then the notes, then the counterexample, then the hints', () => {
+    it('shows the notes, then the counterexample, then the hints, and not the headline, which VS Code shows', () => {
         const note = 'Origin: line 134, `new BufferedInputStream(stream)` makes `markState(buffered) == unmarked`';
         const position = { file: '/workspace/M.java', lineStart: 133, colStart: 43, lineEnd: 133, colEnd: 43 };
         const diagnostic = {
@@ -40,22 +40,14 @@ describe('a diagnostic in markdown', () => {
             counterexample: { assignments: [{ variable: 'x', value: '0' }, { variable: 'size(s)', value: '2' }] },
         } as unknown as import('../types/diagnostics').LJDiagnostic;
         expect(formatDiagnosticMarkdown(diagnostic, p => `file://${p.file}#L${p.lineStart + 1}`)).toBe([
-            'found `x` but expected `y`',
             'Origin\\: [line 134](file:///workspace/M.java#L134)\\, `new BufferedInputStream(stream)` makes `markState(buffered) == unmarked`',
             'Counterexample: `x == 0 && size(s) == 2`',
             '**Hint**\n\nCall `buffered.mark(int)` before this call',
         ].join('\n\n'));
     });
 
-    it('says where the hints are instead of showing them when hints are off (liquidjava.hover.showHints)', () => {
-        const withHints = { category: 'error', type: 'custom-error', title: 'Error', message: 'a < b', hints: [{ kind: 'general', message: 'Call `f()` first' }], file: '', position: null, messageNotes: [], references: [] } as unknown as import('../types/diagnostics').LJDiagnostic;
-        expect(formatDiagnosticMarkdown(withHints, () => null, { hints: false })).toBe('a \\< b\n\n' + HINTS_IN_VIEW);
-        const without = { ...withHints, hints: [] } as unknown as import('../types/diagnostics').LJDiagnostic;
-        expect(formatDiagnosticMarkdown(without, () => null, { hints: false })).toBe('a \\< b');
-    });
-
-    it('is the headline alone when the diagnostic has no notes, counterexample or hints', () => {
+    it('is null when the diagnostic has no notes, counterexample or hints', () => {
         const diagnostic = { category: 'error', type: 'custom-error', title: 'Error', message: 'a < b', hints: [], file: '', position: null, messageNotes: [], references: [] } as unknown as import('../types/diagnostics').LJDiagnostic;
-        expect(formatDiagnosticMarkdown(diagnostic, () => null)).toBe('a \\< b');
+        expect(formatDiagnosticMarkdown(diagnostic, () => null)).toBeNull();
     });
 });

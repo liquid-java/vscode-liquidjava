@@ -65,10 +65,10 @@
 					"default": true,
 					"description": "Apply italic style to LiquidJava injected tokens on top of any active theme"
 				},
-				"liquidjava.hover.showHints": {
+				"liquidjava.hover.showDetails": {
 					"type": "boolean",
 					"default": true,
-					"description": "Show the hints of an error in the editor hover. When off, the hover says that the hints are in the LiquidJava view, where they stay closed until opened."
+					"description": "Show the details of an error in the editor hover under its message: the origin notes, the counterexample and the hints. When off, the hover shows the message alone and the details are in the LiquidJava view, where the hints stay closed until opened."
 				},
 				"liquidjava.usageLog": {
 					"type": "string",
