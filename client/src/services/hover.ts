@@ -57,9 +57,11 @@ function getHoveredDiagnostics(document: vscode.TextDocument, position: vscode.P
         .map(markdown => new vscode.MarkdownString(markdown));
 }
 
-// liquidjava.hover.showDetails: off keeps the origin notes, the counterexample and the hints in the view only (user studies)
+// liquidjava.hover.showDetails: off keeps the origin notes, the counterexample and the hints in the view only (user
+// studies). liquidjava.hover.showHints, its name in 0.1.1, still counts when a settings file sets it to false
 function showDetailsInHover(): boolean {
-    return vscode.workspace.getConfiguration().get<boolean>('liquidjava.hover.showDetails', true);
+    const configuration = vscode.workspace.getConfiguration();
+    return configuration.get<boolean>('liquidjava.hover.showDetails', true) && configuration.get<boolean>('liquidjava.hover.showHints', true);
 }
 
 function getHoveredVariable(document: vscode.TextDocument, position: vscode.Position): LJVariable | null {
