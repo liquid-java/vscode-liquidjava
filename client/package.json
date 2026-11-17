@@ -2,7 +2,7 @@
 	"name": "liquid-java",
 	"displayName": "LiquidJava",
 	"description": "Extending Java with Liquid Types",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
@@ -70,10 +70,15 @@
 					"default": true,
 					"description": "Show the details of an error in the editor hover under its message: the origin notes, the counterexample and the hints. When off, the hover shows the message alone and the details are in the LiquidJava view, where the hints stay closed until opened."
 				},
+				"liquidjava.hover.formattedMessage": {
+					"type": "boolean",
+					"default": false,
+					"description": "Under the plain message of an error, show Expected and Found as code in the editor hover. Meant for user studies."
+				},
 				"liquidjava.usageLog": {
 					"type": "string",
 					"default": "",
-					"description": "Path of a JSON Lines file to which the extension appends what is used in the LiquidJava view: tabs, hints opened, Found steps, locations, state machine, copies. Empty: nothing is written. Meant for user studies."
+					"description": "Path of a JSON Lines file to which the extension appends what is used in the LiquidJava view: tabs, hints, origin and locations opened, Found steps, state machine, copies, clicks on an error card. Empty: nothing is written. Meant for user studies."
 				}
 			}
 		},

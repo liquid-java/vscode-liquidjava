@@ -221,12 +221,15 @@ export function getStyles(): string {
             gap: 0.25rem;
             margin-left: auto;
         }
-        .hint-summary {
+        .hint-summary, .fold-summary {
             font-weight: bold;
             cursor: pointer;
         }
-        .hint-section[open] .hint-summary {
+        .hint-section[open] .hint-summary, .fold-section[open] .fold-summary {
             margin-bottom: 0.25rem;
+        }
+        .fold-body .message-note {
+            margin: 0;
         }
         .hint-body {
             padding: 0.5rem;

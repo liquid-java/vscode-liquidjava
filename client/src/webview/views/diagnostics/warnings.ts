@@ -34,8 +34,9 @@ const warningContentRenderers: WarningContentRenderers = {
 export function renderWarning(warning: LJWarning, actions = ''): string {
     const header = renderDiagnosticHeader(warning.title, warning.message, actions);
     const content = (warningContentRenderers[warning.type] as (warning: LJWarning) => string)?.(warning) || '';
-    const notes = renderMessageNotes(warning);
-    const hint = renderHints(warning.hints, getDiagnosticKey(warning), warning.references);
-    const location = renderLocation(warning);
+    const key = getDiagnosticKey(warning);
+    const notes = renderMessageNotes(warning, key);
+    const hint = renderHints(warning.hints, key, warning.references);
+    const location = renderLocation(warning, key);
     return /*html*/`${header}${content}${notes}${hint}${location}`;
 }

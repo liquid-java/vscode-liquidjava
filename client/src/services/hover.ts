@@ -31,7 +31,8 @@ export function registerHover() {
                 }
             }
 
-            const contents = [hoverContent, ...getHoveredDiagnostics(document, position)].filter(content => content.value.length > 0);
+            const contents = [hoverContent, ...getFormattedMessages(document, position), ...getHoveredDiagnostics(document, position)]
+                .filter(content => content.value.length > 0);
             if (contents.length === 0) return null;
             return new vscode.Hover(contents);
         }
@@ -55,6 +56,28 @@ function getHoveredDiagnostics(document: vscode.TextDocument, position: vscode.P
         .map(diagnostic => formatDiagnosticMarkdown(diagnostic, toLocationLink))
         .filter((markdown): markdown is string => markdown !== null)
         .map(markdown => new vscode.MarkdownString(markdown));
+}
+
+/**
+ * The message of each LiquidJava error at a position, formatted: Expected and Found as inline code on their own
+ * lines, under the plain line VS Code shows from the Problems entry ("Refinement Error: found A but expected B").
+ * Only when liquidjava.hover.formattedMessage is on (user studies: the hover reads like the view)
+ */
+function getFormattedMessages(document: vscode.TextDocument, position: vscode.Position): vscode.MarkdownString[] {
+    if (!vscode.workspace.getConfiguration().get<boolean>('liquidjava.hover.formattedMessage', false)) return [];
+    return vscode.languages.getDiagnostics(document.uri)
+        .filter(diagnostic => diagnostic.source === 'liquidjava' && diagnostic.range.contains(position))
+        .map(diagnostic => formatPlainMessage(diagnostic.message))
+        .filter((markdown): markdown is string => markdown !== null)
+        .map(markdown => new vscode.MarkdownString(markdown));
+}
+
+// "Kind: found A but expected B" -> Expected B, Found A, each as code; null for any other shape
+export function formatPlainMessage(message: string): string | null {
+    const match = /^[^:]+: found ([\s\S]+) but expected ([\s\S]+)$/.exec(message.trim());
+    if (!match) return null;
+    const code = (text: string) => `\`${text.replace(/`/g, '')}\``;
+    return `**Expected** ${code(match[2])}\n\n**Found** ${code(match[1])}`;
 }
 
 // liquidjava.hover.showDetails: off keeps the origin notes, the counterexample and the hints in the view only (user

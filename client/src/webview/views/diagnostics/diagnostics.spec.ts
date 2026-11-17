@@ -98,7 +98,11 @@ describe('diagnostics view', () => {
         const link = document.querySelector('.message-note a.location-link');
         expect(link?.textContent).toBe('line 134');
         expect([link?.getAttribute('data-file'), link?.getAttribute('data-line')]).toEqual(['/workspace/Reader.java', '133']);
-        expect(text('.message-note')).toBe('Origin: line 134, new BufferedInputStream(stream) makes markState(b) == unmarked');
+        // the note sits in a fold titled Origin, closed until opened, so its own "Origin:" prefix is not repeated
+        expect(text('.message-note')).toBe('line 134, new BufferedInputStream(stream) makes markState(b) == unmarked');
+        const origin = document.querySelector<HTMLDetailsElement>('details.fold-origin');
+        expect(origin?.open).toBe(false);
+        expect(origin?.querySelector('summary')?.textContent).toBe('Origin');
         expect(Array.from(document.querySelectorAll('.lj-code')).map(code => code.textContent))
             .toEqual(['new BufferedInputStream(stream)', 'markState(b) == unmarked', "b.f('`')", 'sl9 = "x@1"']);
         expect(document.querySelector('.lj-code sub.lj-line-tag')?.getAttribute('title')).toBe('s at line 9');
