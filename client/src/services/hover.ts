@@ -6,7 +6,7 @@ import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
 import { definitionMatchesClass, getDefinitions } from './definition';
 import { isExtensionRunning } from '../extension';
 import type { SourcePosition } from '../types/diagnostics';
-import { formatDiagnosticMarkdown } from '../utils/message-markdown';
+import { formatDiagnosticMarkdown, formatPlainMessage } from '../utils/message-markdown';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -70,14 +70,6 @@ function getFormattedMessages(document: vscode.TextDocument, position: vscode.Po
         .map(diagnostic => formatPlainMessage(diagnostic.message))
         .filter((markdown): markdown is string => markdown !== null)
         .map(markdown => new vscode.MarkdownString(markdown));
-}
-
-// "Kind: found A but expected B" -> Expected B, Found A, each as code; null for any other shape
-export function formatPlainMessage(message: string): string | null {
-    const match = /^[^:]+: found ([\s\S]+) but expected ([\s\S]+)$/.exec(message.trim());
-    if (!match) return null;
-    const code = (text: string) => `\`${text.replace(/`/g, '')}\``;
-    return `**Expected** ${code(match[2])}\n\n**Found** ${code(match[1])}`;
 }
 
 // liquidjava.hover.showDetails: off keeps the origin notes, the counterexample and the hints in the view only (user
