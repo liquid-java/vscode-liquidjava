@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { runClient, stopClient } from "./lsp/client";
 import { runLanguageServer, stopLanguageServer } from "./lsp/server";
 import { registerCommands } from "./services/commands";
+import { registerHover } from "./services/hover";
 import { registerStatusBar, statusEmitter, updateStatusBar } from "./services/status-bar";
 import { findJavaExecutable } from "./utils/utils";
 import { ExtensionStatus, extension } from "./state";
@@ -20,6 +21,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Liquid
     context.subscriptions.push(statusEmitter);
     registerStatusBar(context);
     registerCommands(context);
+    registerHover(context);
     const api: LiquidJavaBaselineApi = { onStatus: statusEmitter.event, getStatus: () => extension.status };
 
     const javaExecutablePath = findJavaExecutable();

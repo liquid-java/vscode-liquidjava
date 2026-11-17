@@ -2,7 +2,7 @@
 	"name": "liquid-java-baseline",
 	"displayName": "LiquidJava",
 	"description": "Extending Java with Liquid Types (study baseline: the July 2025 messages on the current verifier)",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "AlcidesFonseca",
 	"repository": {
 		"type": "git",
