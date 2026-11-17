@@ -80,7 +80,8 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     }, true);
 
     // opens every fold of the given kinds in the current render, without counting as a use (the tour does this). A
-    // request made while the view is loading, or before any diagnostics arrived, waits for the next render that has them
+    // request made while the view is loading, or before any diagnostics arrived, waits for the next render that has them.
+    // A request that finds no such folds in that render is dropped: it must never open a later error's folds unasked
     let requestedFolds: FoldKind[] | undefined;
     const openFolds = (kinds: FoldKind[]) => {
         if (status === 'loading' || !diagnostics) { requestedFolds = kinds; return; }
