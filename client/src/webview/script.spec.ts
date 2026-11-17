@@ -200,6 +200,21 @@ describe('webview script', () => {
         ]);
     });
 
+    it('opens the requested folds on the next render when asked while loading (the tour asks for the hints)', () => {
+        receive({ type: 'openFolds', kinds: ['hints'] });     // the initial view is loading: nothing to open yet
+        showDiagnostics([{ ...diagnostic(currentFile, 'State error'), hints: [{ kind: 'general', message: 'Call `open()` first' }] }]);
+        const hints = root.querySelector<HTMLDetailsElement>('details[data-fold-kind="hints"]');
+        expect(hints!.open, 'the hints open once the diagnostics are rendered').toBe(true);
+        expect(root.querySelector<HTMLDetailsElement>('details[data-fold-kind="origin"]')?.open ?? false).toBe(false);
+        expect(postMessage.mock.calls.filter(([m]) => (m as { action?: string }).action === 'hints')).toEqual([]);
+
+        // the request is spent: another error's hints render closed
+        const another = diagnostic(currentFile, 'Another error');
+        another.position = { ...another.position, lineStart: another.position.lineStart + 5, lineEnd: another.position.lineEnd + 5 };
+        showDiagnostics([{ ...another, hints: [{ kind: 'general', message: 'Call `close()` first' }] }]);
+        expect(root.querySelector<HTMLDetailsElement>('details[data-fold-kind="hints"]')!.open).toBe(false);
+    });
+
     it('opens a tab on a selectTab message (the liquidjava.showView command with a tab and no diagnostic)', () => {
         showDiagnostics([diagnostic(currentFile, 'Current error')]);
         receive({ type: 'fsm', sms: [stateMachine] });

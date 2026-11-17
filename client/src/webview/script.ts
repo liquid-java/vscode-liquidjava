@@ -79,8 +79,12 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
         foldToggleByUser = false;
     }, true);
 
-    // opens every fold of the given kinds in the current render, without counting as a use (the tour does this)
+    // opens every fold of the given kinds in the current render, without counting as a use (the tour does this). A
+    // request made while the view is loading, or before any diagnostics arrived, waits for the next render that has them
+    let requestedFolds: FoldKind[] | undefined;
     const openFolds = (kinds: FoldKind[]) => {
+        if (status === 'loading' || !diagnostics) { requestedFolds = kinds; return; }
+        requestedFolds = undefined;
         for (const details of Array.from(root.querySelectorAll<HTMLDetailsElement>('details[data-fold-kind]'))) {
             const kind = details.getAttribute('data-fold-kind') as FoldKind;
             const key = details.getAttribute('data-fold-key');
@@ -486,6 +490,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 root.innerHTML = diagnostics
                     ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, badges)
                     : renderLoading();
+                if (requestedFolds && diagnostics) openFolds(requestedFolds);
                 break;
             case 'fsm': {
                 const { error: shownError, index: shownIndex } = getShownStateError(stateErrors);
