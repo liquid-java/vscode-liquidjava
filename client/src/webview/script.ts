@@ -363,9 +363,11 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             return;
         }
 
-        // a click on the card of an error, outside its buttons, links and folds, shows the error in the code
+        // a click on the card of an error, outside its buttons, links and folds, shows the error in the code. A drag that
+        // selects text in the card ends with a click too: that one keeps the selection and does not open the file
         const errorItem = target.closest?.('.error-item');
         if (errorItem && !target.closest('button, a, details')) {
+            if (window.getSelection?.()?.isCollapsed === false) return;
             const revealTarget = getDiagnosticRevealTargetFromKey(errorItem.getAttribute('data-diagnostic-target'));
             if (!revealTarget) return;
             usage('reveal-code', { file: revealTarget.file, line: revealTarget.position.lineStart + 1 });

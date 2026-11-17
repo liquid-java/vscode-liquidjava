@@ -215,6 +215,23 @@ describe('webview script', () => {
         expect(root.querySelector<HTMLDetailsElement>('details[data-fold-kind="hints"]')!.open).toBe(false);
     });
 
+    it('shows the error in the code on a click on its card, except after a text selection', () => {
+        showDiagnostics([diagnostic(currentFile, 'State error')]);
+        postMessage.mockClear();
+        const card = root.querySelector<HTMLElement>('.error-item');
+        expect(card).not.toBeNull();
+        const text = card!.querySelector<HTMLElement>('h3') ?? card!;
+
+        dom.window.getSelection()!.selectAllChildren(text);     // a drag over the message, then its click
+        text.click();
+        expect(postMessage.mock.calls.filter(([m]) => (m as { type: string }).type === 'openFile')).toEqual([]);
+
+        dom.window.getSelection()!.removeAllRanges();
+        text.click();
+        expect(postMessage.mock.calls).toContainEqual([{ type: 'usage', action: 'reveal-code', file: currentFile, line: position.lineStart + 1 }]);
+        expect(postMessage.mock.calls.filter(([m]) => (m as { type: string }).type === 'openFile')).toHaveLength(1);
+    });
+
     it('opens a tab on a selectTab message (the liquidjava.showView command with a tab and no diagnostic)', () => {
         showDiagnostics([diagnostic(currentFile, 'Current error')]);
         receive({ type: 'fsm', sms: [stateMachine] });
