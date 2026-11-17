@@ -6,7 +6,7 @@ import { getOriginalVariableName, normalizeFilePath } from '../utils/utils';
 import { definitionMatchesClass, getDefinitions } from './definition';
 import { isExtensionRunning } from '../extension';
 import type { SourcePosition } from '../types/diagnostics';
-import { formatDiagnosticMarkdown } from '../utils/message-markdown';
+import { formatDiagnosticMarkdown, formatPlainMessage } from '../utils/message-markdown';
 
 /**
  * Initializes hover provider for LiquidJava diagnostics
@@ -31,7 +31,8 @@ export function registerHover() {
                 }
             }
 
-            const contents = [hoverContent, ...getHoveredDiagnostics(document, position)].filter(content => content.value.length > 0);
+            const contents = [hoverContent, ...getFormattedMessages(document, position), ...getHoveredDiagnostics(document, position)]
+                .filter(content => content.value.length > 0);
             if (contents.length === 0) return null;
             return new vscode.Hover(contents);
         }
@@ -53,6 +54,20 @@ function getHoveredDiagnostics(document: vscode.TextDocument, position: vscode.P
             return new vscode.Range(lineStart, colStart, lineEnd, colEnd).contains(position);
         })
         .map(diagnostic => formatDiagnosticMarkdown(diagnostic, toLocationLink))
+        .filter((markdown): markdown is string => markdown !== null)
+        .map(markdown => new vscode.MarkdownString(markdown));
+}
+
+/**
+ * The message of each LiquidJava error at a position, formatted: Expected and Found as inline code on their own
+ * lines, under the plain line VS Code shows from the Problems entry ("Refinement Error: found A but expected B").
+ * Only when liquidjava.hover.formattedMessage is on (user studies: the hover reads like the view)
+ */
+function getFormattedMessages(document: vscode.TextDocument, position: vscode.Position): vscode.MarkdownString[] {
+    if (!vscode.workspace.getConfiguration().get<boolean>('liquidjava.hover.formattedMessage', false)) return [];
+    return vscode.languages.getDiagnostics(document.uri)
+        .filter(diagnostic => diagnostic.source === 'liquidjava' && diagnostic.range.contains(position))
+        .map(diagnostic => formatPlainMessage(diagnostic.message))
         .filter((markdown): markdown is string => markdown !== null)
         .map(markdown => new vscode.MarkdownString(markdown));
 }

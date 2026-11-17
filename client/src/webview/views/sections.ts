@@ -23,12 +23,38 @@ export const renderSection = (title: string, body: string): string => /*html*/
 export const renderExpressionSection = (title: string, expression: string): string => /*html*/
     renderCustomSection(title, renderHighlightedExpression(expression));
 
-// hints the user opened, kept open when the diagnostics are rendered again
-const openHints = new Set<string>();
+// the folds the user opened (hints, origin, locations), kept open when the diagnostics are rendered again
+export type FoldKind = 'hints' | 'origin' | 'locations';
+const openFolds = new Set<string>();
+
+export function setFoldOpen(kind: FoldKind, key: string, open: boolean) {
+    if (open) openFolds.add(`${kind}:${key}`);
+    else openFolds.delete(`${kind}:${key}`);
+}
+
+export function isFoldOpen(kind: FoldKind, key: string | undefined): boolean {
+    return key !== undefined && openFolds.has(`${kind}:${key}`);
+}
 
 export function setHintOpen(key: string, open: boolean) {
-    if (open) openHints.add(key);
-    else openHints.delete(key);
+    setFoldOpen('hints', key, open);
+}
+
+/**
+ * Renders a section closed until the user opens it, like the hints: the origin notes and the locations of an error
+ * @param kind names the fold in the usage log
+ * @param title the summary line
+ * @param body the content
+ * @param key identifies the diagnostic, so an opened fold stays open after a new verification
+ */
+export function renderFold(kind: FoldKind, title: string, body: string, key?: string): string {
+    const open = isFoldOpen(kind, key);
+    return /*html*/`
+        <details class="section fold-section fold-${kind}" data-fold-kind="${kind}"${key !== undefined ? ` data-fold-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
+            <summary class="fold-summary">${title}</summary>
+            <div class="fold-body">${body}</div>
+        </details>
+    `;
 }
 
 /**
@@ -40,9 +66,9 @@ export function setHintOpen(key: string, open: boolean) {
 export function renderHints(hints: LJHint[] | undefined, key?: string, references: LJSourceReference[] = []): string {
     const { shown, options, notes } = groupHints(hints);
     if (shown.length === 0) return '';
-    const open = key !== undefined && openHints.has(key);
+    const open = isFoldOpen('hints', key);
     return /*html*/`
-        <details class="section hint-section"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
+        <details class="section hint-section" data-fold-kind="hints"${key !== undefined ? ` data-hint-key="${escapeHtml(key)}" data-fold-key="${escapeHtml(key)}"` : ''}${open ? ' open' : ''}>
             <summary class="hint-summary">${shown.length === 1 ? 'Hint' : 'Hints'}</summary>
             <div class="hint-body">
                 ${options.length > 0 ? /*html*/`
@@ -62,12 +88,16 @@ function renderHintMessage(hint: LJHint, references: LJSourceReference[]): strin
 }
 
 /**
- * Renders the notes under the message of a diagnostic, such as where a value comes from, with their links
+ * Renders the notes under the message of a diagnostic, such as where a value comes from, with their links, in a fold
+ * titled Origin that is closed until opened (the view shows Expected and Found first)
+ * @param key identifies the diagnostic, so an opened fold stays open after a new verification
  */
-export function renderMessageNotes(diagnostic: LJDiagnostic): string {
+export function renderMessageNotes(diagnostic: LJDiagnostic, key?: string): string {
     if (diagnostic.messageNotes.length === 0) return '';
-    return /*html*/`<div class="section message-notes">${diagnostic.messageNotes
-        .map(note => `<p class="message-note">${renderMessageText(note, diagnostic.references)}</p>`).join('')}</div>`;
+    const notes = diagnostic.messageNotes
+        // the fold's title says Origin, so the note's own prefix goes; after rendering, since the references' offsets count from the full text
+        .map(note => `<p class="message-note">${renderMessageText(note, diagnostic.references).replace(/^Origin:\s*/, '')}</p>`).join('');
+    return renderFold('origin', 'Origin', `<div class="message-notes">${notes}</div>`, key);
 }
 
 export const renderToggleSection = (title: string, targetId: string, isExpanded: boolean = true): string => /*html*/`
@@ -90,7 +120,7 @@ export function renderDiagnosticDataAttributes(diagnostic: LJDiagnostic): string
     return target ? `data-diagnostic-target="${getDiagnosticRevealTargetKey(target)}"` : "";
 }
 
-export const renderLocation = (diagnostic: LJDiagnostic): string => {
+export const renderLocation = (diagnostic: LJDiagnostic, key?: string): string => {
     const positions: SourcePosition[] = [];
     if (diagnostic.position && diagnostic.file) positions.push(diagnostic.position);
 
@@ -106,7 +136,7 @@ export const renderLocation = (diagnostic: LJDiagnostic): string => {
     // the notes explain the declarations, so they are shown only under their links
     const notes = declarationPositions.length > 0 ? declaration?.declarationNotes ?? [] : [];
     const noteLines = notes.map(note => `<span class="location-note">${renderMessageText(note)}</span>`).join("");
-    return renderCustomSection(title, /*html*/`<pre>${links}${noteLines}</pre>`);
+    return renderFold('locations', title, /*html*/`<pre>${links}${noteLines}</pre>`, key);
 };
 
 export function renderVariableHighlightButton(variable: LJVariable): string {

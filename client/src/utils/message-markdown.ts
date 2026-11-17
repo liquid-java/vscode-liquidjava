@@ -72,3 +72,18 @@ function formatInlineCode(code: string): string {
 function escapeMarkdown(text: string): string {
     return text.replace(/[!-/:-@[-`{-~]/g, "\\$&");
 }
+
+/**
+ * The plain one-line message of an error, as the Problems entry shows it, formatted for the hover: Expected and Found
+ * as inline code on their own lines. The two shapes the server writes are "Kind: found A but expected B" and
+ * "Kind: expected B but could not prove it" (nothing known at that point proves B)
+ * @returns the markdown, or null for any other text
+ */
+export function formatPlainMessage(message: string): string | null {
+    const text = message.trim();
+    const found = /^[^:]+: found ([\s\S]+) but expected ([\s\S]+)$/.exec(text);
+    if (found) return `**Expected** ${formatInlineCode(found[2])}\n\n**Found** ${formatInlineCode(found[1])}`;
+    const unproven = /^[^:]+: expected ([\s\S]+) but could not prove it$/.exec(text);
+    if (unproven) return `**Expected** ${formatInlineCode(unproven[1])}\n\n**Found** nothing here that proves it`;
+    return null;
+}

@@ -2,7 +2,10 @@ import * as vscode from "vscode";
 import { LiquidJavaWebviewProvider } from "../webview/provider";
 import { extension } from "../state";
 import type { DiagnosticRevealTarget } from "../types/diagnostics";
-import type { NavTab } from "../webview/views/sections";
+import type { FoldKind, NavTab } from "../webview/views/sections";
+
+/** What liquidjava.showView may do besides opening the view: openFolds opens the named folds (hints, origin, locations) */
+export type ShowViewOptions = { openFolds?: FoldKind[] };
 import { logUsage } from "./usage-log";
 
 /**
@@ -13,6 +16,12 @@ export function registerWebview(context: vscode.ExtensionContext) {
     extension.webview = new LiquidJavaWebviewProvider(context.extensionUri);
     let pendingDiagnosticReveal: { diagnostic: DiagnosticRevealTarget, tab?: NavTab } | undefined;
     let pendingTab: NavTab | undefined;
+    let pendingFolds: FoldKind[] | undefined;
+    const openFolds = (kinds: FoldKind[] | undefined, visible: boolean | undefined) => {
+        if (!kinds || kinds.length === 0) return;
+        if (visible) extension.webview?.sendMessage({ type: "openFolds", kinds });
+        else pendingFolds = kinds;
+    };
 
     // webview provider
     context.subscriptions.push(
@@ -24,14 +33,16 @@ export function registerWebview(context: vscode.ExtensionContext) {
         // shows the diagnostic in the Verification tab, or a state error in the State Machine tab when tab is 'fsm';
         // without a diagnostic, opens the tab, if one is given. from names the caller in the usage log: the code
         // lenses above an error (the default), or another extension
-        vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget, tab?: NavTab, from = 'code-lens') => {
+        vscode.commands.registerCommand("liquidjava.showView", async (diagnostic?: DiagnosticRevealTarget, tab?: NavTab, from = 'code-lens', options: ShowViewOptions = {}) => {
             const isVisible = extension.webview?.isVisible();
             await vscode.commands.executeCommand("liquidJavaView.focus");
             if (!diagnostic) {
-                if (!tab) return;
-                logUsage('tab', { tab, from });
-                if (isVisible) extension.webview?.sendMessage({ type: "selectTab", tab });
-                else pendingTab = tab;
+                if (tab) {
+                    logUsage('tab', { tab, from });
+                    if (isVisible) extension.webview?.sendMessage({ type: "selectTab", tab });
+                    else pendingTab = tab;
+                }
+                openFolds(options.openFolds, isVisible);
                 return;
             }
             // the code lenses above an error: its title opens the Verification tab, "Show in state machine" the State Machine tab
@@ -42,6 +53,7 @@ export function registerWebview(context: vscode.ExtensionContext) {
             } else {
                 pendingDiagnosticReveal = { diagnostic, tab };
             }
+            openFolds(options.openFolds, isVisible);
         })
     );
     // listen for messages from the webview
@@ -60,6 +72,10 @@ export function registerWebview(context: vscode.ExtensionContext) {
                 if (pendingTab) {
                     extension.webview?.sendMessage({ type: "selectTab", tab: pendingTab });
                     pendingTab = undefined;
+                }
+                if (pendingFolds) {
+                    extension.webview?.sendMessage({ type: "openFolds", kinds: pendingFolds });
+                    pendingFolds = undefined;
                 }
             }
         })

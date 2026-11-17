@@ -8,7 +8,7 @@ import type { LJDiagnostic, RefinementMismatchError, StateRefinementError } from
 import type { Range } from "../types/context";
 import type { LJStateMachine } from "../types/fsm";
 import type { ExtensionStatus } from "../state";
-import { setHintOpen, type NavTab } from "./views/sections";
+import { setFoldOpen, type FoldKind, type NavTab } from "./views/sections";
 import { copyDiagnosticToClipboard, getCurrentFileErrorCount, getDisplayDiagnostics, renderDiagnosticsView } from "./views/diagnostics/diagnostics";
 import type { LJContext } from "../types/context";
 import { ContextSectionState, renderContextView } from "./views/context/context";
@@ -62,20 +62,38 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
     
     // on click
     // toggle does not bubble, so it is caught on its way down. A render of an open <details> fires it too, so only a
-    // toggle right after the summary was clicked or keyed counts as the user opening or closing the hints
-    let hintToggleByUser = false;
-    const markHintToggle = (e: Event) => { if ((e.target as Element).closest?.('.hint-summary')) hintToggleByUser = true; };
-    root.addEventListener('click', markHintToggle, true);
-    root.addEventListener('keydown', markHintToggle, true);
+    // toggle right after the summary was clicked or keyed counts as the user opening or closing a fold (hints, origin,
+    // locations); the usage event carries the fold's kind
+    let foldToggleByUser = false;
+    const markFoldToggle = (e: Event) => { if ((e.target as Element).closest?.('.hint-summary, .fold-summary')) foldToggleByUser = true; };
+    root.addEventListener('click', markFoldToggle, true);
+    root.addEventListener('keydown', markFoldToggle, true);
     root.addEventListener('toggle', (e: Event) => {
         const details = e.target as HTMLDetailsElement;
-        const key = details.getAttribute?.('data-hint-key');
+        const key = details.getAttribute?.('data-fold-key');
+        const kind = (details.getAttribute?.('data-fold-kind') ?? 'hints') as FoldKind;
         if (key !== null && key !== undefined) {
-            setHintOpen(key, details.open);
-            if (hintToggleByUser) usage('hints', { open: details.open, error: key });
+            setFoldOpen(kind, key, details.open);
+            if (foldToggleByUser) usage(kind, { open: details.open, error: key });
         }
-        hintToggleByUser = false;
+        foldToggleByUser = false;
     }, true);
+
+    // opens every fold of the given kinds in the current render, without counting as a use (the tour does this). A
+    // request made while the view is loading, or before any diagnostics arrived, waits for the next render that has them.
+    // A request that finds no such folds in that render is dropped: it must never open a later error's folds unasked
+    let requestedFolds: FoldKind[] | undefined;
+    const openFolds = (kinds: FoldKind[]) => {
+        if (status === 'loading' || !diagnostics) { requestedFolds = kinds; return; }
+        requestedFolds = undefined;
+        for (const details of Array.from(root.querySelectorAll<HTMLDetailsElement>('details[data-fold-kind]'))) {
+            const kind = details.getAttribute('data-fold-kind') as FoldKind;
+            const key = details.getAttribute('data-fold-key');
+            if (!kinds.includes(kind) || key === null) continue;
+            setFoldOpen(kind, key, true);
+            details.open = true;
+        }
+    };
 
     root.addEventListener('click', (e: MouseEvent) => {
         const target = e.target instanceof Element ? e.target : null;
@@ -344,6 +362,19 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
             copyDiagnosticToClipboard(diagnosticCopyBtn, getDisplayDiagnostics(diagnostics || [], showAllDiagnostics, currentFile));
             return;
         }
+
+        // a click on the card of an error, outside its buttons, links and folds, shows the error in the code. A drag that
+        // selects text in the card ends with a click too: that one keeps the selection and does not open the file
+        const errorItem = target.closest?.('.error-item');
+        if (errorItem && !target.closest('button, a, details')) {
+            if (window.getSelection?.()?.isCollapsed === false) return;
+            const revealTarget = getDiagnosticRevealTargetFromKey(errorItem.getAttribute('data-diagnostic-target'));
+            if (!revealTarget) return;
+            usage('reveal-code', { file: revealTarget.file, line: revealTarget.position.lineStart + 1 });
+            const { lineStart, colStart } = revealTarget.position;
+            vscode.postMessage({ type: 'openFile', filePath: revealTarget.file, line: lineStart, character: colStart, highlightRange: revealTarget.position });
+            return;
+        }
     });
 
     // navigate context variables with the keyboard
@@ -426,6 +457,9 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 if (tab !== selectedTab) { selectedTab = tab; updateView(); }
                 break;
             }
+            case 'openFolds':   // the liquidjava.showView command with openFolds in its options
+                openFolds(msg.kinds as FoldKind[]);
+                break;
             case 'revealDiagnostic': {
                 const revealTarget = msg.diagnostic as DiagnosticRevealTarget;
                 const stateError = msg.tab === 'fsm' ? findStateErrorAt(revealTarget) : undefined;
@@ -459,6 +493,7 @@ export function getScript(vscode: VSCodeApi, document: Document, window: Window)
                 root.innerHTML = diagnostics
                     ? renderDiagnosticsView(diagnostics, showAllDiagnostics, currentFile, badges)
                     : renderLoading();
+                if (requestedFolds && diagnostics) openFolds(requestedFolds);
                 break;
             case 'fsm': {
                 const { error: shownError, index: shownIndex } = getShownStateError(stateErrors);
