@@ -111,18 +111,22 @@ export function createMermaidDiagram(
 
     // group transitions by from/to states and merge labels
     const transitionMap = new Map<string, { bright: string[], dimmed: CollapsibleLabel[] }>();
+    // the possible states that reject the call and have a transition of the called method, drawn as the rejected call
+    const rejectedFrom = new Set<string>();
     sm.transitions.forEach(transition => {
         const key = `${transition.from}|${transition.to}`;
         const isCalledMethod = transition.label === sm.errorContext?.calledMethod;
         // in focus mode, only the failed method stays bright
         const dimmed = collapse && !isCalledMethod;
         const unmet = hasUnmetCondition(transition, sm, stateSets, rejectingStateSets);
+        const rejected = isCalledMethod && !!errorFocus?.invalidStates.includes(transition.from);
+        if (rejected) rejectedFrom.add(transition.from);
         const label = getTransitionLabel(
             transition.label,
             getFromConditionLabel(transition.fromCondition, stateSets, unmet ? rejectingStateSets : null, showConditions),
             transition.toCondition,
             showConditions,
-            isCalledMethod && !unmet,
+            rejected ? 'rejected' : isCalledMethod ? 'allowed' : null,
         );
         if (!transitionMap.has(key)) transitionMap.set(key, { bright: [], dimmed: [] });
         const group = transitionMap.get(key)!;
@@ -137,6 +141,13 @@ export function createMermaidDiagram(
         const [from, to] = key.split('|');
         addTransition(`    ${from} --> ${to} : ${getCollapsedLabel(bright, dimmed, 'methods')}`, bright.length === 0, from === to);
     });
+    // the spec has no transition of the call from a state that rejects it, so the rejected call is drawn
+    // as a loop on each such state; it is no spec transition, so it is never dimmed or collapsed
+    if (errorFocus?.calledMethod) {
+        const rejectedCall = getCallLabel(escapeMermaidLabel(errorFocus.calledMethod), 'rejected');
+        errorFocus.invalidStates.filter(state => !rejectedFrom.has(state))
+            .forEach(state => addTransition(`    ${state} --> ${state} : ${rejectedCall}`, false, true));
+    }
     if (selfLoops.length > 0) lines.push(`${SELF_LOOPS_COMMENT} ${selfLoops.join(' ')}`);
 
     if (!errorFocus) {
@@ -185,24 +196,29 @@ function getCollapsedLabel(bright: string[], dimmed: CollapsibleLabel[], noun: '
  * Gets the label of a transition: the condition it needs before its method, and the one it sets after,
  * e.g. [lockState(this) == unlocked] open [doorState(this) == opened]
  * @param fromCondition the condition before, from getFromConditionLabel
- * @param isFailedCall whether to mark the method as the rejected call
+ * @param call whether the method is the called one, allowed from the transition's state or rejected there
  */
 function getTransitionLabel(
     label: string,
     fromCondition: string | null,
     toCondition?: string | null,
     showConditions = false,
-    isFailedCall = false,
+    call: CallKind | null = null,
 ): string {
     const escapedLabel = escapeMermaidLabel(label);
-    const methodLabel = isFailedCall
-        ? `<span class="lj-state-error-method">${escapedLabel}</span>`
-        : escapedLabel;
     return [
         fromCondition,
-        methodLabel,
+        call ? getCallLabel(escapedLabel, call) : escapedLabel,
         showConditions ? getConditionLabel('post', toCondition) : '',
     ].filter(Boolean).join(' ');
+}
+
+// how a transition of the called method is drawn: green where the spec allows the call, red and crossed where it rejects it
+type CallKind = 'allowed' | 'rejected';
+
+// the called method, coloured once rendered with its transition
+function getCallLabel(escapedMethod: string, call: CallKind): string {
+    return `<span class="lj-call-${call}">${call === 'rejected' ? `${INVALID_STATE_ICON} ` : ''}${escapedMethod}</span>`;
 }
 
 /**
@@ -272,7 +288,7 @@ export async function renderMermaidDiagram(document: any, window: any) {
         const dimmedTransitions = Array.from(mermaidElements, (element: any) => getListedTransitions(element.textContent, DIMMED_TRANSITIONS_COMMENT));
         const selfLoops = Array.from(mermaidElements, (element: any) => getListedTransitions(element.textContent, SELF_LOOPS_COMMENT));
         await mermaid.run({ nodes: mermaidElements });
-        highlightErrorTransitions(document);
+        colourCallTransitions(document);
         mermaidElements.forEach((element: any, index: number) => {
             markTransitions(element, dimmedTransitions[index], 'lj-dimmed');
             roundSelfLoops(element, selfLoops[index]);
@@ -288,17 +304,20 @@ export async function renderMermaidDiagram(document: any, window: any) {
     }
 }
 
-function highlightErrorTransitions(document: any) {
-    document.querySelectorAll('.lj-state-error-method').forEach((methodLabel: any) => {
-        const label = methodLabel.closest('g.label[data-id]');
-        const edgeId = label?.getAttribute('data-id');
-        const svg = label?.ownerSVGElement;
-        if (!edgeId || !svg) return;
+// colours the line and arrowhead of each transition of the called method like its label
+function colourCallTransitions(document: any) {
+    (['allowed', 'rejected'] as CallKind[]).forEach(call => {
+        document.querySelectorAll(`.lj-call-${call}`).forEach((methodLabel: any) => {
+            const label = methodLabel.closest('g.label[data-id]');
+            const edgeId = label?.getAttribute('data-id');
+            const svg = label?.ownerSVGElement;
+            if (!edgeId || !svg) return;
 
-        const transition = svg.querySelector(`path.transition[data-id="${edgeId}"]`);
-        if (!transition || transition.classList.contains('lj-state-error-transition')) return;
-        transition.classList.add('lj-state-error-transition');
-        highlightTransitionMarker(svg, transition, edgeId);
+            const transition = svg.querySelector(`path.transition[data-id="${edgeId}"]`);
+            if (!transition || transition.classList.contains(`lj-call-${call}-transition`)) return;
+            transition.classList.add(`lj-call-${call}-transition`);
+            colourTransitionMarker(svg, transition, edgeId, call);
+        });
     });
 }
 
@@ -454,7 +473,8 @@ function getLinePoints(svg: Element): Point[] {
     });
 }
 
-function highlightTransitionMarker(svg: any, transition: any, edgeId: string) {
+// the arrowhead is shared by every transition, so the coloured one gets a copy of its own
+function colourTransitionMarker(svg: any, transition: any, edgeId: string, call: CallKind) {
     const markerReference = transition.getAttribute('marker-end');
     const markerId = markerReference?.match(/^url\(#(.+)\)$/)?.[1];
     if (!markerId) return;
@@ -462,12 +482,12 @@ function highlightTransitionMarker(svg: any, transition: any, edgeId: string) {
     const marker = svg.querySelector(`#${markerId}`);
     if (!marker?.parentNode) return;
 
-    const highlightedMarker = marker.cloneNode(true);
-    const highlightedMarkerId = `${markerId}-lj-error-${edgeId}`;
-    highlightedMarker.setAttribute('id', highlightedMarkerId);
-    highlightedMarker.classList.add('lj-state-error-marker');
-    marker.parentNode.appendChild(highlightedMarker);
-    transition.setAttribute('marker-end', `url(#${highlightedMarkerId})`);
+    const colouredMarker = marker.cloneNode(true);
+    const colouredMarkerId = `${markerId}-lj-${call}-${edgeId}`;
+    colouredMarker.setAttribute('id', colouredMarkerId);
+    colouredMarker.classList.add(`lj-call-${call}-marker`);
+    marker.parentNode.appendChild(colouredMarker);
+    transition.setAttribute('marker-end', `url(#${colouredMarkerId})`);
 }
 
 /**
