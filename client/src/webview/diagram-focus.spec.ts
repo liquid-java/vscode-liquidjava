@@ -260,7 +260,9 @@ describe('state error focus', () => {
         expect(getStateErrorFocus(sm)).toBeNull();
         const diagram = createMermaidDiagram(sm, 'TB', false, true);
         expect(diagram).toBe(createMermaidDiagram(sm, 'TB', false, false));
-        expect(diagram).toContain(`maybeHasChildren --> maybeHasChildren : ${allowedCall('getFirstChild')}`);
+        // nothing says where the call is allowed, so the called method is not coloured
+        expect(lines(diagram)).toContain('maybeHasChildren --> maybeHasChildren : getFirstChild');
+        expect(diagram).not.toContain('lj-call');
         expect(diagram).toContain('class childrenAllowed ljStateErrorActual');
         expect(diagram).not.toMatch(/ljStateValid|ljStateInvalid|ljStateAccepted|ljStateDimmed|" as /);
     });

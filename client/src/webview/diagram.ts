@@ -121,12 +121,13 @@ export function createMermaidDiagram(
         const unmet = hasUnmetCondition(transition, sm, stateSets, rejectingStateSets);
         const rejected = isCalledMethod && !!errorFocus?.invalidStates.includes(transition.from);
         if (rejected) rejectedFrom.add(transition.from);
+        // without the accepted states, nothing says where the call is allowed, and there is no legend to explain a colour
         const label = getTransitionLabel(
             transition.label,
             getFromConditionLabel(transition.fromCondition, stateSets, unmet ? rejectingStateSets : null, showConditions),
             transition.toCondition,
             showConditions,
-            rejected ? 'rejected' : isCalledMethod ? 'allowed' : null,
+            rejected ? 'rejected' : isCalledMethod && errorFocus ? 'allowed' : null,
         );
         if (!transitionMap.has(key)) transitionMap.set(key, { bright: [], dimmed: [] });
         const group = transitionMap.get(key)!;
