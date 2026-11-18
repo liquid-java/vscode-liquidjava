@@ -136,18 +136,23 @@ export function createMermaidDiagram(
         else if (!group.dimmed.some(method => method.name === name)) group.dimmed.push({ name, label });
     });
 
+    // the spec has no transition of the call from a state that rejects it, so the rejected call is drawn as a loop
+    // on each such state, on the loop the state already has since the layout nests a second one around the first;
+    // it is no spec transition, so it is never dimmed, collapsed, or counted
+    if (errorFocus?.calledMethod) {
+        const rejectedCall = getCallLabel(escapeMermaidLabel(errorFocus.calledMethod), 'rejected');
+        errorFocus.invalidStates.filter(state => !rejectedFrom.has(state)).forEach(state => {
+            const key = `${state}|${state}`;
+            if (!transitionMap.has(key)) transitionMap.set(key, { bright: [], dimmed: [] });
+            transitionMap.get(key)!.bright.unshift(rejectedCall);
+        });
+    }
+
     // add transitions, dimming those whose methods are all dimmed
     transitionMap.forEach(({ bright, dimmed }, key) => {
         const [from, to] = key.split('|');
         addTransition(`    ${from} --> ${to} : ${getCollapsedLabel(bright, dimmed, 'methods')}`, bright.length === 0, from === to);
     });
-    // the spec has no transition of the call from a state that rejects it, so the rejected call is drawn
-    // as a loop on each such state; it is no spec transition, so it is never dimmed or collapsed
-    if (errorFocus?.calledMethod) {
-        const rejectedCall = getCallLabel(escapeMermaidLabel(errorFocus.calledMethod), 'rejected');
-        errorFocus.invalidStates.filter(state => !rejectedFrom.has(state))
-            .forEach(state => addTransition(`    ${state} --> ${state} : ${rejectedCall}`, false, true));
-    }
     if (selfLoops.length > 0) lines.push(`${SELF_LOOPS_COMMENT} ${selfLoops.join(' ')}`);
 
     if (!errorFocus) {

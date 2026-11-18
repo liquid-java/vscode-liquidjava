@@ -201,6 +201,16 @@ describe('state error focus', () => {
         expect(diagram.match(/closed --> closed/g)).toHaveLength(1);
     });
 
+    it('puts the rejected call on the loop a rejecting state already has, first and never dimmed', () => {
+        const sm = datagramSocket();
+        sm.transitions.push({ from: 'closed', to: 'closed', label: 'close' });
+
+        expect(lines(createMermaidDiagram(sm, 'TB', false, true))).toContain(`closed --> closed : ${rejectedCall('receive')}<br/>${dimmedMethod('close')}`);
+        const shown = createMermaidDiagram(sm, 'TB', false, false);
+        expect(lines(shown)).toContain(`closed --> closed : ${rejectedCall('receive')}<br/>close`);
+        expect(shown.match(/closed --> closed/g)).toHaveLength(1);
+    });
+
     it('does not focus without accepted states', () => {
         const sm = datagramSocket({ acceptedStates: [], validStates: [], invalidStates: [] });
 
