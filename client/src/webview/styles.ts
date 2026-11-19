@@ -1229,6 +1229,17 @@ export function getStyles(): string {
             stroke: var(--lj-state-valid) !important;
             stroke-width: 2px !important;
         }
+        /* the ✕ a rejected call leads into: only its text, no box */
+        .diagram-container .mermaid svg .ljCallRejected .label-container {
+            fill: transparent !important;
+            stroke: none !important;
+        }
+        .diagram-container .mermaid svg .ljCallRejected .nodeLabel,
+        .diagram-container .mermaid svg .ljCallRejected .nodeLabel * {
+            color: var(--lj-state-invalid) !important;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
         .diagram-container .mermaid svg .ljStateAccepted .label-container {
             stroke: var(--lj-state-accepted) !important;
             stroke-width: 1px !important;
@@ -1372,7 +1383,7 @@ export function getStyles(): string {
             border: 1px dashed;
             border-color: var(--lj-state-accepted);
         }
-        /* the arrows: a line with its head, and a cross before the rejected one, as on the diagram */
+        /* the arrows: a line with its head, the rejected one ending in a cross, as on the diagram */
         .diagram-error-legend-allowed,
         .diagram-error-legend-rejected {
             position: relative;
@@ -1396,14 +1407,14 @@ export function getStyles(): string {
         }
         .diagram-error-legend-rejected {
             --lj-call-colour: var(--lj-state-invalid);
-            margin-left: 0.9rem;
+            margin-right: 0.9rem;
         }
         .diagram-error-legend-rejected::before {
             content: '✕';
             position: absolute;
-            right: 100%;
+            left: 100%;
             top: 50%;
-            margin-right: 0.15rem;
+            margin-left: 0.45rem;
             transform: translateY(-50%);
             font-size: 0.75rem;
             line-height: 1;

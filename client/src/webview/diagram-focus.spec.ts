@@ -62,9 +62,8 @@ function lines(diagram: string): string[] {
 }
 
 const dimmedTransitions = (diagram: string) => lines(diagram).filter(line => line.startsWith('%% lj-dimmed-transitions:'));
-const selfLoops = (diagram: string) => lines(diagram).filter(line => line.startsWith('%% lj-self-loops:'));
 const allowedCall = (label: string) => `<span class="lj-call-allowed">${label}</span>`;
-const rejectedCall = (label: string) => `<span class="lj-call-rejected">✕ ${label}</span>`;
+const rejectedCall = (label: string) => `<span class="lj-call-rejected">${label}</span>`;
 const dimmedMethod = (label: string) => `<span class="lj-dimmed-method">${label}</span>`;
 const collapsedMethods = (labels: string[], count: string) =>
     `<span class="lj-dimmed-method lj-collapsed-methods">${count}<span class="lj-collapsed-list">${labels.map(label => `<span class="lj-collapsed-item">${label}</span>`).join('')}</span></span>`;
@@ -92,9 +91,11 @@ describe('state error focus', () => {
                 'state "✕ closed" as closed',
                 'class bound ljStateValid',
                 'class closed ljStateInvalid',
-                // the spec has no receive from closed, so the rejected call is a loop on it, drawn round like the others
-                `closed --> closed : ${rejectedCall('receive')}`,
-                '%% lj-self-loops: edge5 edge6 edge7 edge11 edge13',
+                // the spec has no receive from closed, so the rejected call leads from it into a ✕ of its own
+                'state "✕" as lj_rejected_closed',
+                'class lj_rejected_closed ljCallRejected',
+                `closed --> lj_rejected_closed : ${rejectedCall('receive')}`,
+                '%% lj-self-loops: edge5 edge6 edge7 edge11',
             ]));
             const send = focusOnError ? dimmedMethod('send') : 'send';
             // a single dimmed method keeps its name
@@ -197,18 +198,8 @@ describe('state error focus', () => {
         sm.transitions.push({ from: 'closed', to: 'closed', label: 'receive', fromCondition: 'retries(this) > 0' });
 
         const diagram = createMermaidDiagram(sm, 'TB', true, true);
-        expect(lines(diagram)).toContain(`closed --> closed : <span class="state-cond state-cond-pre">[retries(this) &gt; 0]</span> ${rejectedCall('receive')}`);
-        expect(diagram.match(/closed --> closed/g)).toHaveLength(1);
-    });
-
-    it('puts the rejected call on the loop a rejecting state already has, first and never dimmed', () => {
-        const sm = datagramSocket();
-        sm.transitions.push({ from: 'closed', to: 'closed', label: 'close' });
-
-        expect(lines(createMermaidDiagram(sm, 'TB', false, true))).toContain(`closed --> closed : ${rejectedCall('receive')}<br/>${dimmedMethod('close')}`);
-        const shown = createMermaidDiagram(sm, 'TB', false, false);
-        expect(lines(shown)).toContain(`closed --> closed : ${rejectedCall('receive')}<br/>close`);
-        expect(shown.match(/closed --> closed/g)).toHaveLength(1);
+        expect(lines(diagram)).toContain(`closed --> closed : <span class="state-cond state-cond-pre">[retries(this) &gt; 0]</span> ${rejectedCall('✕ receive')}`);
+        expect(diagram).not.toContain('lj_rejected');
     });
 
     it('does not focus without accepted states', () => {
@@ -246,12 +237,11 @@ describe('state error focus', () => {
             `maybeHasChildren --> maybeHasChildren : ${allowedCall('getFirstChild')}`,
             `childrenAllowed --> maybeHasChildren : ${dimmedMethod('add')}`,
             `maybeHasChildren --> childrenAllowed : ${dimmedMethod('removeAllChildren')}`,
-            `childrenAllowed --> childrenAllowed : ${rejectedCall('getFirstChild')}`,
+            `childrenAllowed --> lj_rejected_childrenAllowed : ${rejectedCall('getFirstChild')}`,
         ]));
         expect(diagram.join('\n')).not.toMatch(/maybeHasChildren" as|ljStateValid|ljStateDimmed/);
         // the constructor is dimmed although it leads to a possible state, the rejected call never is
         expect(dimmedTransitions(diagram.join('\n'))).toEqual(['%% lj-dimmed-transitions: edge0 edge1 edge2']);
-        expect(selfLoops(diagram.join('\n'))).toEqual(['%% lj-self-loops: edge3 edge4']);
     });
 
     it('only highlights the possible states when the accepted states are unknown', () => {
@@ -461,7 +451,7 @@ describe('a state error on several state sets', () => {
         const [doorState, lockState] = sms.map(sm => lines(createMermaidDiagram(sm, 'TB', true, false, sms)));
 
         expect(lockState).toContain(`unlocked --> unlocked : ${guard('doorState(this) == closed')} ${allowedCall('open')}`);
-        expect(lockState).toContain(`locked --> locked : ${rejectedCall('open')}`);
+        expect(lockState).toContain(`locked --> lj_rejected_locked : ${rejectedCall('open')}`);
         // the call is allowed from closed, only its condition on the other state set is unmet
         expect(doorState).toContain(`closed --> opened : ${guard(unmet('lockState(this) == unlocked'))} ${allowedCall('open')}`);
         expect(doorState).toContain(`closed --> closed : ${guard('lockState(this) != locked')} lock`);

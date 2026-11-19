@@ -22,6 +22,8 @@ const POPOVER_GAP = 6;
 const POPOVER_MARGIN = 8;
 // the step between the points of a transition line the list avoids
 const LINE_SAMPLE_STEP = 8;
+// the ✕ a rejected call is drawn into, one per state that rejects it
+const REJECTED_STATE_PREFIX = 'lj_rejected_';
 
 // state variables
 let zoomLevel = 1;
@@ -137,23 +139,22 @@ export function createMermaidDiagram(
         else if (!group.dimmed.some(method => method.name === name)) group.dimmed.push({ name, label });
     });
 
-    // the spec has no transition of the call from a state that rejects it, so the rejected call is drawn as a loop
-    // on each such state, on the loop the state already has since the layout nests a second one around the first;
-    // it is no spec transition, so it is never dimmed, collapsed, or counted
-    if (errorFocus?.calledMethod) {
-        const rejectedCall = getCallLabel(escapeMermaidLabel(errorFocus.calledMethod), 'rejected');
-        errorFocus.invalidStates.filter(state => !rejectedFrom.has(state)).forEach(state => {
-            const key = `${state}|${state}`;
-            if (!transitionMap.has(key)) transitionMap.set(key, { bright: [], dimmed: [] });
-            transitionMap.get(key)!.bright.unshift(rejectedCall);
-        });
-    }
-
     // add transitions, dimming those whose methods are all dimmed
     transitionMap.forEach(({ bright, dimmed }, key) => {
         const [from, to] = key.split('|');
         addTransition(`    ${from} --> ${to} : ${getCollapsedLabel(bright, dimmed, 'methods')}`, bright.length === 0, from === to);
     });
+    // the spec has no transition of the call from a state that rejects it, so the rejected call is drawn
+    // from each such state into a bare ✕, a state of its own so that the layout keeps it clear of the other arrows;
+    // it is no spec transition, so it is never dimmed, collapsed, or counted
+    if (errorFocus?.calledMethod) {
+        const rejectedCall = getCallLabel(escapeMermaidLabel(errorFocus.calledMethod), 'rejected');
+        errorFocus.invalidStates.filter(state => !rejectedFrom.has(state)).forEach(state => {
+            lines.push(`    state "${INVALID_STATE_ICON}" as ${REJECTED_STATE_PREFIX}${state}`);
+            lines.push(`    class ${REJECTED_STATE_PREFIX}${state} ljCallRejected`);
+            addTransition(`    ${state} --> ${REJECTED_STATE_PREFIX}${state} : ${rejectedCall}`, false);
+        });
+    }
     if (selfLoops.length > 0) lines.push(`${SELF_LOOPS_COMMENT} ${selfLoops.join(' ')}`);
 
     if (!errorFocus) {
@@ -214,7 +215,7 @@ function getTransitionLabel(
     const escapedLabel = escapeMermaidLabel(label);
     return [
         fromCondition,
-        call ? getCallLabel(escapedLabel, call) : escapedLabel,
+        call ? getCallLabel(escapedLabel, call, call === 'rejected') : escapedLabel,
         showConditions ? getConditionLabel('post', toCondition) : '',
     ].filter(Boolean).join(' ');
 }
@@ -222,9 +223,9 @@ function getTransitionLabel(
 // how a transition of the called method is drawn: green where the spec allows the call, red and crossed where it rejects it
 type CallKind = 'allowed' | 'rejected';
 
-// the called method, coloured once rendered with its transition
-function getCallLabel(escapedMethod: string, call: CallKind): string {
-    return `<span class="lj-call-${call}">${call === 'rejected' ? `${INVALID_STATE_ICON} ` : ''}${escapedMethod}</span>`;
+// the called method, coloured once rendered with its transition, crossed when the transition is the spec's own
+function getCallLabel(escapedMethod: string, call: CallKind, crossed = false): string {
+    return `<span class="lj-call-${call}">${crossed ? `${INVALID_STATE_ICON} ` : ''}${escapedMethod}</span>`;
 }
 
 /**
