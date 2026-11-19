@@ -57,7 +57,7 @@ function renderStateMachineViewHtml(sms: LJStateMachine[], diagrams: string[], o
                             </div>
                         </div>
                         ${errorFocuses.length > 0
-                            ? renderStateErrorSummary(getStateErrorSummary(sms), stateErrors) + renderStateErrorLegend(errorFocuses, focusOnError)
+                            ? renderStateErrorSummary(getStateErrorSummary(sms), stateErrors) + renderStateErrorLegend(sms, errorFocuses, focusOnError)
                             : isStateErrorShown(stateErrors) ? renderStateErrorSummary(getUnmarkedStateErrorSummary(sms, stateErrors), stateErrors) : ''}
                         ${showConditions && hasConditionExpansions ? /*html*/`
                             <div class="diagram-condition-legend">
@@ -168,14 +168,23 @@ function renderStateErrorStepper({ index, count }: StateErrorNavigation): string
     `;
 }
 
-// explains the state marks with the same outlines, fills, and icons as the diagram, next to the toggle that collapses the rest
-function renderStateErrorLegend(focuses: StateErrorFocus[], focusOnError: boolean): string {
+// explains the state marks and the arrows of the call with the same outlines, fills, colours, and icons as the diagram,
+// next to the toggle that collapses the rest
+function renderStateErrorLegend(sms: LJStateMachine[], focuses: StateErrorFocus[], focusOnError: boolean): string {
+    const hasWrongState = focuses.some(focus => focus.invalidStates.length > 0);
+    // the diagram draws the transitions of the called method from the states that do not reject it as the allowed call
+    const hasAllowedCall = sms.some(sm => {
+        const focus = getStateErrorFocus(sm);
+        return !!focus && sm.transitions.some(transition => transition.label === focus.calledMethod && !focus.invalidStates.includes(transition.from));
+    });
     const items = [
-        focuses.some(focus => focus.invalidStates.length > 0) ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Actual state, not expected`) : '',
+        hasWrongState ? renderLegendItem('invalid', `${INVALID_STATE_ICON} Actual state, not expected`) : '',
         focuses.some(focus => focus.validStates.length > 0) ? renderLegendItem('valid', `${VALID_STATE_ICON} Actual state, expected`) : '',
         focuses.some(focus => focus.acceptedStates.some(state => !focus.validStates.includes(state)))
             ? renderLegendItem('accepted', 'Expected state')
             : '',
+        hasAllowedCall ? renderLegendItem('allowed', `Where ${escapeHtml(focuses[0].calledMethod ?? '')}() is allowed`) : '',
+        hasWrongState ? renderLegendItem('rejected', 'The call, not allowed here') : '',
     ].filter(Boolean);
     return /*html*/`
         <div class="diagram-error-legend">

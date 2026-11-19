@@ -310,7 +310,7 @@ describe('webview script', () => {
         const copied: string = writeText.mock.calls[0][0];
         expect(copied.match(/stateDiagram-v2/g)).toHaveLength(2);
         expect(copied).toContain('Idle --> Busy');
-        expect(copied).not.toMatch(/ljState|lj-dimmed|lj-state-error-method/);
+        expect(copied).not.toMatch(/ljState|lj-dimmed|lj-call-|lj_rejected/);
     });
 
     it('copies the Mermaid source without the error overlay', async () => {
@@ -330,7 +330,7 @@ describe('webview script', () => {
 
         expect(root.querySelector('.mermaid')?.textContent).toContain('ljStateDimmed');
         expect(writeText.mock.calls[1][0]).toBe(plain);
-        expect(plain).not.toMatch(/ljState|lj-dimmed|lj-state-error-method/);
+        expect(plain).not.toMatch(/ljState|lj-dimmed|lj-call-|lj_rejected/);
     });
 
     it('opens another state error focused after showing the full diagram of the previous one', () => {

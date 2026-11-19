@@ -169,12 +169,13 @@ describe('state machine view', () => {
     });
 
     it.each([
-        ['invalid, valid, and other accepted states', ['bound', 'closed'], ['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state']],
-        ['only an invalid and other accepted states', ['closed'], ['\u2715 Actual state, not expected', 'Expected state']],
-        ['an unknown receiver state', ['unbound', 'bound', 'connected', 'closed'], ['Expected state']],
-    ])('explains the state marks in a legend with %s', (_, possibleStates, items) => {
+        ['invalid, valid, and other accepted states', ['bound', 'closed'], ['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state', 'Where receive() is allowed', 'The call, not allowed here']],
+        ['only an invalid and other accepted states', ['closed'], ['\u2715 Actual state, not expected', 'Expected state', 'Where receive() is allowed', 'The call, not allowed here']],
+        ['an unknown receiver state', ['unbound', 'bound', 'connected', 'closed'], ['Expected state', 'Where receive() is allowed']],
+    ])('explains the state marks and the arrows of the call in a legend with %s', (_, possibleStates, items) => {
         renderStateMachineView(document.body, [machine({
             states: ['unbound', 'bound', 'connected', 'closed'],
+            transitions: [{ from: 'bound', to: 'bound', label: 'receive' }],
             errorContext: socketError(possibleStates),
         })], [diagram], 'TB', false, true);
 
@@ -367,7 +368,7 @@ describe('state machine view', () => {
                 .toBe('Invalid method call param.write() \u00B7 expected state tilingSet and compressionExplicit \u00B7 actual state startTiling and compressionExplicit');
             expect(document.querySelector('.diagram-state-set-dimmed')).toBeNull();
             expect(Array.from(document.querySelectorAll('.diagram-error-legend-item'), node => node.textContent))
-                .toEqual(['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state']);
+                .toEqual(['\u2715 Actual state, not expected', '\u2713 Actual state, expected', 'Expected state', 'The call, not allowed here']);
         });
 
         it('names the state sets in the summary, without those in which every state allows the call', () => {

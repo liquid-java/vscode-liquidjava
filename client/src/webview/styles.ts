@@ -1195,19 +1195,29 @@ export function getStyles(): string {
         .diagram-container .mermaid svg .ljStateErrorActual .label-container {
             stroke: var(--vscode-errorForeground) !important;
         }
-        .diagram-container .mermaid .edgeLabel .lj-state-error-method,
+        .diagram-container .mermaid .edgeLabel .lj-call-allowed {
+            color: var(--lj-state-valid) !important;
+        }
+        .diagram-container .mermaid .edgeLabel .lj-call-rejected,
         .diagram-container .mermaid .edgeLabel .lj-unmet-condition {
-            color: var(--vscode-errorForeground) !important;
+            color: var(--lj-state-invalid) !important;
         }
         .diagram-container .mermaid svg path.lj-self-loop {
             stroke-width: 1.5px !important;
         }
-        .diagram-container .mermaid svg path.lj-state-error-transition {
-            stroke: var(--vscode-errorForeground) !important;
+        .diagram-container .mermaid svg path.lj-call-allowed-transition,
+        .diagram-container .mermaid svg marker.lj-call-allowed-marker path {
+            stroke: var(--lj-state-valid) !important;
         }
-        .diagram-container .mermaid svg marker.lj-state-error-marker path {
-            fill: var(--vscode-errorForeground) !important;
-            stroke: var(--vscode-errorForeground) !important;
+        .diagram-container .mermaid svg marker.lj-call-allowed-marker path {
+            fill: var(--lj-state-valid) !important;
+        }
+        .diagram-container .mermaid svg path.lj-call-rejected-transition,
+        .diagram-container .mermaid svg marker.lj-call-rejected-marker path {
+            stroke: var(--lj-state-invalid) !important;
+        }
+        .diagram-container .mermaid svg marker.lj-call-rejected-marker path {
+            fill: var(--lj-state-invalid) !important;
         }
         .diagram-container .mermaid svg .ljStateInvalid .label-container {
             fill: color-mix(in srgb, var(--lj-state-invalid) 10%, var(--vscode-editor-background)) !important;
@@ -1218,6 +1228,17 @@ export function getStyles(): string {
             fill: color-mix(in srgb, var(--lj-state-valid) 10%, var(--vscode-editor-background)) !important;
             stroke: var(--lj-state-valid) !important;
             stroke-width: 2px !important;
+        }
+        /* the ✕ a rejected call leads into: only its text, no box */
+        .diagram-container .mermaid svg .ljCallRejected .label-container {
+            fill: transparent !important;
+            stroke: none !important;
+        }
+        .diagram-container .mermaid svg .ljCallRejected .nodeLabel,
+        .diagram-container .mermaid svg .ljCallRejected .nodeLabel * {
+            color: var(--lj-state-invalid) !important;
+            font-size: 1.4em;
+            font-weight: 600;
         }
         .diagram-container .mermaid svg .ljStateAccepted .label-container {
             stroke: var(--lj-state-accepted) !important;
@@ -1361,6 +1382,43 @@ export function getStyles(): string {
         .diagram-error-legend-accepted {
             border: 1px dashed;
             border-color: var(--lj-state-accepted);
+        }
+        /* the arrows: a line with its head, the rejected one ending in a cross, as on the diagram */
+        .diagram-error-legend-allowed,
+        .diagram-error-legend-rejected {
+            position: relative;
+            width: 1.1rem;
+            height: 2px;
+            border-radius: 0;
+            background: var(--lj-call-colour);
+        }
+        .diagram-error-legend-allowed::after,
+        .diagram-error-legend-rejected::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: -3px;
+            border-left: 6px solid var(--lj-call-colour);
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+        .diagram-error-legend-allowed {
+            --lj-call-colour: var(--lj-state-valid);
+        }
+        .diagram-error-legend-rejected {
+            --lj-call-colour: var(--lj-state-invalid);
+            margin-right: 0.9rem;
+        }
+        .diagram-error-legend-rejected::before {
+            content: '✕';
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            margin-left: 0.45rem;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            line-height: 1;
+            color: var(--lj-call-colour);
         }
     `;
 }
