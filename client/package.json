@@ -87,7 +87,7 @@
 				{
 					"id": "liquidJavaContainer",
 					"title": "LiquidJava",
-					"icon": "media/java-icon.svg"
+					"icon": "media/liquidjava-icon.svg"
 				}
 			]
 		},
@@ -97,7 +97,7 @@
 					"id": "liquidJavaView",
 					"name": "LiquidJava",
 					"type": "webview",
-					"icon": "media/java-icon.svg"
+					"icon": "media/liquidjava-icon.svg"
 				}
 			]
 		},
@@ -122,8 +122,8 @@
 				"title": "Show View",
 				"category": "LiquidJava",
 				"icon": {
-					"light": "media/java-icon.svg",
-					"dark": "media/java-icon-white.svg"
+					"light": "media/liquidjava-icon.svg",
+					"dark": "media/liquidjava-icon-dark.svg"
 				}
 			},
 			{
